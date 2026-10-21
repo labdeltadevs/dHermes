@@ -10,6 +10,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "laravel/fortify": "^1.41",
         "laravel/framework": "^13.17",
         "laravel/tinker": "^3.0",
         "livewire/blaze": "^1.0",
@@ -71,6 +72,10 @@
             "@lint:check",
             "@types:check",
             "@php artisan test"
+        ],
+        "test:pg": [
+            "@php artisan config:clear --ansi",
+            "vendor/bin/pest --configuration=phpunit.pg.xml"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",

@@ -1,5 +1,11 @@
 <?php
 
+use App\Enums\TenantRole;
+use App\Models\SalesRep;
+use App\Models\Tenant;
+use App\Models\TenantUser;
+use App\Models\User;
+use App\Support\Tenancy\CurrentTenant;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -44,7 +50,34 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * @param  array<string, mixed>  $attributes
+ */
+function tenantContext(array $attributes = []): Tenant
 {
-    // ..
+    $tenant = Tenant::factory()->create($attributes);
+
+    app(CurrentTenant::class)->set($tenant->id);
+
+    return $tenant;
+}
+
+function memberFor(
+    Tenant $tenant,
+    TenantRole $role = TenantRole::Seller,
+    ?User $user = null,
+    ?SalesRep $salesRep = null,
+): User {
+    app(CurrentTenant::class)->set($tenant->id);
+
+    $user ??= User::factory()->create();
+
+    TenantUser::factory()->create([
+        'tenant_id' => $tenant->id,
+        'user_id' => $user->id,
+        'role' => $role,
+        'sales_rep_id' => $salesRep?->id,
+    ]);
+
+    return $user;
 }

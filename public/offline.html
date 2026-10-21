@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+        <title>Sin conexión · dHermes</title>
+        <meta name="theme-color" content="#ffffff">
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+        <style>
+            :root {
+                color-scheme: light;
+                --brand: #ff671f;
+                --brand-soft: #fff3ea;
+                --ink: #0a0a0a;
+                --muted: #6b6b6b;
+                --line: #e7e5e4;
+                --canvas: #f7f7f5;
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            body {
+                min-height: 100dvh;
+                margin: 0;
+                display: grid;
+                place-items: center;
+                padding: 1.5rem;
+                background:
+                    radial-gradient(circle at 15% 0%, rgba(255, 103, 31, 0.14), transparent 36%),
+                    var(--canvas);
+                color: var(--ink);
+                font-family: 'Instrument Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                -webkit-font-smoothing: antialiased;
+            }
+
+            main {
+                width: 100%;
+                max-width: 26rem;
+                border: 1px solid var(--line);
+                border-radius: 1.5rem;
+                background: #fff;
+                padding: 2rem;
+                box-shadow: 0 20px 45px rgba(10, 10, 10, 0.06);
+            }
+
+            .brand {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.75rem;
+                font-size: 1rem;
+                font-weight: 700;
+                letter-spacing: -0.02em;
+            }
+
+            .mark {
+                display: grid;
+                place-items: center;
+                width: 2.5rem;
+                height: 2.5rem;
+                border-radius: 0.75rem;
+                background: var(--ink);
+                color: var(--brand);
+                font-size: 0.8rem;
+                font-weight: 800;
+            }
+
+            .status {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                margin-top: 2rem;
+                border-radius: 999px;
+                background: var(--brand-soft);
+                color: #a3380d;
+                padding: 0.4rem 0.75rem;
+                font-size: 0.75rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+            }
+
+            .status::before {
+                content: '';
+                width: 0.5rem;
+                height: 0.5rem;
+                border-radius: 999px;
+                background: var(--brand);
+            }
+
+            h1 {
+                margin: 1rem 0 0;
+                font-size: clamp(1.65rem, 7vw, 2rem);
+                line-height: 1.1;
+                letter-spacing: -0.04em;
+            }
+
+            p {
+                margin: 0.85rem 0 0;
+                color: var(--muted);
+                font-size: 0.95rem;
+                line-height: 1.6;
+            }
+
+            .actions {
+                display: grid;
+                gap: 0.75rem;
+                margin-top: 1.75rem;
+            }
+
+            button {
+                min-height: 2.75rem;
+                border: 0;
+                border-radius: 0.75rem;
+                background: var(--brand);
+                color: var(--ink);
+                padding: 0.75rem 1rem;
+                font: inherit;
+                font-size: 0.9rem;
+                font-weight: 700;
+                cursor: pointer;
+            }
+
+            button:hover {
+                background: #ff7d3f;
+            }
+
+            a {
+                display: grid;
+                min-height: 2.75rem;
+                place-items: center;
+                border: 1px solid var(--line);
+                border-radius: 0.75rem;
+                color: var(--ink);
+                font-size: 0.9rem;
+                font-weight: 600;
+                text-decoration: none;
+            }
+
+            a:hover {
+                background: var(--canvas);
+            }
+
+            .hint {
+                margin-top: 1.25rem;
+                font-size: 0.8rem;
+                color: var(--muted);
+            }
+
+            :focus-visible {
+                outline: 2px solid var(--brand);
+                outline-offset: 2px;
+            }
+        </style>
+    </head>
+    <body>
+        <main>
+            <div class="brand">
+                <span class="mark" aria-hidden="true">dH</span>
+                <span>dHermes</span>
+            </div>
+
+            <span class="status">Sin conexión</span>
+            <h1>No pudimos cargar esta pantalla.</h1>
+            <p>Revisa tu conexión a internet. Por seguridad, dHermes no guarda información de cartera en el dispositivo.</p>
+
+            <div class="actions">
+                <button type="button" onclick="window.location.reload()">Reintentar</button>
+                <a href="/">Volver al inicio</a>
+            </div>
+
+            <p class="hint" id="connection-hint">Cuando recuperes la conexión, podrás continuar donde estabas.</p>
+        </main>
+
+        <script>
+            window.addEventListener('online', function () {
+                document.getElementById('connection-hint').textContent = 'Conexión restablecida. Ya puedes reintentar.';
+            });
+        </script>
+    </body>
+</html>

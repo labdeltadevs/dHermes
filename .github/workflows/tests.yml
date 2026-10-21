@@ -13,6 +13,26 @@ jobs:
   ci:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: dhermes_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DB_DATABASE: dhermes_test
+      DB_PASSWORD: postgres
+      DB_SEARCH_PATH: dhermes,public
+
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -36,3 +56,6 @@ jobs:
 
       - name: Run CI Checks
         run: composer ci:check
+
+      - name: Run PostgreSQL Tests
+        run: composer test:pg

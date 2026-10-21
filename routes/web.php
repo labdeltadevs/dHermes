@@ -1,5 +1,76 @@
 <?php
 
+use App\Http\Controllers\TenantSwitchController;
+use App\Http\Controllers\VerificationController;
+use App\Http\Controllers\VerificationPrintController;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'welcome')->name('home');
+Route::get('/', fn () => auth()->check()
+    ? redirect()->route('dashboard')
+    : view('welcome'))->name('home');
+
+Route::post('/tenant', TenantSwitchController::class)
+    ->middleware('auth')
+    ->name('tenant.switch');
+
+Route::livewire('/cartera', 'pages::portfolio')
+    ->middleware('auth')
+    ->name('portfolio');
+
+Route::livewire('/cobros', 'pages::receipts')
+    ->middleware('auth')
+    ->name('receipts');
+
+Route::livewire('/cobranzas', 'pages::collections')
+    ->middleware('auth')
+    ->name('collections.index');
+
+Route::livewire('/cobranzas/registrar', 'pages::collection-create')
+    ->middleware('auth')
+    ->name('collections.create');
+
+Route::livewire('/arqueos', 'pages::cash-sessions')
+    ->middleware('auth')
+    ->name('cash-sessions.index');
+
+Route::livewire('/arqueos/{cashSession}', 'pages::cash-session')
+    ->middleware('auth')
+    ->name('cash-sessions.show');
+
+Route::livewire('/cartera/vendedores', 'pages::portfolio-by-rep')
+    ->middleware('auth')
+    ->name('portfolio.by-rep');
+
+Route::livewire('/admin/asignaciones', 'pages::admin.assignments')
+    ->middleware(['auth', 'can:manage-users'])
+    ->name('admin.assignments');
+
+Route::livewire('/admin/auditoria', 'pages::admin.audit')
+    ->middleware(['auth', 'can:viewAny,App\Models\AuditEvent'])
+    ->name('admin.audit');
+
+Route::livewire('/admin/comprobantes', 'pages::admin.verification-codes')
+    ->middleware(['auth', 'can:viewAny,App\Models\VerificationCode'])
+    ->name('admin.verification-codes');
+
+Route::livewire('/dashboard', 'pages::dashboard')
+    ->middleware('auth')
+    ->name('dashboard');
+
+Route::livewire('/user/profile', 'pages::profile')
+    ->middleware('auth')
+    ->name('profile');
+
+Route::livewire('/admin/usuarios', 'pages::admin.users')
+    ->middleware(['auth', 'can:manage-users'])
+    ->name('admin.users');
+
+Route::get('/verificar/{code}', VerificationController::class)
+    ->where('code', '[A-Za-z0-9]+')
+    ->middleware('throttle:30,1')
+    ->name('verification.show');
+
+Route::get('/verificar/{code}/comprobante', VerificationPrintController::class)
+    ->where('code', '[A-Za-z0-9]+')
+    ->middleware(['auth', 'throttle:30,1'])
+    ->name('verification.print');
