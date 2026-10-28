@@ -29,11 +29,6 @@ enum TenantRole: string
         return in_array($this, [self::Admin, self::Supervisor], true);
     }
 
-    public function canMatch(): bool
-    {
-        return $this->canApprove();
-    }
-
     public function sells(): bool
     {
         return in_array($this, [self::Seller, self::Collector], true);

@@ -8,8 +8,6 @@ use App\Models\AuditEvent;
 use App\Models\CollectionEvent;
 use App\Models\Customer;
 use App\Models\Invoice;
-use App\Models\Receipt;
-use App\Models\ReceiptApplication;
 use App\Models\SalesRep;
 use App\Models\VerificationCode;
 use Livewire\Livewire;
@@ -69,7 +67,8 @@ function collectionPageScenario(): array
         'amount' => 500,
         'currency' => 'USD',
         'collected_on' => now()->subDays(3)->toDateString(),
-        'status' => CollectionStatus::Discrepancy,
+        'status' => CollectionStatus::Rejected,
+        'rejection_reason' => 'Datos inconsistentes',
     ]);
 
     return compact(
@@ -121,7 +120,7 @@ it('filters collection events by search, status, seller, currency and date', fun
         ->assertSee($scenario['invoiceTwo']->number)
         ->assertDontSee($scenario['invoiceOne']->number)
         ->set('search', '')
-        ->set('status', CollectionStatus::Discrepancy->value)
+        ->set('status', CollectionStatus::Rejected->value)
         ->assertSee($scenario['invoiceTwo']->number)
         ->assertDontSee($scenario['invoiceOne']->number)
         ->set('status', '')
@@ -183,7 +182,9 @@ it('registers a collection from the create page', function () {
         ->set('kind', CollectionKind::Partial->value)
         ->set('paymentMethod', PaymentMethod::Transfer->value)
         ->set('collectedOn', now()->toDateString())
+        ->set('voucherCode', 'V-123')
         ->set('notes', 'Abono')
+        ->set('confirmed', true)
         ->call('save')
         ->assertHasNoErrors()
         ->assertRedirect(route('collections.index'));
@@ -218,7 +219,8 @@ it('validates currency, kind and date when creating a collection', function () {
 
     $this->actingAs($seller);
 
-    $component = Livewire::test('pages::collection-create', ['invoice' => $invoice->id]);
+    $component = Livewire::test('pages::collection-create', ['invoice' => $invoice->id])
+        ->set('confirmed', true);
 
     $component->set('currency', 'USD')
         ->set('kind', CollectionKind::Full->value)
@@ -245,59 +247,174 @@ it('validates currency, kind and date when creating a collection', function () {
     expect(CollectionEvent::query()->count())->toBe(0);
 });
 
-it('matches a collection with a valid receipt from the index page', function () {
+it('opens the approval panel for a pending collection', function () {
     $scenario = collectionPageScenario();
-    $receipt = Receipt::factory()->create([
-        'tenant_id' => $scenario['tenant']->id,
-        'customer_id' => $scenario['customerOne']->id,
-        'currency' => 'BOB',
-    ]);
-    ReceiptApplication::factory()->create([
-        'tenant_id' => $scenario['tenant']->id,
-        'receipt_id' => $receipt->id,
-        'invoice_id' => $scenario['invoiceOne']->id,
-        'applied_amount' => 250,
-    ]);
 
     $this->actingAs($scenario['supervisor']);
 
     Livewire::test('pages::collections')
-        ->call('openMatchPanel', $scenario['eventOne']->id)
-        ->assertSee('Conciliar cobranza')
-        ->set('receiptId', $receipt->id)
-        ->call('matchReceipt')
-        ->assertHasNoErrors();
-
-    expect($scenario['eventOne']->refresh()->status)->toBe(CollectionStatus::Matched)
-        ->and($scenario['eventOne']->matched_receipt_id)->toBe($receipt->id)
-        ->and(AuditEvent::query()->where('action', 'collection.matched')->count())->toBe(1);
+        ->assertDontSee('Revisar cobranza')
+        ->call('openActionPanel', $scenario['eventOne']->id)
+        ->assertSet('pendingActionEventId', $scenario['eventOne']->id)
+        ->assertSeeHtml('role="dialog"')
+        ->assertSeeHtml('aria-modal="true"')
+        ->assertSee('Revisar cobranza')
+        ->assertSee($scenario['invoiceOne']->number)
+        ->assertSee('Cliente Uno')
+        ->assertSee('DocNum ERP')
+        ->assertSee('Aceptar cobro')
+        ->assertSee('Rechazar cobro')
+        ->call('closeActionPanel')
+        ->assertSet('pendingActionEventId', '')
+        ->assertDontSee('Revisar cobranza');
 });
 
-it('requires a reason and updates the status when marking a discrepancy', function () {
+it('opens the cancellation modal for a seller with a collection from today', function () {
     $scenario = collectionPageScenario();
+    $scenario['eventOne']->update(['collected_on' => now()->toDateString()]);
 
-    $this->actingAs($scenario['supervisor']);
+    $this->actingAs($scenario['sellerOne']);
 
     Livewire::test('pages::collections')
-        ->call('openMatchPanel', $scenario['eventOne']->id)
-        ->call('markDiscrepancy')
-        ->assertHasErrors('discrepancyReason');
+        ->assertDontSee('Anular cobranza')
+        ->call('openCancelPanel', $scenario['eventOne']->id)
+        ->assertSet('cancelEventId', $scenario['eventOne']->id)
+        ->assertSeeHtml('role="dialog"')
+        ->assertSeeHtml('aria-modal="true"')
+        ->assertSee('Anular cobranza')
+        ->assertSee($scenario['invoiceOne']->number)
+        ->assertSee('Cliente Uno')
+        ->assertSee('Solo puedes anular cobros registrados el día de hoy.')
+        ->call('closeCancelPanel')
+        ->assertSet('cancelEventId', '')
+        ->assertDontSee('Anular cobranza');
+});
+
+it('requires a reason and cancels a same-day collection', function () {
+    $scenario = collectionPageScenario();
+    $scenario['eventOne']->update(['collected_on' => now()->toDateString()]);
+
+    $this->actingAs($scenario['sellerOne']);
+
+    Livewire::test('pages::collections')
+        ->call('openCancelPanel', $scenario['eventOne']->id)
+        ->call('cancelEvent')
+        ->assertHasErrors('cancelReason');
 
     expect($scenario['eventOne']->refresh()->status)->toBe(CollectionStatus::Pending);
 
     Livewire::test('pages::collections')
-        ->call('openMatchPanel', $scenario['eventOne']->id)
-        ->set('discrepancyReason', 'Comprobante no localizado')
-        ->call('markDiscrepancy')
-        ->assertHasNoErrors();
+        ->call('openCancelPanel', $scenario['eventOne']->id)
+        ->set('cancelReason', 'Monto informado por error')
+        ->call('cancelEvent')
+        ->assertHasNoErrors()
+        ->assertSet('feedback', 'Cobranza anulada.');
 
-    expect($scenario['eventOne']->refresh()->status)->toBe(CollectionStatus::Discrepancy)
-        ->and(AuditEvent::query()->where('action', 'collection.discrepancy')->count())->toBe(1);
+    expect($scenario['eventOne']->refresh()->status)->toBe(CollectionStatus::Cancelled);
 });
 
-it('issues and redirects to the receipt for a matched collection', function () {
+it('hides the cancellation action from sellers for previous-day collections', function () {
     $scenario = collectionPageScenario();
-    $scenario['eventOne']->update(['status' => CollectionStatus::Matched]);
+
+    $this->actingAs($scenario['sellerOne']);
+
+    Livewire::test('pages::collections')
+        ->assertDontSee('Anular');
+});
+
+it('forbids sellers from opening the cancellation of a previous-day collection', function () {
+    $scenario = collectionPageScenario();
+
+    $this->actingAs($scenario['sellerOne']);
+
+    Livewire::test('pages::collections')
+        ->call('openCancelPanel', $scenario['eventOne']->id)
+        ->assertSet('cancelEventId', '')
+        ->assertDontSee('Anular cobranza');
+});
+
+it('allows a supervisor to cancel a previous-day collection', function () {
+    $scenario = collectionPageScenario();
+
+    $this->actingAs($scenario['supervisor']);
+
+    Livewire::test('pages::collections')
+        ->call('openCancelPanel', $scenario['eventOne']->id)
+        ->assertSee('Anular cobranza')
+        ->set('cancelReason', 'Revisión administrativa')
+        ->call('cancelEvent')
+        ->assertHasNoErrors();
+
+    expect($scenario['eventOne']->refresh()->status)->toBe(CollectionStatus::Cancelled);
+});
+
+it('accepts a collection with an ERP DocNum and funds confirmation', function () {
+    $scenario = collectionPageScenario();
+
+    $this->actingAs($scenario['supervisor']);
+
+    Livewire::test('pages::collections')
+        ->call('openActionPanel', $scenario['eventOne']->id)
+        ->set('erpDocnum', '100341331')
+        ->set('fundsReceived', true)
+        ->call('acceptEvent')
+        ->assertHasNoErrors()
+        ->assertSet('feedback', 'Cobranza aceptada.');
+
+    expect($scenario['eventOne']->refresh()->status)->toBe(CollectionStatus::Accepted)
+        ->and($scenario['eventOne']->erp_docnum)->toBe('100341331')
+        ->and($scenario['eventOne']->reviewed_by)->toBe($scenario['supervisor']->id)
+        ->and(AuditEvent::query()->where('action', 'collection.accepted')->count())->toBe(1);
+});
+
+it('validates the ERP DocNum and funds confirmation before accepting', function () {
+    $scenario = collectionPageScenario();
+
+    $this->actingAs($scenario['supervisor']);
+
+    Livewire::test('pages::collections')
+        ->call('openActionPanel', $scenario['eventOne']->id)
+        ->call('acceptEvent')
+        ->assertHasErrors(['erpDocnum', 'fundsReceived'])
+        ->set('erpDocnum', 'RCT2-123')
+        ->set('fundsReceived', true)
+        ->call('acceptEvent')
+        ->assertHasErrors('erpDocnum');
+
+    expect($scenario['eventOne']->refresh()->status)->toBe(CollectionStatus::Pending);
+});
+
+it('requires a reason and updates the status when rejecting', function () {
+    $scenario = collectionPageScenario();
+
+    $this->actingAs($scenario['supervisor']);
+
+    Livewire::test('pages::collections')
+        ->call('openActionPanel', $scenario['eventOne']->id)
+        ->call('rejectEvent')
+        ->assertHasErrors('rejectionReason');
+
+    expect($scenario['eventOne']->refresh()->status)->toBe(CollectionStatus::Pending);
+
+    Livewire::test('pages::collections')
+        ->call('openActionPanel', $scenario['eventOne']->id)
+        ->set('rejectionReason', 'Comprobante no localizado')
+        ->call('rejectEvent')
+        ->assertHasNoErrors()
+        ->assertSet('feedback', 'Cobranza rechazada.');
+
+    expect($scenario['eventOne']->refresh()->status)->toBe(CollectionStatus::Rejected)
+        ->and($scenario['eventOne']->rejection_reason)->toBe('Comprobante no localizado')
+        ->and(AuditEvent::query()->where('action', 'collection.rejected')->count())->toBe(1);
+});
+
+it('issues and redirects to the receipt for an accepted collection', function () {
+    $scenario = collectionPageScenario();
+    $scenario['eventOne']->update([
+        'status' => CollectionStatus::Accepted,
+        'erp_docnum' => '100341331',
+        'reviewed_at' => now(),
+    ]);
 
     $this->actingAs($scenario['sellerOne']);
 
@@ -315,7 +432,7 @@ it('issues and redirects to the receipt for a matched collection', function () {
         ->assertRedirect(route('verification.print', $code->code));
 });
 
-it('does not issue a receipt for an unmatched collection', function () {
+it('does not issue a receipt for collections that are not accepted', function () {
     $scenario = collectionPageScenario();
 
     $this->actingAs($scenario['sellerOne']);
@@ -324,5 +441,66 @@ it('does not issue a receipt for an unmatched collection', function () {
         ->call('issueComprobante', $scenario['eventOne']->id)
         ->assertForbidden();
 
+    $this->actingAs($scenario['supervisor']);
+
+    Livewire::test('pages::collections')
+        ->call('issueComprobante', $scenario['eventTwo']->id)
+        ->assertForbidden();
+
     expect(VerificationCode::query()->count())->toBe(0);
+});
+
+it('opens the create collection modal for sellers', function () {
+    $scenario = collectionPageScenario();
+
+    $this->actingAs($scenario['sellerOne']);
+
+    Livewire::test('pages::collections')
+        ->assertSee('Nuevo cobro')
+        ->call('openCreateModal')
+        ->assertSet('showCreateModal', true)
+        ->assertSee('Registrar cobro')
+        ->assertSee('Selecciona una factura');
+});
+
+it('does not show the create button to roles that cannot sell', function () {
+    $scenario = collectionPageScenario();
+
+    $this->actingAs($scenario['supervisor']);
+
+    Livewire::test('pages::collections')
+        ->assertDontSee('Nuevo cobro');
+});
+
+it('closes the modal and shows feedback after a collection is created', function () {
+    $scenario = collectionPageScenario();
+
+    $this->actingAs($scenario['sellerOne']);
+
+    Livewire::test('pages::collections')
+        ->call('openCreateModal')
+        ->call('onCollectionCreated')
+        ->assertSet('showCreateModal', false)
+        ->assertSet('feedback', 'Cobro registrado correctamente.')
+        ->assertSee('Cobro registrado correctamente.');
+});
+
+it('dispatches collection-created when saving from the embedded form', function () {
+    $scenario = collectionPageScenario();
+
+    $this->actingAs($scenario['sellerOne']);
+
+    Livewire::test('pages::collection-create', [
+        'invoice' => $scenario['invoiceOne']->id,
+        'embedded' => true,
+    ])
+        ->set('amount', '200')
+        ->set('kind', CollectionKind::Partial->value)
+        ->set('paymentMethod', PaymentMethod::Cash->value)
+        ->set('collectedOn', now()->toDateString())
+        ->set('confirmed', true)
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertDispatched('collection-created')
+        ->assertNoRedirect();
 });

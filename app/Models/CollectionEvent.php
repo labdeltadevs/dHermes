@@ -28,9 +28,17 @@ use Illuminate\Support\Carbon;
  * @property Carbon $collected_on
  * @property CollectionKind $kind
  * @property CollectionStatus $status
- * @property string|null $matched_receipt_id
- * @property Carbon|null $matched_at
+ * @property string|null $erp_docnum
+ * @property string|null $reviewed_by
+ * @property Carbon|null $reviewed_at
+ * @property string|null $rejection_reason
  * @property string|null $notes
+ * @property string|null $voucher_code
+ * @property string|null $proof_disk
+ * @property string|null $proof_path
+ * @property string|null $proof_original_name
+ * @property string|null $proof_mime_type
+ * @property int|null $proof_size
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -45,9 +53,17 @@ use Illuminate\Support\Carbon;
     'collected_on',
     'kind',
     'status',
-    'matched_receipt_id',
-    'matched_at',
+    'erp_docnum',
+    'reviewed_by',
+    'reviewed_at',
+    'rejection_reason',
     'notes',
+    'voucher_code',
+    'proof_disk',
+    'proof_path',
+    'proof_original_name',
+    'proof_mime_type',
+    'proof_size',
 ])]
 class CollectionEvent extends Model implements Verifiable
 {
@@ -67,7 +83,8 @@ class CollectionEvent extends Model implements Verifiable
             'collected_on' => 'date',
             'kind' => CollectionKind::class,
             'status' => CollectionStatus::class,
-            'matched_at' => 'datetime',
+            'reviewed_at' => 'datetime',
+            'proof_size' => 'integer',
         ];
     }
 
@@ -88,11 +105,11 @@ class CollectionEvent extends Model implements Verifiable
     }
 
     /**
-     * @return BelongsTo<Receipt, $this>
+     * @return BelongsTo<User, $this>
      */
-    public function matchedReceipt(): BelongsTo
+    public function reviewedBy(): BelongsTo
     {
-        return $this->belongsTo(Receipt::class, 'matched_receipt_id');
+        return $this->belongsTo(User::class, 'reviewed_by');
     }
 
     /**

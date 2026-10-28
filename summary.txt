@@ -1,0 +1,34 @@
+﻿
+> === SUMMARY (LAB_DELTA) ===
+  {
+      "invoice_agg": [
+          {
+              "status": "closed",
+              "cancelled": false,
+              "n": 31363,
+              "bal": "0.000000"
+          },
+          {
+              "status": "open",
+              "cancelled": false,
+              "n": 671,
+              "bal": "5401455.980000"
+          }
+      ],
+      "open_with_apps": 43,
+      "open_total": 671,
+      "apps_invtype": [
+          {
+              "invtype": "13",
+              "n": 33160
+          }
+      ],
+      "currencies": [
+          {
+              "currency": "BOB",
+              "n": 32034
+          }
+      ],
+      "date_range": [
+
+

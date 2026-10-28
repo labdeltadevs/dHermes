@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\CollectionKind;
+use App\Enums\CollectionStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\TenantRole;
 use App\Http\Controllers\VerificationPrintController;
@@ -53,10 +54,30 @@ function verificationScenario(): array
         'payment_method' => PaymentMethod::Cash,
         'collected_on' => now()->toDateString(),
         'kind' => CollectionKind::Partial,
+        'status' => CollectionStatus::Accepted,
+        'erp_docnum' => '100341331',
+        'reviewed_at' => now(),
     ]);
 
     return compact('tenant', 'rep', 'seller', 'supervisor', 'customer', 'invoice', 'event');
 }
+
+it('does not issue a verification code for a collection that is not accepted', function () {
+    $scenario = verificationScenario();
+    $scenario['event']->update(['status' => CollectionStatus::Pending]);
+    $this->actingAs($scenario['seller']);
+
+    expect(fn () => app(IssueVerificationCode::class)->handle($scenario['seller'], $scenario['event']))
+        ->toThrow(AuthorizationException::class);
+
+    $scenario['event']->update(['status' => CollectionStatus::Rejected]);
+    $this->actingAs($scenario['supervisor']);
+
+    expect(fn () => app(IssueVerificationCode::class)->handle($scenario['supervisor'], $scenario['event']->refresh()))
+        ->toThrow(AuthorizationException::class);
+
+    expect(VerificationCode::query()->count())->toBe(0);
+});
 
 it('issues a verification code signed with the record payload', function () {
     $scenario = verificationScenario();
@@ -244,7 +265,7 @@ it('prints a verification receipt for the owner and approvers', function () {
         ->assertOk()
         ->assertSee('Imprimir')
         ->assertSee($code->code)
-        ->assertSee('Registro de cobranza')
+        ->assertSee('Comprobante de registro de cobranza')
         ->assertSee('BOB')
         ->assertSee(route('verification.show', $code->code))
         ->assertSee('<svg', false);

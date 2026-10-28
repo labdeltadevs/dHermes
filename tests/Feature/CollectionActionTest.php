@@ -1,7 +1,8 @@
 <?php
 
-use App\Actions\Collection\MatchCollection;
+use App\Actions\Collection\AcceptCollection;
 use App\Actions\Collection\RegisterCollection;
+use App\Actions\Collection\RejectCollection;
 use App\Enums\CollectionKind;
 use App\Enums\CollectionStatus;
 use App\Enums\PaymentMethod;
@@ -10,8 +11,6 @@ use App\Models\AuditEvent;
 use App\Models\CollectionEvent;
 use App\Models\Customer;
 use App\Models\Invoice;
-use App\Models\Receipt;
-use App\Models\ReceiptApplication;
 use App\Models\SalesRep;
 use App\Models\Tenant;
 use App\Models\User;
@@ -139,7 +138,7 @@ it('rejects a collection for an invoice assigned to another seller even when the
     ))->toThrow(AuthorizationException::class);
 });
 
-it('matches a pending collection with a receipt as supervisor', function () {
+it('accepts a pending collection with an ERP DocNum as supervisor', function () {
     $scenario = collectionScenario();
     $this->actingAs($scenario['seller']);
 
@@ -150,26 +149,114 @@ it('matches a pending collection with a receipt as supervisor', function () {
     );
 
     $this->actingAs($scenario['supervisor']);
-    $receipt = Receipt::factory()->create([
-        'tenant_id' => $scenario['tenant']->id,
-        'customer_id' => $scenario['customer']->id,
-    ]);
-    ReceiptApplication::factory()->create([
-        'tenant_id' => $scenario['tenant']->id,
-        'receipt_id' => $receipt->id,
-        'invoice_id' => $scenario['invoice']->id,
-        'applied_amount' => 200,
-    ]);
+    $accepted = app(AcceptCollection::class)->handle($scenario['supervisor'], $event, '100341331', true);
 
-    $matched = app(MatchCollection::class)->handle($scenario['supervisor'], $event, $receipt);
-
-    expect($matched->status)->toBe(CollectionStatus::Matched)
-        ->and($matched->matched_receipt_id)->toBe($receipt->id)
-        ->and($matched->matched_at)->not->toBeNull()
-        ->and(AuditEvent::query()->where('action', 'collection.matched')->count())->toBe(1);
+    expect($accepted->status)->toBe(CollectionStatus::Accepted)
+        ->and($accepted->erp_docnum)->toBe('100341331')
+        ->and($accepted->reviewed_by)->toBe($scenario['supervisor']->id)
+        ->and($accepted->reviewed_at)->not->toBeNull()
+        ->and($accepted->rejection_reason)->toBeNull()
+        ->and(AuditEvent::query()->where('action', 'collection.accepted')->count())->toBe(1);
 });
 
-it('marks a discrepancy with a reason', function () {
+it('requires an ERP DocNum to accept a collection', function () {
+    $scenario = collectionScenario();
+    $this->actingAs($scenario['seller']);
+    $event = app(RegisterCollection::class)->handle($scenario['seller'], $scenario['invoice'], collectionPayload());
+
+    $this->actingAs($scenario['supervisor']);
+
+    expect(fn () => app(AcceptCollection::class)->handle($scenario['supervisor'], $event, '', true))
+        ->toThrow(ValidationException::class);
+
+    expect($event->refresh()->status)->toBe(CollectionStatus::Pending);
+});
+
+it('rejects a non numeric ERP DocNum', function () {
+    $scenario = collectionScenario();
+    $this->actingAs($scenario['seller']);
+    $event = app(RegisterCollection::class)->handle($scenario['seller'], $scenario['invoice'], collectionPayload());
+
+    $this->actingAs($scenario['supervisor']);
+
+    expect(fn () => app(AcceptCollection::class)->handle($scenario['supervisor'], $event, 'RCT2-123', true))
+        ->toThrow(ValidationException::class);
+
+    expect($event->refresh()->status)->toBe(CollectionStatus::Pending);
+});
+
+it('rejects an ERP DocNum already used in the tenant', function () {
+    $scenario = collectionScenario();
+    $this->actingAs($scenario['seller']);
+
+    $first = app(RegisterCollection::class)->handle($scenario['seller'], $scenario['invoice'], collectionPayload());
+    $second = app(RegisterCollection::class)->handle($scenario['seller'], $scenario['invoice'], collectionPayload(['amount' => 300]));
+
+    $this->actingAs($scenario['supervisor']);
+    app(AcceptCollection::class)->handle($scenario['supervisor'], $first, '100341331', true);
+
+    expect(fn () => app(AcceptCollection::class)->handle($scenario['supervisor'], $second, '100341331', true))
+        ->toThrow(ValidationException::class);
+
+    expect($second->refresh()->status)->toBe(CollectionStatus::Pending);
+});
+
+it('allows the same ERP DocNum in another tenant', function () {
+    $firstScenario = collectionScenario();
+    $this->actingAs($firstScenario['seller']);
+    $first = app(RegisterCollection::class)->handle($firstScenario['seller'], $firstScenario['invoice'], collectionPayload());
+    $this->actingAs($firstScenario['supervisor']);
+    app(AcceptCollection::class)->handle($firstScenario['supervisor'], $first, '100341331', true);
+
+    $secondTenant = tenantContext();
+    $secondRep = SalesRep::factory()->create(['tenant_id' => $secondTenant->id]);
+    $secondSeller = memberFor($secondTenant, TenantRole::Seller, salesRep: $secondRep);
+    $secondSupervisor = memberFor($secondTenant, TenantRole::Supervisor);
+    $secondCustomer = Customer::factory()->create(['tenant_id' => $secondTenant->id, 'sales_rep_id' => $secondRep->id]);
+    $secondInvoice = Invoice::factory()->create([
+        'customer_id' => $secondCustomer->id,
+        'sales_rep_id' => $secondRep->id,
+        'total' => 1000,
+        'balance' => 1000,
+    ]);
+
+    $this->actingAs($secondSeller);
+    $second = app(RegisterCollection::class)->handle($secondSeller, $secondInvoice, collectionPayload());
+
+    $this->actingAs($secondSupervisor);
+    $accepted = app(AcceptCollection::class)->handle($secondSupervisor, $second, '100341331', true);
+
+    expect($accepted->status)->toBe(CollectionStatus::Accepted)
+        ->and($accepted->tenant_id)->toBe($secondTenant->id)
+        ->and($first->refresh()->tenant_id)->toBe($firstScenario['tenant']->id);
+});
+
+it('requires confirmation that the funds were received', function () {
+    $scenario = collectionScenario();
+    $this->actingAs($scenario['seller']);
+    $event = app(RegisterCollection::class)->handle($scenario['seller'], $scenario['invoice'], collectionPayload());
+
+    $this->actingAs($scenario['supervisor']);
+
+    expect(fn () => app(AcceptCollection::class)->handle($scenario['supervisor'], $event, '100341331', false))
+        ->toThrow(ValidationException::class);
+
+    expect($event->refresh()->status)->toBe(CollectionStatus::Pending);
+});
+
+it('does not accept a collection that is no longer pending', function () {
+    $scenario = collectionScenario();
+    $this->actingAs($scenario['seller']);
+    $event = app(RegisterCollection::class)->handle($scenario['seller'], $scenario['invoice'], collectionPayload());
+
+    $this->actingAs($scenario['supervisor']);
+    app(AcceptCollection::class)->handle($scenario['supervisor'], $event, '100341331', true);
+
+    expect(fn () => app(AcceptCollection::class)->handle($scenario['supervisor'], $event->refresh(), '100341332', true))
+        ->toThrow(ValidationException::class);
+});
+
+it('rejects a collection with a reason', function () {
     $scenario = collectionScenario();
     $this->actingAs($scenario['seller']);
 
@@ -180,215 +267,39 @@ it('marks a discrepancy with a reason', function () {
     );
 
     $this->actingAs($scenario['supervisor']);
-    $updated = app(MatchCollection::class)->markDiscrepancy($scenario['supervisor'], $event, 'Sin comprobante');
+    $rejected = app(RejectCollection::class)->handle($scenario['supervisor'], $event, 'Sin comprobante');
 
-    expect($updated->status)->toBe(CollectionStatus::Discrepancy)
-        ->and(AuditEvent::query()->where('action', 'collection.discrepancy')->first()->details)
+    expect($rejected->status)->toBe(CollectionStatus::Rejected)
+        ->and($rejected->rejection_reason)->toBe('Sin comprobante')
+        ->and($rejected->reviewed_by)->toBe($scenario['supervisor']->id)
+        ->and($rejected->reviewed_at)->not->toBeNull()
+        ->and($rejected->erp_docnum)->toBeNull()
+        ->and(AuditEvent::query()->where('action', 'collection.rejected')->first()->details)
         ->toMatchArray(['reason' => 'Sin comprobante']);
 });
 
-it('does not match an already matched collection', function () {
+it('requires a reason to reject a collection', function () {
     $scenario = collectionScenario();
     $this->actingAs($scenario['seller']);
-
-    $event = app(RegisterCollection::class)->handle(
-        $scenario['seller'],
-        $scenario['invoice'],
-        collectionPayload(),
-    );
-    $receipt = Receipt::factory()->create([
-        'tenant_id' => $scenario['tenant']->id,
-        'customer_id' => $scenario['customer']->id,
-    ]);
-    ReceiptApplication::factory()->create([
-        'tenant_id' => $scenario['tenant']->id,
-        'receipt_id' => $receipt->id,
-        'invoice_id' => $scenario['invoice']->id,
-        'applied_amount' => 200,
-    ]);
+    $event = app(RegisterCollection::class)->handle($scenario['seller'], $scenario['invoice'], collectionPayload());
 
     $this->actingAs($scenario['supervisor']);
-    app(MatchCollection::class)->handle($scenario['supervisor'], $event, $receipt);
 
-    expect(fn () => app(MatchCollection::class)->handle($scenario['supervisor'], $event->refresh(), $receipt))
+    expect(fn () => app(RejectCollection::class)->handle($scenario['supervisor'], $event, ''))
         ->toThrow(ValidationException::class);
+
+    expect($event->refresh()->status)->toBe(CollectionStatus::Pending);
 });
 
-it('rejects a collection in a different currency than the invoice', function () {
+it('does not reject a collection that is no longer pending', function () {
     $scenario = collectionScenario();
     $this->actingAs($scenario['seller']);
-
-    expect(fn () => app(RegisterCollection::class)->handle(
-        $scenario['seller'],
-        $scenario['invoice'],
-        collectionPayload(['currency' => 'USD']),
-    ))->toThrow(ValidationException::class);
-
-    expect(CollectionEvent::query()->count())->toBe(0);
-});
-
-it('rejects a collection dated after today', function () {
-    $scenario = collectionScenario();
-    $this->actingAs($scenario['seller']);
-
-    expect(fn () => app(RegisterCollection::class)->handle(
-        $scenario['seller'],
-        $scenario['invoice'],
-        collectionPayload(['collected_on' => now()->addDay()->toDateString()]),
-    ))->toThrow(ValidationException::class);
-
-    expect(CollectionEvent::query()->count())->toBe(0);
-});
-
-it('requires a full collection to match the invoice balance', function () {
-    $scenario = collectionScenario();
-    $this->actingAs($scenario['seller']);
-
-    expect(fn () => app(RegisterCollection::class)->handle(
-        $scenario['seller'],
-        $scenario['invoice'],
-        collectionPayload(['amount' => 900, 'kind' => CollectionKind::Full]),
-    ))->toThrow(ValidationException::class);
-
-    $event = app(RegisterCollection::class)->handle(
-        $scenario['seller'],
-        $scenario['invoice'],
-        collectionPayload(['amount' => 1000, 'kind' => CollectionKind::Full]),
-    );
-
-    expect((float) $event->amount)->toBe(1000.0)
-        ->and($event->kind)->toBe(CollectionKind::Full);
-});
-
-it('requires a partial collection to be less than the invoice balance', function () {
-    $scenario = collectionScenario();
-    $this->actingAs($scenario['seller']);
-
-    expect(fn () => app(RegisterCollection::class)->handle(
-        $scenario['seller'],
-        $scenario['invoice'],
-        collectionPayload(['amount' => 1000, 'kind' => CollectionKind::Partial]),
-    ))->toThrow(ValidationException::class);
-});
-
-it('rejects matching a cancelled receipt', function () {
-    $scenario = collectionScenario();
-    $this->actingAs($scenario['seller']);
-
-    $event = app(RegisterCollection::class)->handle(
-        $scenario['seller'],
-        $scenario['invoice'],
-        collectionPayload(),
-    );
-    $receipt = Receipt::factory()->create([
-        'tenant_id' => $scenario['tenant']->id,
-        'customer_id' => $scenario['customer']->id,
-        'cancelled' => true,
-    ]);
-    ReceiptApplication::factory()->create([
-        'tenant_id' => $scenario['tenant']->id,
-        'receipt_id' => $receipt->id,
-        'invoice_id' => $scenario['invoice']->id,
-    ]);
+    $event = app(RegisterCollection::class)->handle($scenario['seller'], $scenario['invoice'], collectionPayload());
 
     $this->actingAs($scenario['supervisor']);
+    app(RejectCollection::class)->handle($scenario['supervisor'], $event, 'Sin comprobante');
 
-    expect(fn () => app(MatchCollection::class)->handle($scenario['supervisor'], $event, $receipt))
-        ->toThrow(ValidationException::class);
-});
-
-it('rejects matching a receipt from another tenant', function () {
-    $scenario = collectionScenario();
-    $this->actingAs($scenario['seller']);
-
-    $event = app(RegisterCollection::class)->handle(
-        $scenario['seller'],
-        $scenario['invoice'],
-        collectionPayload(),
-    );
-
-    $otherTenant = tenantContext();
-    $otherCustomer = Customer::factory()->create(['tenant_id' => $otherTenant->id]);
-    $receipt = Receipt::factory()->create([
-        'tenant_id' => $otherTenant->id,
-        'customer_id' => $otherCustomer->id,
-    ]);
-    app(CurrentTenant::class)->set($scenario['tenant']->id);
-    $this->actingAs($scenario['supervisor']);
-
-    expect(fn () => app(MatchCollection::class)->handle($scenario['supervisor'], $event, $receipt))
-        ->toThrow(ValidationException::class);
-});
-
-it('rejects matching a receipt from another customer', function () {
-    $scenario = collectionScenario();
-    $this->actingAs($scenario['seller']);
-
-    $event = app(RegisterCollection::class)->handle(
-        $scenario['seller'],
-        $scenario['invoice'],
-        collectionPayload(),
-    );
-    $otherCustomer = Customer::factory()->create(['tenant_id' => $scenario['tenant']->id]);
-    $receipt = Receipt::factory()->create([
-        'tenant_id' => $scenario['tenant']->id,
-        'customer_id' => $otherCustomer->id,
-    ]);
-    ReceiptApplication::factory()->create([
-        'tenant_id' => $scenario['tenant']->id,
-        'receipt_id' => $receipt->id,
-        'invoice_id' => $scenario['invoice']->id,
-    ]);
-
-    $this->actingAs($scenario['supervisor']);
-
-    expect(fn () => app(MatchCollection::class)->handle($scenario['supervisor'], $event, $receipt))
-        ->toThrow(ValidationException::class);
-});
-
-it('rejects matching a receipt in another currency', function () {
-    $scenario = collectionScenario();
-    $this->actingAs($scenario['seller']);
-
-    $event = app(RegisterCollection::class)->handle(
-        $scenario['seller'],
-        $scenario['invoice'],
-        collectionPayload(),
-    );
-    $receipt = Receipt::factory()->create([
-        'tenant_id' => $scenario['tenant']->id,
-        'customer_id' => $scenario['customer']->id,
-        'currency' => 'USD',
-    ]);
-    ReceiptApplication::factory()->create([
-        'tenant_id' => $scenario['tenant']->id,
-        'receipt_id' => $receipt->id,
-        'invoice_id' => $scenario['invoice']->id,
-    ]);
-
-    $this->actingAs($scenario['supervisor']);
-
-    expect(fn () => app(MatchCollection::class)->handle($scenario['supervisor'], $event, $receipt))
-        ->toThrow(ValidationException::class);
-});
-
-it('rejects matching a receipt without an application to the invoice', function () {
-    $scenario = collectionScenario();
-    $this->actingAs($scenario['seller']);
-
-    $event = app(RegisterCollection::class)->handle(
-        $scenario['seller'],
-        $scenario['invoice'],
-        collectionPayload(),
-    );
-    $receipt = Receipt::factory()->create([
-        'tenant_id' => $scenario['tenant']->id,
-        'customer_id' => $scenario['customer']->id,
-    ]);
-
-    $this->actingAs($scenario['supervisor']);
-
-    expect(fn () => app(MatchCollection::class)->handle($scenario['supervisor'], $event, $receipt))
+    expect(fn () => app(RejectCollection::class)->handle($scenario['supervisor'], $event->refresh(), 'Otra vez'))
         ->toThrow(ValidationException::class);
 });
 

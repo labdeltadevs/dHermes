@@ -74,12 +74,4 @@ class Receipt extends Model
     {
         return $this->hasMany(ReceiptApplication::class);
     }
-
-    /**
-     * @return HasMany<CollectionEvent, $this>
-     */
-    public function collectionEvents(): HasMany
-    {
-        return $this->hasMany(CollectionEvent::class, 'matched_receipt_id');
-    }
 }

@@ -257,85 +257,85 @@ new #[Layout('layouts.app')] #[Title('Mi perfil')] class extends Component
 
 <div class="space-y-5 sm:space-y-6">
     <div>
-        <p class="text-xs font-bold uppercase tracking-[0.14em] text-brand-700">Cuenta</p>
-        <h1 class="mt-1 text-2xl font-semibold tracking-tight text-ink sm:text-3xl">Mi perfil</h1>
-        <p class="mt-1.5 text-sm text-black/60">Administra tus datos, seguridad y sesiones activas.</p>
+        <p class="eyebrow">Cuenta</p>
+        <h1 class="page-title">Mi perfil</h1>
+        <p class="page-subtitle">Administra tus datos, seguridad y sesiones activas.</p>
     </div>
 
-    <section class="rounded-2xl border border-black/10 bg-white p-5 shadow-sm sm:p-6">
+    <section class="card p-4 sm:p-6">
         <div class="max-w-2xl">
             <h2 class="text-base font-semibold text-ink">Información personal</h2>
-            <p class="mt-1 text-sm text-black/60">Actualiza el nombre y correo con los que accedes.</p>
+            <p class="mt-1 text-sm text-muted">Actualiza el nombre y correo con los que accedes.</p>
 
             <form wire:submit="updateProfileInformation" class="mt-5 space-y-5">
                 <div>
-                    <label for="name" class="mb-1.5 block text-sm font-medium text-black/70">Nombre</label>
+                    <label for="name" class="label">Nombre</label>
                     <input id="name" type="text" wire:model="name" required autocomplete="name"
-                        class="block min-h-11 w-full rounded-xl border border-black/15 px-3.5 py-2.5 text-base text-ink sm:text-sm outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15">
+                        class="input">
                     @error('name')
-                        <p class="mt-1.5 text-sm text-rose-600">{{ $message }}</p>
+                        <p class="field-error">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <div>
-                    <label for="email" class="mb-1.5 block text-sm font-medium text-black/70">Correo electrónico</label>
+                    <label for="email" class="label">Correo electrónico</label>
                     <input id="email" type="email" wire:model="email" required autocomplete="email"
-                        class="block min-h-11 w-full rounded-xl border border-black/15 px-3.5 py-2.5 text-base text-ink sm:text-sm outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15">
+                        class="input">
                     @error('email')
-                        <p class="mt-1.5 text-sm text-rose-600">{{ $message }}</p>
+                        <p class="field-error">{{ $message }}</p>
                     @enderror
                 </div>
 
-                <button type="submit" class="min-h-11 w-full rounded-xl bg-ink px-4 py-2.5 text-sm font-semibold text-white transition sm:w-auto hover:bg-black/80">
+                <button type="submit" class="btn btn-dark w-full sm:w-auto">
                     Guardar cambios
                 </button>
             </form>
         </div>
     </section>
 
-    <section class="rounded-2xl border border-black/10 bg-white p-5 shadow-sm sm:p-6">
+    <section class="card p-4 sm:p-6">
         <div class="max-w-2xl">
             <h2 class="text-base font-semibold text-ink">Contraseña</h2>
-            <p class="mt-1 text-sm text-black/60">Usa una contraseña larga y única.</p>
+            <p class="mt-1 text-sm text-muted">Usa una contraseña larga y única.</p>
 
             <form wire:submit="updatePassword" class="mt-5 space-y-5">
                 <div>
-                    <label for="current-password" class="mb-1.5 block text-sm font-medium text-black/70">Contraseña actual</label>
+                    <label for="current-password" class="label">Contraseña actual</label>
                     <input id="current-password" type="password" wire:model="currentPassword" required autocomplete="current-password"
-                        class="block min-h-11 w-full rounded-xl border border-black/15 px-3.5 py-2.5 text-base text-ink sm:text-sm outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15">
+                        class="input">
                     @error('currentPassword')
-                        <p class="mt-1.5 text-sm text-rose-600">{{ $message }}</p>
+                        <p class="field-error">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <div class="grid gap-5 sm:grid-cols-2">
                     <div>
-                        <label for="new-password" class="mb-1.5 block text-sm font-medium text-black/70">Nueva contraseña</label>
+                        <label for="new-password" class="label">Nueva contraseña</label>
                         <input id="new-password" type="password" wire:model="password" required autocomplete="new-password"
-                            class="block min-h-11 w-full rounded-xl border border-black/15 px-3.5 py-2.5 text-base text-ink sm:text-sm outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15">
+                            class="input">
                         @error('password')
-                            <p class="mt-1.5 text-sm text-rose-600">{{ $message }}</p>
+                            <p class="field-error">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div>
-                        <label for="password-confirmation" class="mb-1.5 block text-sm font-medium text-black/70">Confirmar contraseña</label>
+                        <label for="password-confirmation" class="label">Confirmar contraseña</label>
                         <input id="password-confirmation" type="password" wire:model="password_confirmation" required autocomplete="new-password"
-                            class="block min-h-11 w-full rounded-xl border border-black/15 px-3.5 py-2.5 text-base text-ink sm:text-sm outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15">
+                            class="input">
                     </div>
                 </div>
 
-                <button type="submit" class="min-h-11 w-full rounded-xl bg-ink px-4 py-2.5 text-sm font-semibold text-white transition sm:w-auto hover:bg-black/80">
+                <button type="submit" class="btn btn-dark w-full sm:w-auto">
                     Actualizar contraseña
                 </button>
             </form>
         </div>
     </section>
 
-    <section class="rounded-2xl border border-black/10 bg-white p-5 shadow-sm sm:p-6">
+    <section class="card p-4 sm:p-6">
         <div class="max-w-2xl">
             <h2 class="text-base font-semibold text-ink">Verificación en dos pasos</h2>
-            <p class="mt-1 text-sm text-black/60">Protege tu cuenta con una aplicación autenticadora.</p>
+            <p class="mt-1 text-sm text-muted">Protege tu cuenta con una aplicación autenticadora.</p>
 
             @if ($user->hasEnabledTwoFactorAuthentication())
                 <div class="mt-5 rounded-xl border border-brand-200 bg-brand-50 p-4">
@@ -343,14 +343,14 @@ new #[Layout('layouts.app')] #[Title('Mi perfil')] class extends Component
                 </div>
 
                 @if ($showRecoveryCodes)
-                    <div class="mt-4 rounded-xl border border-black/10 bg-canvas p-4">
+                    <div class="mt-4 rounded-xl border border-line bg-canvas p-4">
                         <p class="text-sm font-medium text-ink">Códigos de recuperación</p>
-                        <div class="mt-3 grid gap-2 font-mono text-sm text-black/70 sm:grid-cols-2">
+                        <div class="mt-3 grid gap-2 font-mono text-sm text-muted sm:grid-cols-2">
                             @foreach ($recoveryCodes as $code)
-                                <span wire:key="recovery-{{ $code }}" class="rounded-lg bg-white px-3 py-2">{{ $code }}</span>
+                                <span wire:key="recovery-{{ $code }}" class="rounded-lg bg-surface px-3 py-2">{{ $code }}</span>
                             @endforeach
                         </div>
-                        <p class="mt-3 text-xs text-black/60">Guárdalos en un lugar seguro. Cada código se puede usar una sola vez.</p>
+                        <p class="mt-3 text-xs text-muted">Guárdalos en un lugar seguro. Cada código se puede usar una sola vez.</p>
                     </div>
                 @else
                     <button type="button" wire:click="$set('showRecoveryCodes', true)" class="mt-4 text-sm font-medium text-brand-700 hover:text-brand-800">
@@ -359,62 +359,62 @@ new #[Layout('layouts.app')] #[Title('Mi perfil')] class extends Component
                 @endif
 
                 <div class="mt-5">
-                    <label for="two-factor-disable-password" class="mb-1.5 block text-sm font-medium text-black/70">Contraseña actual</label>
+                    <label for="two-factor-disable-password" class="label">Contraseña actual</label>
                     <input id="two-factor-disable-password" type="password" wire:model="currentPassword" autocomplete="current-password"
-                        class="block min-h-11 w-full rounded-xl border border-black/15 px-3.5 py-2.5 text-base text-ink sm:text-sm outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15">
+                        class="input">
                     @error('currentPassword')
-                        <p class="mt-1.5 text-sm text-rose-600">{{ $message }}</p>
+                        <p class="field-error">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-3">
                     <button type="button" wire:click="regenerateRecoveryCodes" wire:loading.attr="disabled"
-                        class="min-h-11 rounded-xl border border-black/15 px-4 py-2.5 text-sm font-medium text-black/70 transition hover:bg-black/[0.03] disabled:opacity-50">
+                        class="btn btn-outline">
                         Regenerar códigos
                     </button>
                     <button type="button" wire:click="disableTwoFactorAuthentication" wire:loading.attr="disabled"
-                        class="min-h-11 w-full rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white transition sm:w-auto hover:bg-rose-500 disabled:opacity-50">
+                        class="btn btn-danger w-full sm:w-auto">
                         Desactivar 2FA
                     </button>
                 </div>
             @elseif ($user->two_factor_secret !== null)
                 <div class="mt-5 space-y-4">
-                    <p class="text-sm text-black/60">Escanea el código QR con tu aplicación autenticadora y confirma el código generado.</p>
+                    <p class="text-sm text-muted">Escanea el código QR con tu aplicación autenticadora y confirma el código generado.</p>
 
-                    <div class="flex justify-center rounded-xl border border-black/10 bg-white p-4">
+                    <div class="flex justify-center rounded-xl border border-line bg-surface p-4">
                         <div class="size-44 [&>svg]:size-full sm:size-48">{!! $qrCode !!}</div>
                     </div>
 
                     <div>
-                        <p class="text-xs font-medium uppercase tracking-wide text-black/60">Clave secreta</p>
+                        <p class="text-xs font-medium uppercase tracking-wide text-muted">Clave secreta</p>
                         <p class="mt-1 break-all rounded-lg bg-black/[0.04] px-3 py-2 font-mono text-sm text-ink">{{ $secretKey }}</p>
                     </div>
 
                     <div>
-                        <label for="two-factor-code" class="mb-1.5 block text-sm font-medium text-black/70">Código de confirmación</label>
+                        <label for="two-factor-code" class="label">Código de confirmación</label>
                         <input id="two-factor-code" type="text" wire:model="twoFactorCode" inputmode="numeric" autocomplete="one-time-code"
-                            class="block min-h-11 w-full rounded-xl border border-black/15 px-3.5 py-2.5 text-center text-lg tracking-[0.3em] text-ink outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15">
+                            class="input">
                         @error('twoFactorCode')
-                            <p class="mt-1.5 text-sm text-rose-600">{{ $message }}</p>
+                            <p class="field-error">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <button type="button" wire:click="confirmTwoFactorAuthentication" wire:loading.attr="disabled"
-                        class="min-h-11 w-full rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-bold text-ink transition sm:w-auto hover:bg-brand-400 disabled:opacity-50">
+                        class="btn btn-primary w-full sm:w-auto">
                         Confirmar y activar
                     </button>
                 </div>
             @else
                 <div class="mt-5">
-                    <label for="two-factor-password" class="mb-1.5 block text-sm font-medium text-black/70">Contraseña actual</label>
+                    <label for="two-factor-password" class="label">Contraseña actual</label>
                     <input id="two-factor-password" type="password" wire:model="currentPassword" autocomplete="current-password"
-                        class="block min-h-11 w-full rounded-xl border border-black/15 px-3.5 py-2.5 text-base text-ink sm:text-sm outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15">
+                        class="input">
                     @error('currentPassword')
-                        <p class="mt-1.5 text-sm text-rose-600">{{ $message }}</p>
+                        <p class="field-error">{{ $message }}</p>
                     @enderror
 
                     <button type="button" wire:click="enableTwoFactorAuthentication" wire:loading.attr="disabled"
-                        class="mt-4 min-h-11 w-full rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-bold text-ink transition sm:w-auto hover:bg-brand-400 disabled:opacity-50">
+                        class="mt-4 btn btn-primary w-full sm:w-auto">
                         Activar verificación en dos pasos
                     </button>
                 </div>
@@ -422,53 +422,53 @@ new #[Layout('layouts.app')] #[Title('Mi perfil')] class extends Component
         </div>
     </section>
 
-    <section class="rounded-2xl border border-black/10 bg-white p-5 shadow-sm sm:p-6">
+    <section class="card p-4 sm:p-6">
         <div class="max-w-2xl">
             <h2 class="text-base font-semibold text-ink">Sesiones del navegador</h2>
-            <p class="mt-1 text-sm text-black/60">Si reconoces todas las sesiones, puedes cerrar las demás.</p>
+            <p class="mt-1 text-sm text-muted">Si reconoces todas las sesiones, puedes cerrar las demás.</p>
 
             <div class="mt-5 space-y-3">
                 @forelse ($sessions as $session)
-                    <div wire:key="session-{{ $loop->index }}" class="flex flex-col gap-2 rounded-xl border border-black/10 p-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div wire:key="session-{{ $loop->index }}" class="flex flex-col gap-2 rounded-xl border border-line p-4 sm:flex-row sm:items-start sm:justify-between">
                         <div>
                             <p class="text-sm font-medium text-ink">
                                 {{ $session->browser }}
                                 @if ($session->is_current)
-                                    <span class="ml-2 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">Esta sesión</span>
+                                    <span class="badge ml-2 bg-brand-50 text-brand-700">Esta sesión</span>
                                 @endif
                             </p>
-                            <p class="mt-1 text-xs text-black/60">{{ $session->ip_address ?? 'IP desconocida' }} · {{ $session->last_active }}</p>
+                            <p class="mt-1 text-xs text-muted">{{ $session->ip_address ?? 'IP desconocida' }} · {{ $session->last_active }}</p>
                         </div>
                     </div>
                 @empty
-                    <p class="text-sm text-black/60">No hay sesiones registradas.</p>
+                    <p class="text-sm text-muted">No hay sesiones registradas.</p>
                 @endforelse
             </div>
 
             @if ($sessions->count() > 1)
                 @if ($confirmingLogout)
-                    <div class="mt-5 rounded-xl border border-black/10 bg-canvas p-4">
-                        <label for="logout-password" class="mb-1.5 block text-sm font-medium text-black/70">Confirma tu contraseña</label>
+                    <div class="mt-5 rounded-xl border border-line bg-canvas p-4">
+                        <label for="logout-password" class="label">Confirma tu contraseña</label>
                         <input id="logout-password" type="password" wire:model="logoutPassword" autocomplete="current-password"
-                            class="block min-h-11 w-full rounded-xl border border-black/15 px-3.5 py-2.5 text-base text-ink sm:text-sm outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15">
+                            class="input">
                         @error('logoutPassword')
-                            <p class="mt-1.5 text-sm text-rose-600">{{ $message }}</p>
+                            <p class="field-error">{{ $message }}</p>
                         @enderror
 
                         <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:gap-3">
                             <button type="button" wire:click="logoutOtherBrowserSessions" wire:loading.attr="disabled"
-                                class="min-h-11 w-full rounded-xl bg-ink px-4 py-2.5 text-sm font-semibold text-white transition sm:w-auto hover:bg-black/80 disabled:opacity-50">
+                                class="btn btn-dark w-full sm:w-auto">
                                 Cerrar otras sesiones
                             </button>
                             <button type="button" wire:click="$set('confirmingLogout', false)"
-                                class="min-h-11 rounded-xl border border-black/15 px-4 py-2.5 text-sm font-medium text-black/70 transition hover:bg-white">
+                                class="btn btn-outline">
                                 Cancelar
                             </button>
                         </div>
                     </div>
                 @else
                     <button type="button" wire:click="$set('confirmingLogout', true)"
-                        class="mt-5 min-h-11 rounded-xl border border-black/15 px-4 py-2.5 text-sm font-medium text-black/70 transition hover:bg-black/[0.03]">
+                        class="mt-5 btn btn-outline">
                         Cerrar otras sesiones
                     </button>
                 @endif

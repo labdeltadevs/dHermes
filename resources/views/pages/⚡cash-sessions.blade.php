@@ -178,22 +178,22 @@ $statusClasses = fn (CashSessionStatus $value): string => match ($value) {
 <div class="space-y-5 sm:space-y-6">
     <section class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-            <p class="text-xs font-bold uppercase tracking-[0.14em] text-brand-700">Caja y cobranzas</p>
-            <h1 class="mt-1 text-2xl font-semibold tracking-tight text-ink sm:text-3xl">Arqueos</h1>
-            <p class="mt-1.5 text-sm text-black/60">Sesiones de caja y conciliación de cobros.</p>
+            <p class="eyebrow">Caja y cobranzas</p>
+            <h1 class="page-title">Arqueos</h1>
+            <p class="page-subtitle">Sesiones de caja y conciliación de cobros.</p>
         </div>
 
         <div class="flex flex-col gap-2 sm:flex-row">
             @if ($canSell)
                 <button type="button" wire:click="toggleOpenForm"
-                    class="inline-flex min-h-11 items-center justify-center rounded-xl bg-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-black/80">
+                    class="btn btn-dark">
                     {{ $showOpenForm ? 'Cancelar' : 'Abrir arqueo' }}
                 </button>
             @endif
 
             @if ($search !== '' || $status !== '' || $sellerId !== '' || $currency !== '' || $from !== '' || $to !== '')
                 <button type="button" wire:click="clearFilters"
-                    class="inline-flex min-h-11 items-center justify-center rounded-xl border border-black/15 bg-white px-4 py-2.5 text-sm font-semibold text-black/70 transition hover:bg-black/[0.03]">
+                    class="btn btn-outline">
                     Limpiar filtros
                 </button>
             @endif
@@ -201,37 +201,37 @@ $statusClasses = fn (CashSessionStatus $value): string => match ($value) {
     </section>
 
     @if ($canSell && $showOpenForm)
-        <section class="rounded-2xl border border-brand-200 bg-brand-50/60 p-5 shadow-sm sm:p-6">
+        <section class="rounded-2xl border border-brand-200 bg-brand-50/60 p-5 sm:p-6">
             <h2 class="text-base font-semibold text-ink">Abrir arqueo</h2>
-            <p class="mt-1 text-sm text-black/60">Solo puede existir un arqueo abierto por moneda.</p>
+            <p class="mt-1 text-sm text-muted">Solo puede existir un arqueo abierto por moneda.</p>
 
             <form wire:submit="openSession" class="mt-5 grid gap-4 sm:grid-cols-2">
                 <div>
-                    <label for="open-currency" class="mb-1.5 block text-sm font-medium text-black/70">Moneda</label>
+                    <label for="open-currency" class="label">Moneda</label>
                     <select id="open-currency" wire:model="openCurrency"
-                        class="block min-h-11 w-full rounded-xl border border-black/15 bg-white px-3.5 py-2.5 text-base text-ink outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 sm:text-sm">
+                        class="select">
                         <option value="">Seleccionar</option>
                         @foreach ($currencies as $currencyOption)
                             <option value="{{ $currencyOption }}">{{ $currencyOption }}</option>
                         @endforeach
                     </select>
                     @error('openCurrency')
-                        <p class="mt-1.5 text-sm text-rose-600">{{ $message }}</p>
+                        <p class="field-error">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <div class="sm:col-span-2">
-                    <label for="open-notes" class="mb-1.5 block text-sm font-medium text-black/70">Notas (opcional)</label>
+                    <label for="open-notes" class="label">Notas (opcional)</label>
                     <textarea id="open-notes" rows="2" wire:model="openNotes"
-                        class="block min-h-11 w-full rounded-xl border border-black/15 px-3.5 py-2.5 text-base text-ink outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 sm:text-sm"></textarea>
+                        class="input"></textarea>
                     @error('openNotes')
-                        <p class="mt-1.5 text-sm text-rose-600">{{ $message }}</p>
+                        <p class="field-error">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <div class="sm:col-span-2">
                     <button type="submit" wire:loading.attr="disabled"
-                        class="min-h-11 w-full rounded-xl bg-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-black/80 disabled:opacity-50 sm:w-auto">
+                        class="btn btn-dark w-full sm:w-auto">
                         Abrir arqueo
                     </button>
                 </div>
@@ -246,31 +246,31 @@ $statusClasses = fn (CashSessionStatus $value): string => match ($value) {
             CashSessionStatus::Approved->value => ['label' => 'Aprobados', 'tone' => 'text-brand-800'],
             CashSessionStatus::Rejected->value => ['label' => 'Rechazados', 'tone' => 'text-rose-700'],
         ] as $statusKey => $meta)
-            <article wire:key="kpi-{{ $statusKey }}" class="rounded-2xl border border-black/10 bg-white p-5 shadow-sm">
-                <p class="text-xs font-bold uppercase tracking-[0.12em] text-black/60">{{ $meta['label'] }}</p>
-                <p class="mt-2 text-2xl font-semibold {{ $meta['tone'] }}">{{ number_format($summary['counts'][$statusKey], 0, ',', '.') }}</p>
+            <article wire:key="kpi-{{ $statusKey }}" class="card p-5">
+                <p class="stat-label">{{ $meta['label'] }}</p>
+                <p class="stat-value {{ $meta['tone'] }}">{{ number_format($summary['counts'][$statusKey], 0, ',', '.') }}</p>
             </article>
         @endforeach
     </section>
 
-    <section class="rounded-2xl border border-black/10 bg-white p-5 shadow-sm sm:p-6">
+    <section class="card p-4 sm:p-6">
         <h2 class="text-base font-semibold text-ink">Totales por moneda</h2>
 
         <div class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             @forelse ($summary['totals'] as $row)
                 <article wire:key="currency-{{ $row->currency }}" class="rounded-xl bg-canvas p-4">
-                    <p class="text-xs font-bold uppercase tracking-wide text-black/60">{{ $row->currency }}</p>
+                    <p class="stat-label">{{ $row->currency }}</p>
                     <dl class="mt-2 space-y-1 text-sm">
                         <div class="flex items-center justify-between gap-3">
-                            <dt class="text-black/60">Esperado</dt>
+                            <dt class="text-muted">Esperado</dt>
                             <dd class="font-semibold text-ink">{{ $money($row->expected) }}</dd>
                         </div>
                         <div class="flex items-center justify-between gap-3">
-                            <dt class="text-black/60">Contado</dt>
+                            <dt class="text-muted">Contado</dt>
                             <dd class="font-semibold text-ink">{{ $row->counted === null ? '—' : $money($row->counted) }}</dd>
                         </div>
                         <div class="flex items-center justify-between gap-3">
-                            <dt class="text-black/60">Diferencia</dt>
+                            <dt class="text-muted">Diferencia</dt>
                             <dd class="font-semibold {{ (float) $row->difference < 0 ? 'text-rose-700' : 'text-ink' }}">
                                 {{ $row->difference === null ? '—' : $money($row->difference) }}
                             </dd>
@@ -278,24 +278,24 @@ $statusClasses = fn (CashSessionStatus $value): string => match ($value) {
                     </dl>
                 </article>
             @empty
-                <p class="text-sm text-black/60">Aún no hay montos registrados.</p>
+                <p class="text-sm text-muted">Aún no hay montos registrados.</p>
             @endforelse
         </div>
     </section>
 
-    <section class="rounded-2xl border border-black/10 bg-white p-5 shadow-sm sm:p-6">
+    <section class="card p-4 sm:p-6">
         <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
             <div class="xl:col-span-2">
-                <label for="cash-search" class="mb-1.5 block text-sm font-medium text-black/70">Buscar</label>
+                <label for="cash-search" class="label">Buscar</label>
                 <input id="cash-search" type="search" wire:model.live.debounce.400ms="search"
                     placeholder="Vendedor"
-                    class="block min-h-11 w-full rounded-xl border border-black/15 px-3.5 py-2.5 text-base text-ink outline-none transition placeholder:text-black/60 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 sm:text-sm">
+                    class="input">
             </div>
 
             <div>
-                <label for="cash-status" class="mb-1.5 block text-sm font-medium text-black/70">Estado</label>
+                <label for="cash-status" class="label">Estado</label>
                 <select id="cash-status" wire:model.live="status"
-                    class="block min-h-11 w-full rounded-xl border border-black/15 bg-white px-3.5 py-2.5 text-base text-ink outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 sm:text-sm">
+                    class="select">
                     <option value="">Todos</option>
                     @foreach ($statusLabels as $statusValue => $statusLabel)
                         <option value="{{ $statusValue }}">{{ $statusLabel }}</option>
@@ -305,9 +305,9 @@ $statusClasses = fn (CashSessionStatus $value): string => match ($value) {
 
             @if ($canApprove && $sellers->isNotEmpty())
                 <div>
-                    <label for="cash-seller" class="mb-1.5 block text-sm font-medium text-black/70">Vendedor</label>
+                    <label for="cash-seller" class="label">Vendedor</label>
                     <select id="cash-seller" wire:model.live="sellerId"
-                        class="block min-h-11 w-full rounded-xl border border-black/15 bg-white px-3.5 py-2.5 text-base text-ink outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 sm:text-sm">
+                        class="select">
                         <option value="">Todos</option>
                         @foreach ($sellers as $sellerMember)
                             <option value="{{ $sellerMember->user_id }}">{{ $sellerMember->user?->name }}</option>
@@ -317,9 +317,9 @@ $statusClasses = fn (CashSessionStatus $value): string => match ($value) {
             @endif
 
             <div>
-                <label for="cash-currency" class="mb-1.5 block text-sm font-medium text-black/70">Moneda</label>
+                <label for="cash-currency" class="label">Moneda</label>
                 <select id="cash-currency" wire:model.live="currency"
-                    class="block min-h-11 w-full rounded-xl border border-black/15 bg-white px-3.5 py-2.5 text-base text-ink outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 sm:text-sm">
+                    class="select">
                     <option value="">Todas</option>
                     @foreach ($currencies as $currencyOption)
                         <option value="{{ $currencyOption }}">{{ $currencyOption }}</option>
@@ -328,51 +328,51 @@ $statusClasses = fn (CashSessionStatus $value): string => match ($value) {
             </div>
 
             <div>
-                <label for="cash-from" class="mb-1.5 block text-sm font-medium text-black/70">Desde</label>
+                <label for="cash-from" class="label">Desde</label>
                 <input id="cash-from" type="date" wire:model.live="from"
-                    class="block min-h-11 w-full rounded-xl border border-black/15 bg-white px-3.5 py-2.5 text-base text-ink outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 sm:text-sm">
+                    class="input">
             </div>
 
             <div>
-                <label for="cash-to" class="mb-1.5 block text-sm font-medium text-black/70">Hasta</label>
+                <label for="cash-to" class="label">Hasta</label>
                 <input id="cash-to" type="date" wire:model.live="to"
-                    class="block min-h-11 w-full rounded-xl border border-black/15 bg-white px-3.5 py-2.5 text-base text-ink outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 sm:text-sm">
+                    class="input">
             </div>
         </div>
     </section>
 
-    <section class="hidden overflow-hidden rounded-2xl border border-black/10 bg-white shadow-sm md:block">
+    <section class="hidden overflow-hidden card md:block">
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-black/10">
+            <table class="min-w-full divide-y divide-line">
                 <thead class="bg-canvas">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-black/60">Vendedor</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-black/60">Apertura</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-black/60">Moneda</th>
-                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-black/60">Esperado</th>
-                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-black/60">Contado</th>
-                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-black/60">Diferencia</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-black/60">Estado</th>
-                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-black/60">Acción</th>
+                        <th class="table-head">Vendedor</th>
+                        <th class="table-head">Apertura</th>
+                        <th class="table-head">Moneda</th>
+                        <th class="table-head text-right">Esperado</th>
+                        <th class="table-head text-right">Contado</th>
+                        <th class="table-head text-right">Diferencia</th>
+                        <th class="table-head">Estado</th>
+                        <th class="table-head text-right">Acción</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-black/5">
+                <tbody class="divide-y divide-line">
                     @forelse ($cashSessions as $cashSession)
                         <tr wire:key="cash-session-{{ $cashSession->id }}" class="transition hover:bg-brand-50/40">
-                            <td class="px-4 py-4 text-sm font-medium text-ink">{{ $cashSession->seller?->name ?? '—' }}</td>
-                            <td class="whitespace-nowrap px-4 py-4 text-sm text-black/70">{{ $cashSession->opened_at?->format('d/m/Y H:i') }}</td>
-                            <td class="whitespace-nowrap px-4 py-4 text-sm text-black/70">{{ $cashSession->currency }}</td>
-                            <td class="whitespace-nowrap px-4 py-4 text-right text-sm font-semibold text-ink">{{ $money($cashSession->expected_amount) }}</td>
-                            <td class="whitespace-nowrap px-4 py-4 text-right text-sm text-black/70">{{ $cashSession->counted_amount === null ? '—' : $money($cashSession->counted_amount) }}</td>
-                            <td class="whitespace-nowrap px-4 py-4 text-right text-sm font-semibold {{ (float) $cashSession->difference < 0 ? 'text-rose-700' : 'text-ink' }}">
+                            <td class="table-cell font-medium text-ink">{{ $cashSession->seller?->name ?? '—' }}</td>
+                            <td class="table-cell text-muted">{{ $cashSession->opened_at?->format('d/m/Y H:i') }}</td>
+                            <td class="table-cell text-muted">{{ $cashSession->currency }}</td>
+                            <td class="table-cell whitespace-nowrap text-right font-semibold text-ink">{{ $money($cashSession->expected_amount) }}</td>
+                            <td class="table-cell whitespace-nowrap text-right text-muted">{{ $cashSession->counted_amount === null ? '—' : $money($cashSession->counted_amount) }}</td>
+                            <td class="table-cell whitespace-nowrap text-right font-semibold {{ (float) $cashSession->difference < 0 ? 'text-rose-700' : 'text-ink' }}">
                                 {{ $cashSession->difference === null ? '—' : $money($cashSession->difference) }}
                             </td>
-                            <td class="whitespace-nowrap px-4 py-4">
-                                <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold {{ $statusClasses($cashSession->status) }}">
+                            <td class="table-cell">
+                                <span class="badge {{ $statusClasses($cashSession->status) }}">
                                     {{ $statusLabels[$cashSession->status->value] }}
                                 </span>
                             </td>
-                            <td class="whitespace-nowrap px-4 py-4 text-right">
+                            <td class="table-cell text-right">
                                 <a href="{{ route('cash-sessions.show', $cashSession) }}" wire:navigate
                                     class="text-sm font-semibold text-brand-700 hover:text-brand-800">Ver</a>
                             </td>
@@ -394,32 +394,32 @@ $statusClasses = fn (CashSessionStatus $value): string => match ($value) {
 
     <section class="space-y-3 md:hidden" aria-label="Arqueos">
         @forelse ($cashSessions as $cashSession)
-            <article wire:key="cash-session-card-{{ $cashSession->id }}" class="rounded-2xl border border-black/10 bg-white p-4 shadow-sm">
+            <article wire:key="cash-session-card-{{ $cashSession->id }}" class="card p-4">
                 <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0">
                         <p class="truncate text-sm font-semibold text-ink">{{ $cashSession->seller?->name ?? '—' }}</p>
-                        <p class="mt-0.5 text-xs text-black/60">{{ $cashSession->opened_at?->format('d/m/Y H:i') }}</p>
+                        <p class="mt-0.5 text-xs text-muted">{{ $cashSession->opened_at?->format('d/m/Y H:i') }}</p>
                     </div>
-                    <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold {{ $statusClasses($cashSession->status) }}">
+                    <span class="shrink-0 badge {{ $statusClasses($cashSession->status) }}">
                         {{ $statusLabels[$cashSession->status->value] }}
                     </span>
                 </div>
 
                 <dl class="mt-3 grid grid-cols-2 gap-2 rounded-xl bg-canvas p-3 text-xs">
                     <div>
-                        <dt class="font-medium text-black/60">Moneda</dt>
+                        <dt class="font-medium text-muted">Moneda</dt>
                         <dd class="mt-0.5 font-semibold text-ink">{{ $cashSession->currency }}</dd>
                     </div>
                     <div>
-                        <dt class="font-medium text-black/60">Esperado</dt>
+                        <dt class="font-medium text-muted">Esperado</dt>
                         <dd class="mt-0.5 font-semibold text-ink">{{ $money($cashSession->expected_amount) }}</dd>
                     </div>
                     <div>
-                        <dt class="font-medium text-black/60">Contado</dt>
+                        <dt class="font-medium text-muted">Contado</dt>
                         <dd class="mt-0.5 font-semibold text-ink">{{ $cashSession->counted_amount === null ? '—' : $money($cashSession->counted_amount) }}</dd>
                     </div>
                     <div>
-                        <dt class="font-medium text-black/60">Diferencia</dt>
+                        <dt class="font-medium text-muted">Diferencia</dt>
                         <dd class="mt-0.5 font-semibold {{ (float) $cashSession->difference < 0 ? 'text-rose-700' : 'text-ink' }}">
                             {{ $cashSession->difference === null ? '—' : $money($cashSession->difference) }}
                         </dd>
@@ -427,12 +427,12 @@ $statusClasses = fn (CashSessionStatus $value): string => match ($value) {
                 </dl>
 
                 <a href="{{ route('cash-sessions.show', $cashSession) }}" wire:navigate
-                    class="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-black/15 bg-white px-4 py-2.5 text-sm font-semibold text-brand-700 transition hover:bg-brand-50">
+                    class="mt-3 btn btn-outline w-full">
                     Ver arqueo
                 </a>
             </article>
         @empty
-            <div class="rounded-2xl border border-dashed border-black/15 bg-white px-4 py-10 text-center">
+            <div class="empty-state">
                 <p class="text-sm font-medium text-ink">Sin arqueos con estos filtros.</p>
                 <button type="button" wire:click="clearFilters" class="mt-2 text-sm font-semibold text-brand-700 hover:text-brand-800">
                     Limpiar filtros
@@ -442,7 +442,7 @@ $statusClasses = fn (CashSessionStatus $value): string => match ($value) {
     </section>
 
     @if ($cashSessions->hasPages())
-        <section class="rounded-2xl border border-black/10 bg-white p-3 shadow-sm">
+        <section class="card p-3">
             {{ $cashSessions->links('components.pagination') }}
         </section>
     @endif

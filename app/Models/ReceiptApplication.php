@@ -17,7 +17,7 @@ use Illuminate\Support\Carbon;
  * @property string $receipt_id
  * @property string $invoice_id
  * @property string|null $docnum
- * @property int $invoiceid
+ * @property int|null $invoiceid
  * @property string|null $docentry
  * @property int|null $instid
  * @property string $invtype

@@ -31,24 +31,29 @@ class CollectionEventFactory extends Factory
             'collected_on' => now()->toDateString(),
             'kind' => CollectionKind::Partial,
             'status' => CollectionStatus::Pending,
-            'matched_receipt_id' => null,
-            'matched_at' => null,
+            'erp_docnum' => null,
+            'reviewed_by' => null,
+            'reviewed_at' => null,
+            'rejection_reason' => null,
             'notes' => null,
         ];
     }
 
-    public function matched(): static
+    public function accepted(): static
     {
         return $this->state(fn (array $attributes): array => [
-            'status' => CollectionStatus::Matched,
-            'matched_at' => now(),
+            'status' => CollectionStatus::Accepted,
+            'erp_docnum' => (string) fake()->unique()->numberBetween(100000000, 999999999),
+            'reviewed_at' => now(),
         ]);
     }
 
-    public function discrepancy(): static
+    public function rejected(): static
     {
         return $this->state(fn (array $attributes): array => [
-            'status' => CollectionStatus::Discrepancy,
+            'status' => CollectionStatus::Rejected,
+            'rejection_reason' => 'Datos del cobro inconsistentes.',
+            'reviewed_at' => now(),
         ]);
     }
 }

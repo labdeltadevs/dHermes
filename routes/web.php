@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CollectionProofController;
 use App\Http\Controllers\TenantSwitchController;
 use App\Http\Controllers\VerificationController;
 use App\Http\Controllers\VerificationPrintController;
@@ -64,6 +65,10 @@ Route::livewire('/user/profile', 'pages::profile')
 Route::livewire('/admin/usuarios', 'pages::admin.users')
     ->middleware(['auth', 'can:manage-users'])
     ->name('admin.users');
+
+Route::get('/cobranzas/{collectionEvent}/comprobante', CollectionProofController::class)
+    ->middleware('auth')
+    ->name('collections.proof');
 
 Route::get('/verificar/{code}', VerificationController::class)
     ->where('code', '[A-Za-z0-9]+')

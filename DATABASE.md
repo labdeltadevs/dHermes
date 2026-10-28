@@ -8,7 +8,7 @@ dHermes controla la cartera y las cobranzas de vendedores: consulta de facturas 
 
 Un complemento externo lee SAP Business One y escribe las tablas derivadas de SAP directamente en PostgreSQL. La aplicación no se conecta a SAP ni ejecuta importaciones. La aplicación sí escribe sus propias tablas transaccionales (cobros, arqueos, códigos de verificación y auditoría).
 
-Esta versión no envía cobros al ERP. La conciliación con cobros existentes se hace contra `receipts` y `receipt_applications` ya importados.
+Esta versión no envía cobros al ERP. El administrador revisa cada cobro informado, registra el cobro manualmente en SAP Business One e ingresa el DocNum resultante para aceptarlo. Las tablas `receipts` y `receipt_applications` se siguen importando, pero ya no se usan para conciliar cobros.
 
 ## 2. Decisiones de diseño
 
@@ -181,10 +181,14 @@ Cobro registrado por un vendedor o cobrador.
 | `payment_method` | `cash`, `check`, `transfer`, `other` | No | — |
 | `collected_on` | `DATE` | No | — |
 | `kind` | `full`, `partial` | No | — |
-| `status` | `pending`, `matched`, `discrepancy` | No | `pending` |
-| `matched_receipt_id` | `UUID` FK `receipts` | Sí | — |
-| `matched_at` | `TIMESTAMPTZ` | Sí | — |
+| `status` | `pending`, `accepted`, `rejected`, `cancelled` | No | `pending` |
+| `erp_docnum` | `VARCHAR(32)` | Sí | — |
+| `reviewed_by` | `UUID` FK `users` | Sí | — |
+| `reviewed_at` | `TIMESTAMPTZ` | Sí | — |
+| `rejection_reason` | `TEXT` | Sí | — |
 | `notes` | `TEXT` | Sí | — |
+
+`erp_docnum` es obligatorio a nivel de aplicación al aceptar un cobro, debe ser numérico y es único por empresa. El índice único `(tenant_id, erp_docnum)` permite múltiples valores nulos. `reviewed_by`, `reviewed_at` y `rejection_reason` registran la revisión del administrador o supervisor.
 
 ### 4.10 `cash_sessions`
 
@@ -265,7 +269,7 @@ Reglas de unión: `OINV.CardCode = OCRD.CardCode`, `ORCT.CardCode = OCRD.CardCod
 - El contexto de empresa se resuelve en el middleware `ResolveTenant` a partir de la membresía activa del usuario y se guarda en sesión.
 - `BelongsToTenant` aplica un global scope por `tenant_id` y asigna el tenant activo al crear. Sin contexto activo, las consultas de dominio no devuelven filas.
 - Las policies verifican pertenencia y rol:
-  - `admin` y `supervisor`: cartera completa, conciliación y aprobación de arqueos.
+  - `admin` y `supervisor`: cartera completa, aceptación o rechazo de cobros y aprobación de arqueos.
   - `seller`: solo clientes/facturas de su `sales_rep_id`; registra cobros y arqueos propios.
   - `collector`: solo clientes con `collector_user_id` igual a su usuario; registra cobros y arqueos propios.
 - Nadie puede eliminar facturas, clientes, cobros ni auditoría desde la aplicación.
@@ -273,7 +277,7 @@ Reglas de unión: `OINV.CardCode = OCRD.CardCode`, `ORCT.CardCode = OCRD.CardCod
 
 ## 7. Verificación de comprobantes
 
-1. Al registrar un cobro o cerrar un arqueo, la aplicación puede emitir un `verification_codes`.
+1. Solo las cobranzas en estado `accepted` y los arqueos aprobados pueden emitir un `verification_codes`.
 2. El código impreso apunta a `/verificar/{code}`.
 3. La verificación busca el código sin el global scope de tenant, fija el tenant del código y recalcula el HMAC del registro.
 4. Resultados: `valid`, `tampered` (firma no coincide), `revoked` (`revoked_at` no nulo) o `not_found` (404).

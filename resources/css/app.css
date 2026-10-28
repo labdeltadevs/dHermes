@@ -10,29 +10,51 @@
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
-    --color-brand-50: #fff8f3;
-    --color-brand-100: #ffede2;
-    --color-brand-200: #ffd7bf;
-    --color-brand-300: #ffb98f;
-    --color-brand-400: #ff9259;
-    --color-brand-500: #ff671f;
-    --color-brand-600: #e95313;
-    --color-brand-700: #c24112;
-    --color-brand-800: #983516;
-    --color-brand-900: #7a2d15;
+    /* Brand: naranja electrico de dHermes */
+    --color-brand-50: #fff7f2;
+    --color-brand-100: #ffeade;
+    --color-brand-200: #ffd3b8;
+    --color-brand-300: #ffb488;
+    --color-brand-400: #ff8b52;
+    --color-brand-500: #ff6a24;
+    --color-brand-600: #f04f08;
+    --color-brand-700: #c73a07;
+    --color-brand-800: #9e2f0e;
+    --color-brand-900: #7f290e;
 
-    --color-ink: #0a0a0a;
-    --color-canvas: #f7f7f5;
+    /* Acento fresco secundario */
+    --color-mint-50: #ecfdf5;
+    --color-mint-100: #d1fae5;
+    --color-mint-200: #a7f3d0;
+    --color-mint-300: #6ee7b7;
+    --color-mint-400: #34d399;
+    --color-mint-500: #10b981;
+    --color-mint-600: #059669;
+    --color-mint-700: #047857;
+
+    /* Neutros */
+    --color-ink: #0b1220;
+    --color-ink-soft: #1f2937;
+    --color-muted: #64748b;
+    --color-line: #e6e8ef;
+    --color-canvas: #f5f6fa;
+    --color-surface: #ffffff;
+
+    --shadow-card: 0 1px 2px rgba(11, 18, 32, 0.04), 0 8px 24px -12px rgba(11, 18, 32, 0.14);
+    --shadow-card-hover: 0 2px 4px rgba(11, 18, 32, 0.05), 0 18px 40px -16px rgba(11, 18, 32, 0.22);
+    --shadow-pop: 0 24px 60px -20px rgba(11, 18, 32, 0.32);
 }
 
 @layer base {
     html {
         -webkit-tap-highlight-color: transparent;
         scroll-behavior: smooth;
+        -webkit-text-size-adjust: 100%;
     }
 
     body {
         text-rendering: optimizeLegibility;
+        background-color: var(--color-canvas);
     }
 
     ::selection {
@@ -43,6 +65,20 @@
     :focus-visible {
         outline: 2px solid var(--color-brand-500);
         outline-offset: 2px;
+    }
+
+    input,
+    select,
+    textarea {
+        font-size: 16px;
+    }
+
+    @media (min-width: 640px) {
+        input,
+        select,
+        textarea {
+            font-size: 14px;
+        }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -61,6 +97,156 @@
     }
 }
 
+@layer components {
+    /* ---------- Superficies ---------- */
+    .card {
+        @apply rounded-2xl border border-line bg-surface shadow-card;
+    }
+
+    .card-hover {
+        @apply transition duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-card-hover;
+    }
+
+    /* ---------- Botones ---------- */
+    .btn {
+        @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition duration-150 select-none;
+    }
+
+    .btn-primary {
+        @apply bg-brand-500 text-ink shadow-[0_8px_20px_-10px_rgba(255,106,36,0.9)] hover:bg-brand-400 active:bg-brand-600;
+    }
+
+    .btn-dark {
+        @apply bg-ink text-white hover:bg-ink-soft active:bg-black;
+    }
+
+    .btn-outline {
+        @apply border border-line bg-surface text-ink-soft hover:border-brand-300 hover:bg-brand-50 hover:text-brand-800;
+    }
+
+    .btn-ghost {
+        @apply text-muted hover:bg-black/[0.04] hover:text-ink;
+    }
+
+    .btn-soft {
+        @apply border border-brand-200 bg-brand-50 text-brand-700 hover:bg-brand-100 hover:text-brand-800;
+    }
+
+    .btn-danger {
+        @apply bg-rose-600 text-white hover:bg-rose-500 active:bg-rose-700;
+    }
+
+    .btn-danger-soft {
+        @apply border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100;
+    }
+
+    .btn-sm {
+        @apply min-h-9 rounded-lg px-3 py-1.5 text-xs;
+    }
+
+    .btn-lg {
+        @apply min-h-12 rounded-2xl px-5 text-[15px];
+    }
+
+    /* ---------- Formularios ---------- */
+    .label {
+        @apply mb-1.5 block text-sm font-medium text-ink-soft;
+    }
+
+    .input {
+        @apply block min-h-11 w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-base text-ink outline-none transition placeholder:text-muted focus:border-brand-400 focus:ring-4 focus:ring-brand-500/15 sm:text-sm;
+    }
+
+    .select {
+        @apply block min-h-11 w-full appearance-none rounded-xl border border-line bg-surface bg-[length:1rem] bg-[right_0.75rem_center] bg-no-repeat px-3.5 py-2.5 pr-10 text-base text-ink outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-500/15 sm:text-sm;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    }
+
+    .field-error {
+        @apply mt-1.5 text-sm text-rose-600;
+    }
+
+    /* ---------- Badges y chips ---------- */
+    .badge {
+        @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide;
+    }
+
+    .chip {
+        @apply inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-muted;
+    }
+
+    /* ---------- Encabezado de pagina ---------- */
+    .eyebrow {
+        @apply text-[11px] font-bold uppercase tracking-[0.16em] text-brand-600;
+    }
+
+    .page-title {
+        @apply mt-1 text-2xl font-semibold tracking-[-0.02em] text-ink sm:text-3xl;
+    }
+
+    .page-subtitle {
+        @apply mt-1.5 text-sm leading-6 text-muted;
+    }
+
+    /* ---------- Datos ---------- */
+    .stat {
+        @apply relative overflow-hidden rounded-2xl border border-line bg-surface p-4 shadow-card sm:p-5;
+    }
+
+    .stat-label {
+        @apply text-[11px] font-bold uppercase tracking-[0.12em] text-muted;
+    }
+
+    .stat-value {
+        @apply mt-2 text-2xl font-semibold tracking-tight text-ink;
+    }
+
+    .table-head {
+        @apply px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-muted;
+    }
+
+    .table-cell {
+        @apply px-4 py-4 text-sm text-ink-soft;
+    }
+
+    /* ---------- Navegacion ---------- */
+    .nav-link {
+        @apply rounded-xl px-3 py-2 text-sm font-medium text-muted transition hover:bg-black/[0.04] hover:text-ink;
+    }
+
+    .nav-link-active {
+        @apply bg-brand-50 text-brand-700 hover:bg-brand-100 hover:text-brand-800;
+    }
+
+    .tab-item {
+        @apply flex min-h-16 flex-1 flex-col items-center justify-center gap-1 rounded-2xl px-1 text-[11px] font-medium text-muted transition;
+    }
+
+    .tab-item-active {
+        @apply bg-brand-50 text-brand-700;
+    }
+
+    .divider {
+        @apply border-t border-line;
+    }
+
+    .empty-state {
+        @apply rounded-2xl border border-dashed border-line bg-surface px-4 py-12 text-center;
+    }
+}
+
 @utility safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
+}
+
+@utility safe-top {
+    padding-top: env(safe-area-inset-top);
+}
+
+@utility no-scrollbar {
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
 }

@@ -12,35 +12,35 @@
         @livewireStyles
     </head>
     <body class="min-h-dvh bg-canvas text-ink antialiased">
-        <div class="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(255,103,31,0.12),transparent_38%)]"></div>
+        <div class="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(255,106,36,0.16),transparent_42%)]"></div>
+        <div class="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(16,185,129,0.12),transparent_40%)]"></div>
 
-        <main class="relative flex min-h-dvh flex-col px-4 py-6 sm:px-6 sm:py-10">
+        <main class="relative flex min-h-dvh flex-col px-4 py-6 sm:px-6 sm:py-10 safe-top">
             <header class="mx-auto flex w-full max-w-5xl items-center justify-between">
-                <a href="{{ route('home') }}" class="flex items-center gap-2.5 font-semibold tracking-tight">
-                    <span class="flex size-9 items-center justify-center rounded-xl bg-ink text-xs font-extrabold text-brand-500">dH</span>
+                <a href="{{ route('home') }}" class="flex items-center gap-2.5 font-semibold tracking-tight text-ink">
+                    <span class="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 text-xs font-extrabold text-white shadow-[0_6px_16px_-8px_rgba(240,79,8,0.9)]">dH</span>
                     <span>dHermes</span>
                 </a>
 
-                <a href="{{ route('home') }}" class="text-sm font-medium text-black/60 transition hover:text-ink">
+                <a href="{{ route('home') }}" class="chip transition hover:border-brand-200 hover:bg-brand-50 hover:text-brand-800">
                     Volver al inicio
                 </a>
             </header>
 
             <div class="flex flex-1 items-center justify-center py-10">
                 <div class="w-full max-w-md">
-                    <div class="rounded-2xl border border-black/10 bg-white p-6 shadow-xl shadow-black/[0.04] sm:p-8">
+                    <div class="card p-6 sm:p-8">
                         {{ $slot }}
                     </div>
 
                     <div class="mt-5 flex flex-col items-center gap-3 text-center">
-                        <button type="button" data-pwa-install hidden
-                            class="rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700 transition hover:bg-brand-100">
+                        <button type="button" data-pwa-install hidden class="btn btn-outline btn-sm">
                             Instalar aplicación
                         </button>
-                        <p data-pwa-ios-instructions hidden class="max-w-xs text-xs leading-5 text-black/60">
+                        <p data-pwa-ios-instructions hidden class="max-w-xs text-xs leading-5 text-muted">
                             En Safari, toca Compartir y luego “Añadir a pantalla de inicio”.
                         </p>
-                        <p class="text-xs text-black/60">Acceso restringido a personal autorizado.</p>
+                        <p class="text-xs text-muted">Acceso restringido a personal autorizado.</p>
                     </div>
                 </div>
             </div>

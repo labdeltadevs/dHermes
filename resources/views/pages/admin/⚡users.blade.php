@@ -307,13 +307,13 @@ new #[Layout('layouts.app')] #[Title('Usuarios')] class extends Component
 <div class="space-y-5 sm:space-y-6">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-            <p class="text-xs font-bold uppercase tracking-[0.14em] text-brand-700">Administración</p>
-            <h1 class="mt-1 text-2xl font-semibold tracking-tight text-ink sm:text-3xl">Usuarios</h1>
-            <p class="mt-1.5 text-sm text-black/60">Gestiona las cuentas de tu empresa y sus roles.</p>
+            <p class="eyebrow">Administración</p>
+            <h1 class="page-title">Usuarios</h1>
+            <p class="mt-1.5 text-sm text-muted">Gestiona las cuentas de tu empresa y sus roles.</p>
         </div>
 
         <button type="button" wire:click="create"
-            class="min-h-11 w-full rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-bold text-ink transition hover:bg-brand-400 sm:w-auto">
+            class="btn btn-primary w-full sm:w-auto">
             Nuevo usuario
         </button>
     </div>
@@ -325,77 +325,77 @@ new #[Layout('layouts.app')] #[Title('Usuarios')] class extends Component
     @endif
 
     @if ($showForm)
-        <section class="rounded-2xl border border-black/10 bg-white p-5 shadow-sm sm:p-6">
+        <section class="card p-5 sm:p-6">
             <div class="flex items-start justify-between gap-4">
                 <div>
                     <h2 class="text-base font-semibold text-ink">{{ $editingUserId ? 'Editar usuario' : 'Nuevo usuario' }}</h2>
-                    <p class="mt-1 text-sm text-black/60">La contraseña es temporal y el usuario puede cambiarla después.</p>
+                    <p class="mt-1 text-sm text-muted">La contraseña es temporal y el usuario puede cambiarla después.</p>
                 </div>
-                <button type="button" wire:click="cancel" class="text-sm font-medium text-black/60 hover:text-ink">Cancelar</button>
+                <button type="button" wire:click="cancel" class="text-sm font-medium text-muted hover:text-ink">Cancelar</button>
             </div>
 
             <form wire:submit="save" class="mt-6 space-y-5">
                 <div class="grid gap-5 sm:grid-cols-2">
                     <div>
-                        <label for="user-name" class="mb-1.5 block text-sm font-medium text-black/70">Nombre</label>
+                        <label for="user-name" class="label">Nombre</label>
                         <input id="user-name" type="text" wire:model="name" required
-                            class="block min-h-11 w-full rounded-xl border border-black/15 px-3.5 py-2.5 text-base text-ink sm:text-sm outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15">
+                            class="input">
                         @error('name')
-                            <p class="mt-1.5 text-sm text-rose-600">{{ $message }}</p>
+                            <p class="field-error">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div>
-                        <label for="user-email" class="mb-1.5 block text-sm font-medium text-black/70">Correo electrónico</label>
+                        <label for="user-email" class="label">Correo electrónico</label>
                         <input id="user-email" type="email" wire:model="email" required
-                            class="block min-h-11 w-full rounded-xl border border-black/15 px-3.5 py-2.5 text-base text-ink sm:text-sm outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15">
+                            class="input">
                         @error('email')
-                            <p class="mt-1.5 text-sm text-rose-600">{{ $message }}</p>
+                            <p class="field-error">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div>
-                        <label for="user-role" class="mb-1.5 block text-sm font-medium text-black/70">Rol</label>
+                        <label for="user-role" class="label">Rol</label>
                         <select id="user-role" wire:model.live="role"
-                            class="block min-h-11 w-full rounded-xl border border-black/15 bg-white px-3.5 py-2.5 text-base text-ink sm:text-sm outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15">
+                            class="input">
                             @foreach ($roles as $tenantRole)
                                 <option value="{{ $tenantRole->value }}">{{ $tenantRole->label() }}</option>
                             @endforeach
                         </select>
                         @error('role')
-                            <p class="mt-1.5 text-sm text-rose-600">{{ $message }}</p>
+                            <p class="field-error">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <div>
-                        <label for="user-password" class="mb-1.5 block text-sm font-medium text-black/70">
+                        <label for="user-password" class="label">
                             {{ $editingUserId ? 'Nueva contraseña (opcional)' : 'Contraseña temporal' }}
                         </label>
                         <input id="user-password" type="password" wire:model="password" autocomplete="new-password"
-                            class="block min-h-11 w-full rounded-xl border border-black/15 px-3.5 py-2.5 text-base text-ink sm:text-sm outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15">
+                            class="input">
                         @error('password')
-                            <p class="mt-1.5 text-sm text-rose-600">{{ $message }}</p>
+                            <p class="field-error">{{ $message }}</p>
                         @enderror
                     </div>
 
                     @if ($role === \App\Enums\TenantRole::Seller->value)
                         <div>
-                            <label for="user-sales-rep" class="mb-1.5 block text-sm font-medium text-black/70">Vendedor asignado</label>
+                            <label for="user-sales-rep" class="label">Vendedor asignado</label>
                             <select id="user-sales-rep" wire:model="salesRepId"
-                                class="block min-h-11 w-full rounded-xl border border-black/15 bg-white px-3.5 py-2.5 text-base text-ink sm:text-sm outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15">
+                                class="input">
                                 <option value="">Selecciona un vendedor</option>
                                 @foreach ($salesReps as $salesRep)
                                     <option value="{{ $salesRep->id }}">{{ $salesRep->name }}</option>
                                 @endforeach
                             </select>
                             @error('salesRepId')
-                                <p class="mt-1.5 text-sm text-rose-600">{{ $message }}</p>
+                                <p class="field-error">{{ $message }}</p>
                             @enderror
                         </div>
                     @endif
 
-                    <label class="flex items-center gap-2 self-end pb-2 text-sm font-medium text-black/70">
-                        <input type="checkbox" wire:model="active" class="size-4 rounded border-black/15 text-brand-700 focus:ring-brand-500">
+                    <label class="flex items-center gap-2 self-end pb-2 label">
+                        <input type="checkbox" wire:model="active" class="size-4 rounded border-line text-brand-700 focus:ring-brand-500">
                         Usuario activo
                     </label>
                 </div>
@@ -405,53 +405,53 @@ new #[Layout('layouts.app')] #[Title('Usuarios')] class extends Component
                 @enderror
 
                 <button type="submit" wire:loading.attr="disabled"
-                    class="min-h-11 w-full rounded-xl bg-ink px-4 py-2.5 text-sm font-semibold text-white sm:w-auto transition hover:bg-black/80 disabled:opacity-50">
+                    class="btn btn-dark w-full sm:w-auto">
                     {{ $editingUserId ? 'Guardar cambios' : 'Crear usuario' }}
                 </button>
             </form>
         </section>
     @endif
 
-    <section class="overflow-hidden rounded-2xl border border-black/10 bg-white shadow-sm">
+    <section class="overflow-hidden card">
         <div class="hidden overflow-x-auto md:block">
-            <table class="min-w-full divide-y divide-black/10">
+            <table class="min-w-full divide-y divide-line">
                 <thead class="bg-canvas">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-black/60">Usuario</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-black/60">Rol</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-black/60">Vendedor</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-black/60">Estado</th>
-                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-black/60">Acciones</th>
+                        <th class="table-head">Usuario</th>
+                        <th class="table-head">Rol</th>
+                        <th class="table-head">Vendedor</th>
+                        <th class="table-head">Estado</th>
+                        <th class="table-head text-right">Acciones</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-black/5">
+                <tbody class="divide-y divide-line">
                     @forelse ($memberships as $membership)
                         <tr wire:key="membership-{{ $membership->id }}">
                             <td class="whitespace-nowrap px-4 py-4">
                                 <p class="text-sm font-medium text-ink">{{ $membership->user->name }}</p>
-                                <p class="text-xs text-black/60">{{ $membership->user->email }}</p>
+                                <p class="text-xs text-muted">{{ $membership->user->email }}</p>
                             </td>
-                            <td class="whitespace-nowrap px-4 py-4 text-sm text-black/70">{{ $membership->role->label() }}</td>
-                            <td class="whitespace-nowrap px-4 py-4 text-sm text-black/70">{{ $membership->salesRep?->name ?? '—' }}</td>
+                            <td class="whitespace-nowrap px-4 py-4 text-sm text-ink-soft">{{ $membership->role->label() }}</td>
+                            <td class="whitespace-nowrap px-4 py-4 text-sm text-ink-soft">{{ $membership->salesRep?->name ?? '—' }}</td>
                             <td class="whitespace-nowrap px-4 py-4">
                                 @if ($membership->active && $membership->user->active)
-                                    <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">Activo</span>
+                                    <span class="badge bg-emerald-100 text-emerald-700">Activo</span>
                                 @else
-                                    <span class="rounded-full bg-black/[0.04] px-2.5 py-1 text-xs font-medium text-black/60">Inactivo</span>
+                                    <span class="badge bg-black/[0.04] text-muted">Inactivo</span>
                                 @endif
                             </td>
                             <td class="whitespace-nowrap px-4 py-4 text-right text-sm">
                                 <button type="button" wire:click="edit('{{ $membership->user_id }}')" class="font-medium text-brand-700 hover:text-brand-800">
                                     Editar
                                 </button>
-                                <button type="button" wire:click="toggleActive('{{ $membership->user_id }}')" class="ml-4 font-medium text-black/60 hover:text-ink">
+                                <button type="button" wire:click="toggleActive('{{ $membership->user_id }}')" class="ml-4 font-medium text-muted hover:text-ink">
                                     {{ $membership->active && $membership->user->active ? 'Desactivar' : 'Activar' }}
                                 </button>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-4 py-8 text-center text-sm text-black/60">No hay usuarios registrados.</td>
+                            <td colspan="5" class="px-4 py-8 text-center text-sm text-muted">No hay usuarios registrados.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -461,52 +461,52 @@ new #[Layout('layouts.app')] #[Title('Usuarios')] class extends Component
 
     <section class="space-y-3 md:hidden" aria-label="Listado de usuarios">
         @forelse ($memberships as $membership)
-            <article wire:key="membership-card-{{ $membership->id }}" class="rounded-2xl border border-black/10 bg-white p-4 shadow-sm">
+            <article wire:key="membership-card-{{ $membership->id }}" class="card p-4">
                 <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0">
                         <p class="truncate text-sm font-semibold text-ink">{{ $membership->user->name }}</p>
-                        <p class="mt-0.5 truncate text-xs text-black/60">{{ $membership->user->email }}</p>
+                        <p class="mt-0.5 truncate text-xs text-muted">{{ $membership->user->email }}</p>
                     </div>
 
                     @if ($membership->active && $membership->user->active)
-                        <span class="shrink-0 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">Activo</span>
+                        <span class="shrink-0 badge bg-emerald-100 text-emerald-700">Activo</span>
                     @else
-                        <span class="shrink-0 rounded-full bg-black/[0.04] px-2.5 py-1 text-xs font-semibold text-black/60">Inactivo</span>
+                        <span class="shrink-0 badge bg-black/[0.04] text-muted">Inactivo</span>
                     @endif
                 </div>
 
                 <dl class="mt-3 grid grid-cols-2 gap-2 rounded-xl bg-canvas p-3 text-xs">
                     <div>
-                        <dt class="font-medium text-black/60">Rol</dt>
+                        <dt class="font-medium text-muted">Rol</dt>
                         <dd class="mt-0.5 font-semibold text-ink">{{ $membership->role->label() }}</dd>
                     </div>
                     <div>
-                        <dt class="font-medium text-black/60">Vendedor</dt>
+                        <dt class="font-medium text-muted">Vendedor</dt>
                         <dd class="mt-0.5 truncate font-semibold text-ink">{{ $membership->salesRep?->name ?? '—' }}</dd>
                     </div>
                 </dl>
 
                 <div class="mt-3 grid grid-cols-2 gap-2">
                     <button type="button" wire:click="edit('{{ $membership->user_id }}')"
-                        class="min-h-10 rounded-lg border border-black/10 px-3 py-2 text-sm font-semibold text-brand-700 transition hover:bg-brand-50">
+                        class="btn btn-soft btn-sm">
                         Editar
                     </button>
                     <button type="button" wire:click="toggleActive('{{ $membership->user_id }}')"
-                        class="min-h-10 rounded-lg border border-black/10 px-3 py-2 text-sm font-medium text-black/60 transition hover:bg-black/[0.03]">
+                        class="btn btn-ghost btn-sm">
                         {{ $membership->active && $membership->user->active ? 'Desactivar' : 'Activar' }}
                     </button>
                 </div>
             </article>
         @empty
-            <div class="rounded-2xl border border-dashed border-black/15 bg-white px-4 py-10 text-center">
+            <div class="empty-state">
                 <p class="text-sm font-medium text-ink">No hay usuarios registrados.</p>
-                <p class="mt-1 text-sm text-black/60">Crea el primer usuario para empezar.</p>
+                <p class="mt-1 text-sm text-muted">Crea el primer usuario para empezar.</p>
             </div>
         @endforelse
     </section>
 
     @if ($memberships->hasPages())
-        <section class="rounded-2xl border border-black/10 bg-white p-3 shadow-sm">
+        <section class="card p-3">
             {{ $memberships->links('components.pagination') }}
         </section>
     @endif

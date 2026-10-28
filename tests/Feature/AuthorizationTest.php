@@ -113,18 +113,23 @@ it('allows a collector to see only assigned customers', function () {
         ->and(Gate::forUser($collector)->allows('view', $foreignInvoice))->toBeFalse();
 });
 
-it('prevents sellers from matching collections', function () {
+it('prevents sellers from accepting or rejecting collections', function () {
     $scenario = policyScenario();
     app(CurrentTenant::class)->set($scenario['tenant']->id);
 
-    expect(Gate::forUser($scenario['seller'])->allows('match', CollectionEvent::factory()->create([
+    $sellerEvent = CollectionEvent::factory()->create([
         'invoice_id' => $scenario['invoice']->id,
         'seller_user_id' => $scenario['seller']->id,
-    ])))->toBeFalse()
-        ->and(Gate::forUser($scenario['supervisor'])->allows('match', CollectionEvent::factory()->create([
-            'invoice_id' => $scenario['invoice']->id,
-            'seller_user_id' => $scenario['seller']->id,
-        ])))->toBeTrue();
+    ]);
+    $supervisorEvent = CollectionEvent::factory()->create([
+        'invoice_id' => $scenario['invoice']->id,
+        'seller_user_id' => $scenario['seller']->id,
+    ]);
+
+    expect(Gate::forUser($scenario['seller'])->allows('accept', $sellerEvent))->toBeFalse()
+        ->and(Gate::forUser($scenario['seller'])->allows('reject', $sellerEvent))->toBeFalse()
+        ->and(Gate::forUser($scenario['supervisor'])->allows('accept', $supervisorEvent))->toBeTrue()
+        ->and(Gate::forUser($scenario['supervisor'])->allows('reject', $supervisorEvent))->toBeTrue();
 });
 
 it('prevents sellers from approving cash sessions and allows supervisors', function () {

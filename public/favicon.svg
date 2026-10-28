@@ -1,4 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-    <rect width="64" height="64" rx="14" fill="#0a0a0a"/>
-    <text x="32" y="43" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700" fill="#ff671f">dH</text>
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generator: visioncortex VTracer 0.6.4 -->
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
+<path d="M0 0 C5.28 0 10.56 0 16 0 C16 5.28 16 10.56 16 16 C10.72 16 5.44 16 0 16 C0 10.72 0 5.44 0 0 Z " fill="#FEFEFD" transform="translate(0,0)"/>
+<path d="M0 0 C1.98 0 3.96 0 6 0 C5.12 4.75 5.12 4.75 4 7 C3.34 7 2.68 7 2 7 C0.54 4.35 0 3.11 0 0 Z " fill="#F8AE88" transform="translate(5,3)"/>
 </svg>

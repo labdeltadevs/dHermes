@@ -1,0 +1,182 @@
+﻿=== TENANTS ===
+{"id":"01a1605d-c5cb-7118-9f06-a62e7fa272be","code":"DELTA","name":"Laboratorios DELTA S.A.","tax_id":null,"timezone":"America\/La_Paz","local_currency":"BOB","active":true,"created_at":"2026-10-21 21:28:40+00","updated_at":"2026-10-21 21:28:40+00"}
+{"id":"01a1605e-6ac7-7018-adbd-a5b9be5c8995","code":"DELTA-TEST","name":"Laboratorios DELTA S.A.","tax_id":null,"timezone":"America\/La_Paz","local_currency":"BOB","active":true,"created_at":"2026-10-21 21:29:22+00","updated_at":"2026-10-21 21:29:22+00"}
+{"id":"c69269b9-3332-4559-b62f-f72ce77f7d3a","code":"LABDEL-001","name":"Laboratorios DELTA S.A.","tax_id":null,"timezone":"America\/La_Paz","local_currency":"BOB","active":true,"created_at":"2026-10-21 21:30:11+00","updated_at":"2026-10-21 21:30:11+00"}
+{"id":"c6ad1172-3115-4b7d-9f6d-32560639ca4b","code":"LAB_DELTA","name":"Laboratorios Delta SA","tax_id":null,"timezone":"America\/La_Paz","local_currency":"BOB","active":true,"created_at":"2026-10-22 13:28:09+00","updated_at":"2026-10-22 13:28:09+00"}
+
+=== COUNTS PER TABLE / TENANT ===
+sales_reps            c69269b9-3332-4559-b62f-f72ce77f7d3a  1
+sales_reps            c6ad1172-3115-4b7d-9f6d-32560639ca4b  49
+customers             c69269b9-3332-4559-b62f-f72ce77f7d3a  1
+customers             c6ad1172-3115-4b7d-9f6d-32560639ca4b  4752
+invoices              c69269b9-3332-4559-b62f-f72ce77f7d3a  1
+invoices              c6ad1172-3115-4b7d-9f6d-32560639ca4b  32034
+receipts              c6ad1172-3115-4b7d-9f6d-32560639ca4b  26175
+receipt_applications  c6ad1172-3115-4b7d-9f6d-32560639ca4b  33160
+collection_events     c69269b9-3332-4559-b62f-f72ce77f7d3a  1
+
+=== USERS ===
+{"id":"00000000-0000-0000-0000-000000000001","name":"Seller User","email":"seller@test.local","auth_subject":null,"password_hash":"$2y$12$QmJ8rUrEN55dzChPZmfvA.ofuJVi2VQt9kej7NF86Di.a2Uvtn1fa","active":true,"remember_token":null,"created_at":null,"updated_at":"2026-10-22 17:25:05+00","two_factor_secret":null,"two_factor_recovery_codes":null,"two_factor_confirmed_at":null}
+
+=== TENANT_USERS (LAB_DELTA) ===
+
+=== SALES_REPS (LAB_DELTA, 10) ===
+{"id":"a360cc25-cb89-49e8-bc33-80415e2c610f","tenant_id":"c6ad1172-3115-4b7d-9f6d-32560639ca4b","slpcode":"67","name":"Licitaciones y Anpes Sucre","email":null,"active":true,"created_at":"2026-10-22 13:28:09+00","updated_at":"2026-10-22 13:28:09+00"}
+{"id":"dd1d2a13-85c2-4213-ace3-76754d161ba9","tenant_id":"c6ad1172-3115-4b7d-9f6d-32560639ca4b","slpcode":"68","name":"Oficina Sucre Potosi","email":null,"active":true,"created_at":"2026-10-22 13:28:09+00","updated_at":"2026-10-22 13:28:09+00"}
+{"id":"6b234e1e-4242-4d71-969c-c75e4b83474d","tenant_id":"c6ad1172-3115-4b7d-9f6d-32560639ca4b","slpcode":"3","name":"Jhonny Alvarez","email":null,"active":true,"created_at":"2026-10-22 13:28:09+00","updated_at":"2026-10-22 13:28:09+00"}
+{"id":"3a7b0427-cdca-4d40-9426-c3833bba64df","tenant_id":"c6ad1172-3115-4b7d-9f6d-32560639ca4b","slpcode":"73","name":"Omar Gonzales Lopez","email":null,"active":true,"created_at":"2026-10-22 13:28:09+00","updated_at":"2026-10-22 13:28:09+00"}
+{"id":"14adf56d-3dd7-44a2-90e2-758413e2fe7e","tenant_id":"c6ad1172-3115-4b7d-9f6d-32560639ca4b","slpcode":"13","name":"Benjamin Bazan","email":null,"active":true,"created_at":"2026-10-22 13:28:09+00","updated_at":"2026-10-22 13:28:09+00"}
+{"id":"171c6100-bf29-4758-ac53-4d4afe2ba0af","tenant_id":"c6ad1172-3115-4b7d-9f6d-32560639ca4b","slpcode":"29","name":"Diana Kruscaya Birbueth Muriel","email":null,"active":true,"created_at":"2026-10-22 13:28:09+00","updated_at":"2026-10-22 13:28:09+00"}
+{"id":"d1dfb341-8144-4dd8-9dfc-7c12a2fac254","tenant_id":"c6ad1172-3115-4b7d-9f6d-32560639ca4b","slpcode":"74","name":"Marco Antonio Camacho Mendoza","email":null,"active":true,"created_at":"2026-10-22 13:28:09+00","updated_at":"2026-10-22 13:28:09+00"}
+{"id":"4153cbe6-71dd-45b1-bfda-aa3ef553cff0","tenant_id":"c6ad1172-3115-4b7d-9f6d-32560639ca4b","slpcode":"94","name":"Fernando Francisco Mamani Malala","email":null,"active":true,"created_at":"2026-10-22 13:28:09+00","updated_at":"2026-10-22 13:28:09+00"}
+{"id":"8e6a2231-5a85-47cb-9f16-7a8a9e846763","tenant_id":"c6ad1172-3115-4b7d-9f6d-32560639ca4b","slpcode":"1","name":"Ariel Vargas","email":null,"active":true,"created_at":"2026-10-22 13:28:09+00","updated_at":"2026-10-22 13:28:09+00"}
+{"id":"2fa6269d-d7f0-4947-abc1-0f95ef8e8ba2","tenant_id":"c6ad1172-3115-4b7d-9f6d-32560639ca4b","slpcode":"25","name":"Fernando Agreda","email":null,"active":true,"created_at":"2026-10-22 13:28:09+00","updated_at":"2026-10-22 13:28:09+00"}
+
+=== INVOICE AGG (LAB_DELTA) ===
+[{"status":"closed","cancelled":false,"n":31363,"bal":"0.000000"},{"status":"open","cancelled":false,"n":671,"bal":"5401455.980000"}]
+
+=== OPEN INVOICES WITH APPLIED RECEIPTS (count) ===
+43
+
+=== RECEIPT_APPS SAMPLE (LAB_DELTA) ===
+{"id":"0a0a4a86-2cf3-4b3e-8848-82089b3c96b4","tenant_id":"c6ad1172-3115-4b7d-9f6d-32560639ca4b","receipt_id":"982a26a5-5b7a-4337-a10c-5888814f3388","invoice_id":"ef42df5b-2a7b-40d2-a14e-53086d4c7a6c","docnum":"800022504","invoiceid":22505,"docentry":"698692","instid":1,"invtype":"13","applied_amount":"2855.460000","local_applied_amount":"2855.460000","application_date":"2026-04-02","synced_at":"2026-10-22 13:30:50+00","created_at":"2026-10-22 13:30:50+00","updated_at":"2026-10-22 13:30:50+00"}
+{"id":"a249991c-9d86-457d-9438-dc892a2fa1e3","tenant_id":"c6ad1172-3115-4b7d-9f6d-32560639ca4b","receipt_id":"15858972-bae8-42e2-bf0e-aee703c18dc4","invoice_id":"b4648fc5-9637-494b-8cd3-7e4db1a3eea7","docnum":"800022499","invoiceid":22500,"docentry":"698687","instid":1,"invtype":"13","applied_amount":"682.530000","local_applied_amount":"682.530000","application_date":"2026-04-02","synced_at":"2026-10-22 13:30:50+00","created_at":"2026-10-22 13:30:50+00","updated_at":"2026-10-22 13:30:50+00"}
+{"id":"c876cac0-8d27-4156-b535-4aa6b6194b32","tenant_id":"c6ad1172-3115-4b7d-9f6d-32560639ca4b","receipt_id":"da1ecfce-ea69-4d98-b6c4-35e66183de88","invoice_id":"7123536b-934e-4ae5-a5b7-5d6a67a191da","docnum":"600045181","invoiceid":45182,"docentry":"698361","instid":1,"invtype":"13","applied_amount":"506.610000","local_applied_amount":"506.610000","application_date":"2026-04-02","synced_at":"2026-10-22 13:30:50+00","created_at":"2026-10-22 13:30:50+00","updated_at":"2026-10-22 13:30:50+00"}
+{"id":"6df3fc71-a720-4c7e-ae46-84b99e5d1a69","tenant_id":"c6ad1172-3115-4b7d-9f6d-32560639ca4b","receipt_id":"7cb02400-1d38-4667-bf96-31749ee7a4f9","invoice_id":"53e6b857-4c86-499f-a87f-7a21c7992ad5","docnum":"600045205","invoiceid":45206,"docentry":"698552","instid":1,"invtype":"13","applied_amount":"2094.660000","local_applied_amount":"2094.660000","application_date":"2026-04-02","synced_at":"2026-10-22 13:30:50+00","created_at":"2026-10-22 13:30:50+00","updated_at":"2026-10-22 13:30:50+00"}
+{"id":"e46054e9-de13-48f2-80d8-495e4b76dfe5","tenant_id":"c6ad1172-3115-4b7d-9f6d-32560639ca4b","receipt_id":"504045bc-5299-404a-8c9f-14d5d3f3c28d","invoice_id":"b779ab56-21b1-4842-8a44-4aa85cb7cf58","docnum":"700051957","invoiceid":51958,"docentry":"698484","instid":1,"invtype":"13","applied_amount":"208.070000","local_applied_amount":"208.070000","application_date":"2026-04-02","synced_at":"2026-10-22 13:30:50+00","created_at":"2026-10-22 13:30:50+00","updated_at":"2026-10-22 13:30:50+00"}
+
+=== OPEN INVOICE SAMPLE (LAB_DELTA, 5) ===
+{"id":"4c7e99c7-f7e4-41ee-adc3-fab61cff2179","tenant_id":"c6ad1172-3115-4b7d-9f6d-32560639ca4b","docentry":"708579","number":"500104178","series":"110","customer_id":"5657b170-329b-4847-ba6b-1b81251401a4","sales_rep_id":"1fce60ee-14d2-4645-8204-38c87cdbbf6f","issue_date":"2026-05-14","due_date":"2026-07-13","status":"open","cancelled":false,"currency":"BOB","total":"853799.790000","paid":"0.000000","balance":"853799.790000","local_currency":"BOB","local_total":"853799.790000","local_paid":"0.000000","local_balance":"853799.790000","synced_at":"2026-10-22 13:28:09+00","created_at":"2026-10-22 13:28:09+00","updated_at":"2026-10-22 13:28:09+00"}
+{"id":"b3c1face-dc45-42ce-a7e5-b883fa90496e","tenant_id":"c6ad1172-3115-4b7d-9f6d-32560639ca4b","docentry":"708575","number":"700053818","series":"112","customer_id":"82a36910-e574-471d-bcc3-793adadedb87","sales_rep_id":"dc49b335-c78d-48b2-b20b-f8b5ec829d36","issue_date":"2026-05-14","due_date":"2026-07-13","status":"open","cancelled":false,"currency":"BOB","total":"280257.780000","paid":"0.000000","balance":"280257.780000","local_currency":"BOB","local_total":"280257.780000","local_paid":"0.000000","local_balance":"280257.780000","synced_at":"2026-10-22 13:28:09+00","created_at":"2026-10-22 13:28:09+00","updated_at":"2026-10-22 13:28:09+00"}
+{"id":"dd06e66e-41d4-450a-a88f-d6e3281c4699","tenant_id":"c6ad1172-3115-4b7d-9f6d-32560639ca4b","docentry":"715671","number":"600048524","series":"111","customer_id":"44f5ad12-8394-4660-8a2f-96928af103d1","sales_rep_id":"1ffec562-4eee-4076-8b18-ba011d3dc1e2","issue_date":"2026-06-15","due_date":"2026-08-14","status":"open","cancelled":false,"currency":"BOB","total":"268966.700000","paid":"0.000000","balance":"268966.700000","local_currency":"BOB","local_total":"268966.700000","local_paid":"0.000000","local_balance":"268966.700000","synced_at":"2026-10-22 13:28:09+00","created_at":"2026-10-22 13:28:09+00","updated_at":"2026-10-22 13:28:09+00"}
+{"id":"a4507219-2fe4-4475-8cf4-b7b2fb48ec1a","tenant_id":"c6ad1172-3115-4b7d-9f6d-32560639ca4b","docentry":"724197","number":"700056828","series":"112","customer_id":"8c88c89b-b195-4e9f-8352-c2f91a738e64","sales_rep_id":"9c364748-beff-4ea7-9dc8-477c0169fee6","issue_date":"2026-07-22","due_date":"2026-09-20","status":"open","cancelled":false,"currency":"BOB","total":"223290.000000","paid":"0.000000","balance":"223290.000000","local_currency":"BOB","local_total":"223290.000000","local_paid":"0.000000","local_balance":"223290.000000","synced_at":"2026-10-22 13:28:09+00","created_at":"2026-10-22 13:28:09+00","updated_at":"2026-10-22 13:28:09+00"}
+{"id":"3ddfb8f1-1dd0-4e8c-a469-10118c8c9622","tenant_id":"c6ad1172-3115-4b7d-9f6d-32560639ca4b","docentry":"708577","number":"500104177","series":"110","customer_id":"5657b170-329b-4847-ba6b-1b81251401a4","sales_rep_id":"1fce60ee-14d2-4645-8204-38c87cdbbf6f","issue_date":"2026-05-14","due_date":"2026-07-13","status":"open","cancelled":false,"currency":"BOB","total":"161638.100000","paid":"0.000000","balance":"161638.100000","local_currency":"BOB","local_total":"161638.100000","local_paid":"0.000000","local_balance":"161638.100000","synced_at":"2026-10-22 13:28:09+00","created_at":"2026-10-22 13:28:09+00","updated_at":"2026-10-22 13:28:09+00"}
+
+=== CUSTOMERS AGG (LAB_DELTA) ===
+[{"n":4752,"with_rep":4752,"with_coll":0,"act":4752}]
+
+=== RECEIPTS SAMPLE (LAB_DELTA, 5) ===
+{"id":"07a047d4-619c-404e-8a82-4459241aef7f","tenant_id":"c6ad1172-3115-4b7d-9f6d-32560639ca4b","docentry":"400117121","number":"200190147","customer_id":"8ca58177-b828-474e-bf7b-f08f703f2ec0","receipt_date":"2026-06-25","cancelled":false,"currency":"BOB","total":"102.910000","local_total":"102.910000","synced_at":"2026-10-22 13:30:50+00","created_at":"2026-10-22 13:30:50+00","updated_at":"2026-10-22 13:30:50+00"}
+{"id":"36fc94d1-2abb-4715-9130-2754b6b7512c","tenant_id":"c6ad1172-3115-4b7d-9f6d-32560639ca4b","docentry":"400121955","number":"200191134","customer_id":"198edb8e-1e3a-408a-ad9b-b64cadbf594e","receipt_date":"2026-07-17","cancelled":false,"currency":"BOB","total":"660.820000","local_total":"660.820000","synced_at":"2026-10-22 13:30:50+00","created_at":"2026-10-22 13:30:50+00","updated_at":"2026-10-22 13:30:50+00"}
+{"id":"62222cdd-a8fd-4714-bcc9-ab3075c11ada","tenant_id":"c6ad1172-3115-4b7d-9f6d-32560639ca4b","docentry":"400127575","number":"400031607","customer_id":"b0214367-219f-4bf1-9e9d-0f0824467ea4","receipt_date":"2026-08-14","cancelled":false,"currency":"BOB","total":"637.520000","local_total":"637.520000","synced_at":"2026-10-22 13:30:50+00","created_at":"2026-10-22 13:30:50+00","updated_at":"2026-10-22 13:30:50+00"}
+{"id":"465b0623-9e2b-4e63-8f38-3e7f951a8a5a","tenant_id":"c6ad1172-3115-4b7d-9f6d-32560639ca4b","docentry":"400114310","number":"200189543","customer_id":"01d2a1a4-e1a7-4198-a8ce-c2743d4bf876","receipt_date":"2026-06-11","cancelled":false,"currency":"BOB","total":"23.380000","local_total":"23.380000","synced_at":"2026-10-22 13:30:50+00","created_at":"2026-10-22 13:30:50+00","updated_at":"2026-10-22 13:30:50+00"}
+{"id":"0b9f1a6d-5984-4929-ba6e-d1b145065fb4","tenant_id":"c6ad1172-3115-4b7d-9f6d-32560639ca4b","docentry":"400112677","number":"100334931","customer_id":"3c1e80a8-e983-43a8-be13-e3fddc9ccccd","receipt_date":"2026-05-30","cancelled":false,"currency":"BOB","total":"313.010000","local_total":"313.010000","synced_at":"2026-10-22 13:30:50+00","created_at":"2026-10-22 13:30:50+00","updated_at":"2026-10-22 13:30:50+00"}
+
+=== RECEIPTS TOTAL vs APPLIED (LAB_DELTA) ===
+[{"receipts":26175,"apps":33160,"rtotal":"86736357.710000","applied":"33444643.210000"}]
+
+=== SUMMARY (LAB_DELTA) ===
+{
+    "invoice_agg": [
+        {
+            "status": "closed",
+            "cancelled": false,
+            "n": 31363,
+            "bal": "0.000000"
+        },
+        {
+            "status": "open",
+            "cancelled": false,
+            "n": 671,
+            "bal": "5401455.980000"
+        }
+    ],
+    "open_with_apps": 43,
+    "open_total": 671,
+    "apps_invtype": [
+        {
+            "invtype": "13",
+            "n": 33160
+        }
+    ],
+    "currencies": [
+        {
+            "currency": "BOB",
+            "n": 32034
+        }
+    ],
+    "date_range": [
+        {
+            "mi": "2026-04-01",
+            "ma": "2026-08-31"
+        }
+    ],
+    "receipt_dates": [
+        {
+            "mi": "2026-04-02",
+            "ma": "2026-08-31"
+        }
+    ]
+}
+
+=== RECEIPTS WITH/WITHOUT APPLICATIONS (LAB_DELTA) ===
+{
+    "receipts_without_apps": 0,
+    "open_inv_with_apps_rows": [
+        {
+            "inv": "3cc9813b-dee8-4bc4-87b4-8bc30e09c2b0",
+            "number": "600046009",
+            "balance": "674.220000",
+            "currency": "BOB",
+            "customer_id": "0e84408d-28a0-43a3-bd36-b32068626640",
+            "sales_rep_id": "fbb47cbc-b41e-4a92-8a11-eff23ec9d885",
+            "receipt_id": "ae504609-41a6-4c24-9fc3-4c88b3fc889f",
+            "applied_amount": "200.000000",
+            "invoiceid": 46010,
+            "instid": 1,
+            "docnum": "600046009"
+        },
+        {
+            "inv": "3cc9813b-dee8-4bc4-87b4-8bc30e09c2b0",
+            "number": "600046009",
+            "balance": "674.220000",
+            "currency": "BOB",
+            "customer_id": "0e84408d-28a0-43a3-bd36-b32068626640",
+            "sales_rep_id": "fbb47cbc-b41e-4a92-8a11-eff23ec9d885",
+            "receipt_id": "2bc4dc90-f567-436d-8ebe-96771e8cac6d",
+            "applied_amount": "36.010000",
+            "invoiceid": 46010,
+            "instid": 1,
+            "docnum": "600046009"
+        },
+        {
+            "inv": "3cc9813b-dee8-4bc4-87b4-8bc30e09c2b0",
+            "number": "600046009",
+            "balance": "674.220000",
+            "currency": "BOB",
+            "customer_id": "0e84408d-28a0-43a3-bd36-b32068626640",
+            "sales_rep_id": "fbb47cbc-b41e-4a92-8a11-eff23ec9d885",
+            "receipt_id": "dcccb82d-5f9c-4788-bc2c-ee8d9abae59e",
+            "applied_amount": "110.000000",
+            "invoiceid": 46010,
+            "instid": 1,
+            "docnum": "600046009"
+        },
+        {
+            "inv": "3cc9813b-dee8-4bc4-87b4-8bc30e09c2b0",
+            "number": "600046009",
+            "balance": "674.220000",
+            "currency": "BOB",
+            "customer_id": "0e84408d-28a0-43a3-bd36-b32068626640",
+            "sales_rep_id": "fbb47cbc-b41e-4a92-8a11-eff23ec9d885",
+            "receipt_id": "f35d4c31-18ba-4bbe-8a4a-0872e370ee68",
+            "applied_amount": "140.000000",
+            "invoiceid": 46010,
+            "instid": 1,
+            "docnum": "600046009"
+        },
+        {
+            "inv": "3cc9813b-dee8-4bc4-87b4-8bc30e09c2b0",
+            "number": "600046009",
+            "balance": "674.220000",
+            "currency": "BOB",
+            "customer_id": "0e84408d-28a0-43a3-bd36-b32068626640",
+            "sales_rep_id": "fbb47cbc-b41e-4a92-8a11-eff23ec9d885",
+            "receipt_id": "1b77d0e0-42f2-41be-a527-6dec0b015e18",
+            "applied_amount": "100.000000",
+            "invoiceid": 46010,
+            "instid": 1,
+            "docnum": "600046009"
+        }
+    ]
+}

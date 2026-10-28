@@ -95,51 +95,51 @@ $money = fn (string|int|float|null $value): string => number_format((float) $val
 <div class="space-y-5 sm:space-y-6">
     <section class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-            <p class="text-xs font-bold uppercase tracking-[0.14em] text-brand-700">Cartera y cobranzas</p>
-            <h1 class="mt-1 text-2xl font-semibold tracking-tight text-ink sm:text-3xl">Cobros</h1>
-            <p class="mt-1.5 text-sm text-black/60">Comprobantes de cobro registrados en SAP.</p>
+            <p class="eyebrow">Cartera y cobranzas</p>
+            <h1 class="page-title">Cobros</h1>
+            <p class="page-subtitle">Comprobantes de cobro registrados en SAP.</p>
         </div>
 
         @if ($search !== '' || $salesRepId !== '' || $from !== '' || $to !== '')
             <button type="button" wire:click="clearFilters"
-                class="inline-flex min-h-11 items-center justify-center rounded-xl border border-black/15 bg-white px-4 py-2.5 text-sm font-semibold text-black/70 transition hover:bg-black/[0.03]">
+                class="btn btn-outline">
                 Limpiar filtros
             </button>
         @endif
     </section>
 
     <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <article class="rounded-2xl border border-black/10 bg-white p-5 shadow-sm">
-            <p class="text-xs font-bold uppercase tracking-[0.12em] text-black/60">Comprobantes</p>
-            <p class="mt-2 text-2xl font-semibold text-ink">{{ number_format($summary->sum('receipts_count'), 0, ',', '.') }}</p>
+        <article class="stat">
+            <p class="stat-label">Comprobantes</p>
+            <p class="stat-value">{{ number_format($summary->sum('receipts_count'), 0, ',', '.') }}</p>
         </article>
 
-        <article class="rounded-2xl border border-black/10 bg-white p-5 shadow-sm xl:col-span-3">
-            <p class="text-xs font-bold uppercase tracking-[0.12em] text-black/60">{{ $isSeller ? 'Aplicado a mi cartera' : 'Monto cobrado' }}</p>
+        <article class="stat xl:col-span-3">
+            <p class="stat-label">{{ $isSeller ? 'Aplicado a mi cartera' : 'Monto cobrado' }}</p>
             <div class="mt-2 space-y-1">
                 @forelse ($summary as $row)
                     <p class="text-2xl font-semibold text-ink">{{ $row->currency }} {{ $money($row->total) }}</p>
                 @empty
-                    <p class="text-2xl font-semibold text-black/40">—</p>
+                    <p class="text-2xl font-semibold text-muted">—</p>
                 @endforelse
             </div>
         </article>
     </section>
 
-    <section class="rounded-2xl border border-black/10 bg-white p-5 shadow-sm sm:p-6">
+    <section class="card p-4 sm:p-6">
         <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             <div class="xl:col-span-2">
-                <label for="receipts-search" class="mb-1.5 block text-sm font-medium text-black/70">Buscar</label>
+                <label for="receipts-search" class="label">Buscar</label>
                 <input id="receipts-search" type="search" wire:model.live.debounce.400ms="search"
                     placeholder="Cliente, código, comprobante"
-                    class="block min-h-11 w-full rounded-xl border border-black/15 px-3.5 py-2.5 text-base text-ink outline-none transition placeholder:text-black/60 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 sm:text-sm">
+                    class="input">
             </div>
 
             @if ($salesReps->isNotEmpty())
                 <div>
-                    <label for="receipts-sales-rep" class="mb-1.5 block text-sm font-medium text-black/70">Vendedor</label>
+                    <label for="receipts-sales-rep" class="label">Vendedor</label>
                     <select id="receipts-sales-rep" wire:model.live="salesRepId"
-                        class="block min-h-11 w-full rounded-xl border border-black/15 bg-white px-3.5 py-2.5 text-base text-ink outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 sm:text-sm">
+                        class="select">
                         <option value="">Todos</option>
                         @foreach ($salesReps as $salesRep)
                             <option value="{{ $salesRep->id }}">{{ $salesRep->name }} · SLP {{ $salesRep->slpcode }}</option>
@@ -149,21 +149,21 @@ $money = fn (string|int|float|null $value): string => number_format((float) $val
             @endif
 
             <div>
-                <label for="receipts-from" class="mb-1.5 block text-sm font-medium text-black/70">Desde</label>
+                <label for="receipts-from" class="label">Desde</label>
                 <input id="receipts-from" type="date" wire:model.live="from"
-                    class="block min-h-11 w-full rounded-xl border border-black/15 bg-white px-3.5 py-2.5 text-base text-ink outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 sm:text-sm">
+                    class="input">
             </div>
 
             <div>
-                <label for="receipts-to" class="mb-1.5 block text-sm font-medium text-black/70">Hasta</label>
+                <label for="receipts-to" class="label">Hasta</label>
                 <input id="receipts-to" type="date" wire:model.live="to"
-                    class="block min-h-11 w-full rounded-xl border border-black/15 bg-white px-3.5 py-2.5 text-base text-ink outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 sm:text-sm">
+                    class="input">
             </div>
 
             <div>
-                <label for="receipts-sort" class="mb-1.5 block text-sm font-medium text-black/70">Ordenar por</label>
+                <label for="receipts-sort" class="label">Ordenar por</label>
                 <select id="receipts-sort" wire:model.live="sort"
-                    class="block min-h-11 w-full rounded-xl border border-black/15 bg-white px-3.5 py-2.5 text-base text-ink outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 sm:text-sm">
+                    class="select">
                     <option value="receipt_date_desc">Fecha descendente</option>
                     <option value="receipt_date_asc">Fecha ascendente</option>
                     <option value="total_desc">Mayor monto</option>
@@ -172,46 +172,46 @@ $money = fn (string|int|float|null $value): string => number_format((float) $val
         </div>
     </section>
 
-    <section class="hidden overflow-hidden rounded-2xl border border-black/10 bg-white shadow-sm md:block">
+    <section class="hidden overflow-hidden card md:block">
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-black/10">
+            <table class="min-w-full divide-y divide-line">
                 <thead class="bg-canvas">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-black/60">Cliente</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-black/60">Comprobante</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-black/60">Vendedor</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-black/60">Fecha</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-black/60">Moneda</th>
-                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-black/60">{{ $isSeller ? 'Aplicado a mi cartera' : 'Total' }}</th>
+                        <th class="table-head">Cliente</th>
+                        <th class="table-head">Comprobante</th>
+                        <th class="table-head">Vendedor</th>
+                        <th class="table-head">Fecha</th>
+                        <th class="table-head">Moneda</th>
+                        <th class="table-head text-right">{{ $isSeller ? 'Aplicado a mi cartera' : 'Total' }}</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-black/5">
+                <tbody class="divide-y divide-line">
                     @forelse ($receipts as $receipt)
                         <tr wire:key="receipt-{{ $receipt->id }}" class="transition hover:bg-brand-50/40">
-                            <td class="px-4 py-4">
+                            <td class="table-cell">
                                 <p class="text-sm font-medium text-ink">{{ $receipt->customer?->name }}</p>
-                                <p class="mt-0.5 text-xs text-black/60">{{ $receipt->customer?->cardcode }}</p>
+                                <p class="mt-0.5 text-xs text-muted">{{ $receipt->customer?->cardcode }}</p>
                             </td>
-                            <td class="px-4 py-4">
+                            <td class="table-cell">
                                 <p class="text-sm font-medium text-ink">{{ $receipt->number }}</p>
-                                <p class="mt-0.5 text-xs text-black/60">{{ $receipt->docentry }}</p>
+                                <p class="mt-0.5 text-xs text-muted">{{ $receipt->docentry }}</p>
                             </td>
-                            <td class="px-4 py-4 text-sm text-black/70">
+                            <td class="table-cell text-muted">
                                 @if ($isSeller)
                                     <p>{{ $sellerName ?? '—' }}</p>
                                     @if ($sellerSlpcode)
-                                        <p class="mt-0.5 text-xs text-black/60">SLP {{ $sellerSlpcode }}</p>
+                                        <p class="mt-0.5 text-xs text-muted">SLP {{ $sellerSlpcode }}</p>
                                     @endif
                                 @else
                                     <p>{{ $receipt->customer?->salesRep?->name ?? '—' }}</p>
                                     @if ($receipt->customer?->salesRep?->slpcode)
-                                        <p class="mt-0.5 text-xs text-black/60">SLP {{ $receipt->customer->salesRep->slpcode }}</p>
+                                        <p class="mt-0.5 text-xs text-muted">SLP {{ $receipt->customer->salesRep->slpcode }}</p>
                                     @endif
                                 @endif
                             </td>
-                            <td class="whitespace-nowrap px-4 py-4 text-sm text-black/70">{{ $receipt->receipt_date?->format('d/m/Y') }}</td>
-                            <td class="whitespace-nowrap px-4 py-4 text-sm text-black/70">{{ $receipt->currency }}</td>
-                            <td class="whitespace-nowrap px-4 py-4 text-right text-sm font-semibold text-ink">{{ $money($receipt->attributed_total) }}</td>
+                            <td class="table-cell whitespace-nowrap text-muted">{{ $receipt->receipt_date?->format('d/m/Y') }}</td>
+                            <td class="table-cell text-muted">{{ $receipt->currency }}</td>
+                            <td class="table-cell whitespace-nowrap text-right font-semibold text-ink">{{ $money($receipt->attributed_total) }}</td>
                         </tr>
                     @empty
                         <tr>
@@ -230,44 +230,44 @@ $money = fn (string|int|float|null $value): string => number_format((float) $val
 
     <section class="space-y-3 md:hidden" aria-label="Comprobantes de cobro">
         @forelse ($receipts as $receipt)
-            <article wire:key="receipt-card-{{ $receipt->id }}" class="rounded-2xl border border-black/10 bg-white p-4 shadow-sm">
+            <article wire:key="receipt-card-{{ $receipt->id }}" class="card p-4">
                 <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0">
                         <p class="truncate text-sm font-semibold text-ink">{{ $receipt->customer?->name }}</p>
-                        <p class="mt-0.5 text-xs text-black/60">{{ $receipt->customer?->cardcode }}</p>
+                        <p class="mt-0.5 text-xs text-muted">{{ $receipt->customer?->cardcode }}</p>
                     </div>
                     <div class="shrink-0 text-right">
-                        <p class="text-[10px] font-bold uppercase tracking-wide text-black/50">{{ $isSeller ? 'Aplicado' : 'Total' }}</p>
+                        <p class="text-[10px] font-bold uppercase tracking-wide text-muted">{{ $isSeller ? 'Aplicado' : 'Total' }}</p>
                         <p class="text-sm font-semibold text-ink">{{ $money($receipt->attributed_total) }}</p>
                     </div>
                 </div>
 
                 <dl class="mt-3 grid grid-cols-2 gap-2 rounded-xl bg-canvas p-3 text-xs">
                     <div>
-                        <dt class="font-medium text-black/60">Comprobante</dt>
+                        <dt class="font-medium text-muted">Comprobante</dt>
                         <dd class="mt-0.5 font-semibold text-ink">{{ $receipt->number }}</dd>
                     </div>
                     <div>
-                        <dt class="font-medium text-black/60">Vendedor</dt>
+                        <dt class="font-medium text-muted">Vendedor</dt>
                         <dd class="mt-0.5 font-semibold text-ink">
                             {{ $isSeller ? ($sellerName ?? '—') : ($receipt->customer?->salesRep?->name ?? '—') }}
                             @if ($isSeller ? $sellerSlpcode : $receipt->customer?->salesRep?->slpcode)
-                                <span class="block text-xs font-normal text-black/60">SLP {{ $isSeller ? $sellerSlpcode : $receipt->customer->salesRep->slpcode }}</span>
+                                <span class="block text-xs font-normal text-muted">SLP {{ $isSeller ? $sellerSlpcode : $receipt->customer->salesRep->slpcode }}</span>
                             @endif
                         </dd>
                     </div>
                     <div>
-                        <dt class="font-medium text-black/60">Fecha</dt>
+                        <dt class="font-medium text-muted">Fecha</dt>
                         <dd class="mt-0.5 font-semibold text-ink">{{ $receipt->receipt_date?->format('d/m/Y') }}</dd>
                     </div>
                     <div>
-                        <dt class="font-medium text-black/60">Moneda</dt>
+                        <dt class="font-medium text-muted">Moneda</dt>
                         <dd class="mt-0.5 font-semibold text-ink">{{ $receipt->currency }}</dd>
                     </div>
                 </dl>
             </article>
         @empty
-            <div class="rounded-2xl border border-dashed border-black/15 bg-white px-4 py-10 text-center">
+            <div class="empty-state">
                 <p class="text-sm font-medium text-ink">Sin comprobantes con estos filtros.</p>
                 <button type="button" wire:click="clearFilters" class="mt-2 text-sm font-semibold text-brand-700 hover:text-brand-800">
                     Limpiar filtros
@@ -277,7 +277,7 @@ $money = fn (string|int|float|null $value): string => number_format((float) $val
     </section>
 
     @if ($receipts->hasPages())
-        <section class="rounded-2xl border border-black/10 bg-white p-3 shadow-sm">
+        <section class="card p-3">
             {{ $receipts->links('components.pagination') }}
         </section>
     @endif

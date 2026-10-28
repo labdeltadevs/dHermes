@@ -59,9 +59,32 @@ class CollectionEventPolicy
         return false;
     }
 
-    public function match(User $user, CollectionEvent $collectionEvent): bool
+    public function accept(User $user, CollectionEvent $collectionEvent): bool
     {
-        return $this->role($user, $collectionEvent)?->canMatch() ?? false;
+        return $this->role($user, $collectionEvent)?->canApprove() ?? false;
+    }
+
+    public function reject(User $user, CollectionEvent $collectionEvent): bool
+    {
+        return $this->role($user, $collectionEvent)?->canApprove() ?? false;
+    }
+
+    public function cancel(User $user, CollectionEvent $collectionEvent): bool
+    {
+        if ($collectionEvent->status !== CollectionStatus::Pending) {
+            return false;
+        }
+
+        if ($this->role($user, $collectionEvent)?->canApprove() ?? false) {
+            return true;
+        }
+
+        $membership = $this->membership($user, $collectionEvent);
+
+        return $membership !== null
+            && $membership->role->sells()
+            && $collectionEvent->seller_user_id === $user->id
+            && $collectionEvent->collected_on->isToday();
     }
 
     public function void(User $user, CollectionEvent $collectionEvent): bool

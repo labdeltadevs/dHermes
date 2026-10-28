@@ -5,7 +5,6 @@ namespace App\Queries;
 use App\Enums\CollectionStatus;
 use App\Enums\TenantRole;
 use App\Models\CollectionEvent;
-use App\Models\Receipt;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -26,7 +25,7 @@ final class CollectionQuery
             'invoice.customer',
             'invoice.salesRep',
             'seller',
-            'matchedReceipt',
+            'reviewedBy:id,name',
         ]);
 
         if ($membership->role === TenantRole::Seller || $membership->role === TenantRole::Collector) {
@@ -50,14 +49,18 @@ final class CollectionQuery
         $search = trim((string) ($filters['search'] ?? ''));
 
         if ($search !== '') {
-            $query->whereHas('invoice', function (Builder $invoice) use ($search): void {
-                $invoice->where(function (Builder $invoice) use ($search): void {
-                    $invoice->whereLike('number', '%'.$search.'%')
-                        ->orWhereLike('docentry', '%'.$search.'%')
-                        ->orWhereHas('customer', fn (Builder $customer): Builder => $customer
-                            ->whereLike('name', '%'.$search.'%')
-                            ->orWhereLike('cardcode', '%'.$search.'%'));
-                });
+            $query->where(function (Builder $query) use ($search): void {
+                $query->whereLike('erp_docnum', '%'.$search.'%')
+                    ->orWhereLike('voucher_code', '%'.$search.'%')
+                    ->orWhereHas('invoice', function (Builder $invoice) use ($search): void {
+                        $invoice->where(function (Builder $invoice) use ($search): void {
+                            $invoice->whereLike('number', '%'.$search.'%')
+                                ->orWhereLike('docentry', '%'.$search.'%')
+                                ->orWhereHas('customer', fn (Builder $customer): Builder => $customer
+                                    ->whereLike('name', '%'.$search.'%')
+                                    ->orWhereLike('cardcode', '%'.$search.'%'));
+                        });
+                    });
             });
         }
 
@@ -101,35 +104,12 @@ final class CollectionQuery
             ->selectRaw('count(*) as collections_count')
             ->selectRaw('sum(amount) as total')
             ->selectRaw('sum(case when status = ? then 1 else 0 end) as pending_count', [CollectionStatus::Pending->value])
-            ->selectRaw('sum(case when status = ? then 1 else 0 end) as matched_count', [CollectionStatus::Matched->value])
-            ->selectRaw('sum(case when status = ? then 1 else 0 end) as discrepancy_count', [CollectionStatus::Discrepancy->value])
+            ->selectRaw('sum(case when status = ? then 1 else 0 end) as accepted_count', [CollectionStatus::Accepted->value])
+            ->selectRaw('sum(case when status = ? then 1 else 0 end) as rejected_count', [CollectionStatus::Rejected->value])
+            ->selectRaw('sum(case when status = ? then 1 else 0 end) as cancelled_count', [CollectionStatus::Cancelled->value])
+            ->selectRaw('sum(case when status = ? then amount else 0 end) as accepted_total', [CollectionStatus::Accepted->value])
             ->groupBy('currency')
             ->orderBy('currency')
             ->get();
-    }
-
-    /**
-     * @return Builder<Receipt>
-     */
-    public function candidatesFor(CollectionEvent $event): Builder
-    {
-        $event->loadMissing('invoice');
-
-        $invoice = $event->invoice;
-
-        abort_if($invoice === null, 404);
-
-        return Receipt::query()
-            ->where('tenant_id', $event->tenant_id)
-            ->where('cancelled', false)
-            ->where('customer_id', $invoice->customer_id)
-            ->where('currency', $event->currency)
-            ->whereHas('applications', fn (Builder $application): Builder => $application
-                ->where('tenant_id', $event->tenant_id)
-                ->where('invoice_id', $invoice->id))
-            ->with('customer:id,name,cardcode')
-            ->orderByDesc('receipt_date')
-            ->orderBy('id')
-            ->limit(50);
     }
 }

@@ -1,130 +1,343 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-        <title>{{ __('Comprobante') }} · {{ config('app.name', 'dHermes') }}</title>
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-        <style>
-            @page {
-                size: A4;
-                margin: 16mm;
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ __('Comprobante') }} · {{ config('app.name', 'dHermes') }}</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        @page {
+            size: 80mm auto;
+            margin: 0;
+        }
+
+        html,
+        body {
+            width: 80mm;
+            margin: 0;
+            padding: 0;
+            background: #fff;
+            color: #000;
+        }
+
+        body {
+            /* Fuente liviana: usa la fuente interna de la impresora (draft) */
+            font-family: "Courier New", Courier, monospace;
+            font-weight: 500;
+        }
+
+        .receipt {
+            width: 80mm;
+            /* padding arriba = 0 porque el .prefeed ya hace el colchón */
+            padding: 0 4mm 2mm 4mm;
+            background: #fff;
+            color: #000;
+            font-size: 8pt;
+            line-height: 1.15;
+        }
+
+        /* Espacio en blanco que absorbe la precarga de la impresora */
+        .prefeed {
+            height: 5mm;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .app {
+            font-size: 6pt;
+            font-weight: 600;
+            letter-spacing: 0;
+            text-transform: uppercase;
+            opacity: .9;
+        }
+
+        .tenant {
+            font-size: 8.5pt;
+            font-weight: 600;
+            line-height: 1.1;
+            margin-top: 0.5mm;
+            word-break: break-word;
+        }
+
+        .doctype {
+            font-size: 6pt;
+            margin-top: 0.5mm;
+            text-transform: uppercase;
+            opacity: .9;
+        }
+
+        .status {
+            display: inline-block;
+            margin-top: 0.8mm;
+            border: 0.5pt dotted #000;
+            padding: 0.2mm 1mm;
+            font-size: 6pt;
+            font-weight: 600;
+            letter-spacing: 0;
+        }
+
+        .sep {
+            border-top: 1px dotted #000;
+            margin: 1.5mm 0;
+            opacity: .9;
+        }
+
+        .line {
+            display: flex;
+            gap: 1mm;
+            align-items: baseline;
+            padding: 0.5mm 0;
+            font-size: 7pt;
+        }
+
+        .line .l {
+            font-size: 7pt;
+            font-weight: 600;
+            white-space: nowrap;
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+
+        .line .v {
+            font-weight: 600;
+            font-size: 7pt;
+            word-break: break-all;
+            flex: 1;
+            text-align: right;
+        }
+
+        .line .v.left {
+            text-align: left;
+        }
+
+        .cols {
+            display: flex;
+            gap: 1.5mm;
+        }
+
+        .cols .col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 0.5mm 0;
+        }
+
+        .cols .col .l {
+            font-size: 7pt;
+            font-weight: 600;
+            opacity: .9;
+            text-transform: uppercase;
+        }
+
+        .cols .col .v {
+            font-size: 7pt;
+            font-weight: 600;
+            word-break: break-all;
+            line-height: 1.1;
+        }
+
+        .mono {
+            word-break: break-all;
+        }
+
+        .qr-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.8mm;
+            padding: 0.8mm 0;
+        }
+
+        .qr-box {
+            width: 20mm;
+            height: 20mm;
+            line-height: 0;
+        }
+
+        .qr-box svg {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        }
+
+        .url {
+            font-size: 6pt;
+            text-align: center;
+            word-break: break-all;
+            line-height: 1.1;
+            max-width: 72mm;
+        }
+
+        .hint {
+            font-size: 6pt;
+            opacity: .9;
+            text-align: center;
+        }
+
+        .footer {
+            font-size: 6pt;
+            line-height: 1.15;
+            opacity: .9;
+            text-align: center;
+            margin-top: 1mm;
+        }
+
+        @media screen {
+            html {
+                width: 100% !important;
             }
-        </style>
-    </head>
-    <body class="min-h-dvh bg-canvas text-ink antialiased print:bg-white">
-        @php
-            $money = fn (string|int|float|null $value): string => number_format((float) $value, 2, ',', '.');
-            $subjectLabel = $subject instanceof \App\Contracts\Verifiable ? $subject->verificationLabel() : 'Comprobante';
-            $isCollection = $subject instanceof \App\Models\CollectionEvent;
-            $isCashSession = $subject instanceof \App\Models\CashSession;
-            $statusLabel = match ($result) {
-                \App\Support\Verification\VerificationResult::Valid => 'Válido',
-                \App\Support\Verification\VerificationResult::Tampered => 'Alterado',
-                \App\Support\Verification\VerificationResult::Revoked => 'Revocado',
-                default => 'Desconocido',
-            };
-        @endphp
 
-        <main class="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 sm:py-10 print:max-w-none print:px-0 print:py-0">
-            <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between print:hidden">
-                <a href="{{ route('verification.show', $code) }}" class="text-sm font-semibold text-brand-700 hover:text-brand-800">
-                    Verificación pública
-                </a>
-                <button type="button" onclick="window.print()"
-                    class="inline-flex min-h-11 items-center justify-center rounded-xl bg-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-black/80">
-                    Imprimir
-                </button>
+            body {
+                width: 100% !important;
+                background: #e5e5e5;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 12px;
+            }
+
+            .receipt {
+                box-shadow: 0 1px 8px rgba(0, 0, 0, .18);
+                margin-top: 10px;
+            }
+
+            .no-print {
+                width: 80mm;
+                display: flex;
+                justify-content: space-between;
+                gap: 8px;
+            }
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    @php
+        $money = fn(string|int|float|null $value): string => number_format((float) $value, 2, ',', '.');
+        $subjectLabel = $subject instanceof \App\Contracts\Verifiable ? $subject->verificationLabel() : 'Comprobante';
+        $isCollection = $subject instanceof \App\Models\CollectionEvent;
+        $isCashSession = $subject instanceof \App\Models\CashSession;
+        $statusLabel = match ($result) {
+            \App\Support\Verification\VerificationResult::Valid => 'VALIDO',
+            \App\Support\Verification\VerificationResult::Tampered => 'ALTERADO',
+            \App\Support\Verification\VerificationResult::Revoked => 'REVOCADO',
+            default => 'DESCONOCIDO',
+        };
+    @endphp
+
+    <div class="no-print">
+        <a href="{{ route('verification.show', $code) }}"
+            style="font-size:12px;font-weight:600;color:#000">Verificación</a>
+        <button type="button" onclick="window.print()"
+            style="background:#000;color:#fff;border:0;border-radius:999px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer">Imprimir</button>
+    </div>
+
+    <div class="receipt">
+        {{-- COLCHÓN: absorbe la precarga de la impresora --}}
+        <div class="prefeed"></div>
+
+        {{-- HEADER --}}
+        <div class="center">
+            <div class="app">///////////////////////////////////</div>
+            <div class="app">{{ config('app.name', 'dHermes') }}</div>
+            <div class="tenant">{{ $tenant?->name ?? 'Comprobante' }}</div>
+            <div class="doctype">Comprobante de {{ strtolower($subjectLabel) }}</div>
+            <div class="status">{{ $statusLabel }}</div>
+        </div>
+
+        <div class="sep"></div>
+
+        {{-- DATA --}}
+        <div class="line">
+            <span class="l">COD:</span>
+            <span class="v mono left">{{ $code }}</span>
+        </div>
+
+        @if ($isCollection)
+            <div class="cols">
+                <div class="col"><span class="l">Monto</span><span class="v">{{ $subject->currency }}
+                        {{ $money($subject->amount) }}</span></div>
+                <div class="col"><span class="l">Fecha</span><span
+                        class="v">{{ $subject->collected_on?->format('d/m/Y') ?? '—' }}</span></div>
             </div>
+            <div class="cols">
+                <div class="col"><span class="l">Factura</span><span
+                        class="v">{{ $subject->invoice?->number ?? '—' }}</span>
+                </div>
+                <div class="col"><span class="l">DocEntry</span><span
+                        class="v">{{ $subject->invoice?->docentry ?? '—' }}</span></div>
+            </div>
+            <div class="cols">
+                <div class="col"><span class="l">Doc. ERP</span><span
+                        class="v">{{ $subject->erp_docnum ?? '—' }}</span></div>
+                <div class="col"><span class="l">Voucher</span><span
+                        class="v">{{ $subject->voucher_code ?? '—' }}</span></div>
+            </div>
+            <div class="line">
+                <span class="l">Cliente:</span>
+                <span
+                    class="v left">{{ \Illuminate\Support\Str::limit($subject->invoice?->customer?->name ?? '—', 32) }}</span>
+            </div>
+            <div class="line">
+                <span class="l">Adj:</span>
+                <span class="v left">{{ $subject->proof_path ? 'SI' : 'NO' }} <span class="no-print">
+                        @if ($subject->proof_path)
+                            -
+                            <a href="{{ route('collections.proof', $subject->id) }}" target="_blank">ver</a>
+                        @endif
+                    </span></span>
+            </div>
+        @elseif ($isCashSession)
+            <div class="cols">
+                <div class="col"><span class="l">Esperado</span><span class="v">{{ $subject->currency }}
+                        {{ $money($subject->expected_amount) }}</span></div>
+                <div class="col"><span class="l">Contado</span><span
+                        class="v">{{ $subject->counted_amount !== null ? $subject->currency . ' ' . $money($subject->counted_amount) : '—' }}</span>
+                </div>
+            </div>
+            <div class="cols">
+                <div class="col"><span class="l">Diferencia</span><span
+                        class="v">{{ $subject->difference !== null ? $subject->currency . ' ' . $money($subject->difference) : '—' }}</span>
+                </div>
+                <div class="col"><span class="l">Apertura</span><span
+                        class="v">{{ $subject->opened_at?->format('d/m H:i') ?? '—' }}</span></div>
+            </div>
+        @else
+            <div class="line"><span class="l">Tipo:</span><span class="v left">{{ $subjectLabel }}</span></div>
+        @endif
 
-            <article class="rounded-3xl border border-black/10 bg-white p-6 shadow-xl shadow-black/[0.04] sm:p-8 print:rounded-none print:border-0 print:p-0 print:shadow-none">
-                <header class="flex flex-col gap-4 border-b border-black/10 pb-6 sm:flex-row sm:items-start sm:justify-between">
-                    <div class="min-w-0">
-                        <p class="text-xs font-bold uppercase tracking-[0.16em] text-brand-700">{{ config('app.name', 'dHermes') }}</p>
-                        <h1 class="mt-1 text-2xl font-semibold tracking-tight text-ink">{{ $tenant?->name ?? 'Comprobante' }}</h1>
-                        <p class="mt-1.5 text-sm text-black/60">Comprobante de {{ strtolower($subjectLabel) }}</p>
-                    </div>
+        <div class="sep"></div>
 
-                    <span class="inline-flex w-fit shrink-0 rounded-full border px-3 py-1 text-xs font-semibold
-                        @class([
-                            'border-emerald-200 bg-emerald-50 text-emerald-800' => $result === \App\Support\Verification\VerificationResult::Valid,
-                            'border-amber-200 bg-amber-50 text-amber-800' => $result === \App\Support\Verification\VerificationResult::Revoked,
-                            'border-rose-200 bg-rose-50 text-rose-800' => $result === \App\Support\Verification\VerificationResult::Tampered,
-                            'border-black/10 bg-canvas text-ink' => $result === \App\Support\Verification\VerificationResult::NotFound,
-                        ])">
-                        {{ $statusLabel }}
-                    </span>
-                </header>
+        {{-- QR --}}
+        <div class="qr-wrap">
+            <div class="qr-box">{!! $qrSvg !!}</div>
+            <div class="url mono">{{ $publicUrl }}</div>
+            <div class="hint">Escanee para verificar</div>
+        </div>
 
-                <section class="mt-6 grid gap-6 sm:grid-cols-[1fr_auto]">
-                    <div class="min-w-0 space-y-5">
-                        <dl class="grid gap-3 text-sm sm:grid-cols-2">
-                            <div class="rounded-xl border border-black/5 bg-canvas px-4 py-3">
-                                <dt class="font-medium text-black/60">Código</dt>
-                                <dd class="mt-1 break-all font-mono text-xs font-semibold text-ink">{{ $code }}</dd>
-                            </div>
+        <div class="sep"></div>
 
-                            <div class="rounded-xl border border-black/5 bg-canvas px-4 py-3">
-                                <dt class="font-medium text-black/60">Tipo</dt>
-                                <dd class="mt-1 font-semibold text-ink">{{ $subjectLabel }}</dd>
-                            </div>
+        <div class="footer">
+            Emitido electrónicamente por {{ $tenant?->name ?? config('app.name') }}. Valide en la URL. No comparta si
+            es REVOCADO.
+        </div>
+        <div class="footer">///////////////////////////////////</div>
+    </div>
+</body>
 
-                            @if ($isCollection)
-                                <div class="rounded-xl border border-black/5 bg-canvas px-4 py-3">
-                                    <dt class="font-medium text-black/60">Monto</dt>
-                                    <dd class="mt-1 font-semibold text-ink">{{ $subject->currency }} {{ $money($subject->amount) }}</dd>
-                                </div>
-                                <div class="rounded-xl border border-black/5 bg-canvas px-4 py-3">
-                                    <dt class="font-medium text-black/60">Fecha</dt>
-                                    <dd class="mt-1 font-semibold text-ink">{{ $subject->collected_on?->format('d/m/Y') ?? '—' }}</dd>
-                                </div>
-                                <div class="rounded-xl border border-black/5 bg-canvas px-4 py-3">
-                                    <dt class="font-medium text-black/60">Factura</dt>
-                                    <dd class="mt-1 font-semibold text-ink">{{ $subject->invoice?->number ?? '—' }}</dd>
-                                </div>
-                                <div class="rounded-xl border border-black/5 bg-canvas px-4 py-3">
-                                    <dt class="font-medium text-black/60">Cliente</dt>
-                                    <dd class="mt-1 truncate font-semibold text-ink">{{ $subject->invoice?->customer?->name ?? '—' }}</dd>
-                                </div>
-                            @elseif ($isCashSession)
-                                <div class="rounded-xl border border-black/5 bg-canvas px-4 py-3">
-                                    <dt class="font-medium text-black/60">Esperado</dt>
-                                    <dd class="mt-1 font-semibold text-ink">{{ $subject->currency }} {{ $money($subject->expected_amount) }}</dd>
-                                </div>
-                                <div class="rounded-xl border border-black/5 bg-canvas px-4 py-3">
-                                    <dt class="font-medium text-black/60">Contado</dt>
-                                    <dd class="mt-1 font-semibold text-ink">{{ $subject->counted_amount !== null ? $subject->currency.' '.$money($subject->counted_amount) : '—' }}</dd>
-                                </div>
-                                <div class="rounded-xl border border-black/5 bg-canvas px-4 py-3">
-                                    <dt class="font-medium text-black/60">Diferencia</dt>
-                                    <dd class="mt-1 font-semibold text-ink">{{ $subject->difference !== null ? $subject->currency.' '.$money($subject->difference) : '—' }}</dd>
-                                </div>
-                                <div class="rounded-xl border border-black/5 bg-canvas px-4 py-3">
-                                    <dt class="font-medium text-black/60">Apertura</dt>
-                                    <dd class="mt-1 font-semibold text-ink">{{ $subject->opened_at?->format('d/m/Y H:i') ?? '—' }}</dd>
-                                </div>
-                            @endif
-                        </dl>
-
-                        <div class="rounded-xl border border-black/5 bg-canvas px-4 py-3 text-sm">
-                            <p class="font-medium text-black/60">Verificación pública</p>
-                            <p class="mt-1 break-all font-mono text-xs font-semibold text-ink">{{ $publicUrl }}</p>
-                        </div>
-                    </div>
-
-                    <div class="flex flex-col items-center justify-start gap-2">
-                        <div class="rounded-2xl border border-black/10 bg-white p-3">
-                            {!! $qrSvg !!}
-                        </div>
-                        <p class="max-w-44 text-center text-xs leading-5 text-black/60">Escanee para verificar el comprobante.</p>
-                    </div>
-                </section>
-
-                <footer class="mt-8 border-t border-black/10 pt-4 text-xs leading-5 text-black/60">
-                    <p>Este comprobante fue emitido electrónicamente por {{ $tenant?->name ?? config('app.name', 'dHermes') }}.</p>
-                    <p class="mt-1">La autenticidad puede comprobarse en la dirección indicada. No comparta este documento si fue revocado.</p>
-                </footer>
-            </article>
-        </main>
-    </body>
 </html>

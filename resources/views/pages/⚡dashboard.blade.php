@@ -23,56 +23,53 @@ new #[Layout('layouts.app')] #[Title('Inicio')] class extends Component
 ?>
 
 <div class="space-y-6 sm:space-y-8">
-    <section class="relative overflow-hidden rounded-3xl border border-black/10 bg-white p-5 shadow-sm sm:p-8">
-        <div class="pointer-events-none absolute -right-20 -top-24 size-64 rounded-full bg-brand-500/10 blur-3xl"></div>
-        <div class="pointer-events-none absolute -bottom-28 left-1/3 size-56 rounded-full bg-brand-500/5 blur-3xl"></div>
+    <section class="relative overflow-hidden rounded-3xl border border-line bg-surface p-5 shadow-card sm:p-8">
+        <div class="pointer-events-none absolute -right-20 -top-24 size-64 rounded-full bg-brand-500/15 blur-3xl"></div>
+        <div class="pointer-events-none absolute -bottom-28 left-1/3 size-56 rounded-full bg-mint-400/10 blur-3xl"></div>
 
         <div class="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div class="max-w-2xl">
                 <div class="flex flex-wrap items-center gap-2">
-                    <span class="inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1 text-xs font-bold text-brand-700">
+                    <span class="badge bg-brand-100 text-brand-700">
                         <span class="size-1.5 rounded-full bg-brand-500"></span>
                         {{ $tenant?->name ?? 'Sin empresa activa' }}
                     </span>
-                    <span class="text-xs font-medium text-black/60">{{ now()->format('d/m/Y') }}</span>
+                    <span class="text-xs font-medium text-muted">{{ now()->format('d/m/Y') }}</span>
                 </div>
 
                 <h1 class="mt-4 text-2xl font-semibold tracking-[-0.03em] text-ink sm:text-4xl">
                     Hola, {{ auth()->user()->name }}
                 </h1>
-                <p class="mt-2 max-w-xl text-sm leading-6 text-black/60 sm:text-base">
+                <p class="mt-2 max-w-xl text-sm leading-6 text-muted sm:text-base">
                     Este es el punto de partida para la gestión de cartera, cobros y arqueos de {{ $tenant?->code ?? 'tu empresa' }}.
                 </p>
 
                 <div class="mt-5 flex flex-wrap gap-2">
-                    <span class="rounded-full border border-black/10 bg-canvas px-3 py-1.5 text-xs font-semibold text-black/60">
+                    <span class="chip">
                         {{ $membership?->role->label() }}
                     </span>
-                    <span class="rounded-full border border-black/10 bg-canvas px-3 py-1.5 text-xs font-semibold text-black/60">
+                    <span class="chip">
                         {{ $tenant?->local_currency ?? '—' }}
                     </span>
-                    <span class="rounded-full border border-black/10 bg-canvas px-3 py-1.5 text-xs font-semibold text-black/60">
+                    <span class="chip">
                         {{ $tenant?->timezone ?? '—' }}
                     </span>
                 </div>
             </div>
 
             <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <a href="{{ route('portfolio') }}" wire:navigate
-                    class="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand-500 px-4 py-2.5 text-sm font-bold text-ink transition hover:bg-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-500/25">
+                <a href="{{ route('portfolio') }}" wire:navigate class="btn btn-primary">
                     Ver cartera
                 </a>
 
                 @if ($membership?->role->sells())
-                    <a href="{{ route('collections.create') }}" wire:navigate
-                        class="inline-flex min-h-11 items-center justify-center rounded-xl border border-black/15 bg-white px-4 py-2.5 text-sm font-semibold text-black/70 transition hover:bg-black/[0.03]">
+                    <a href="{{ route('collections.create') }}" wire:navigate class="btn btn-outline">
                         Registrar cobro
                     </a>
                 @endif
 
                 @if ($canManageTenant)
-                    <a href="{{ route('admin.users') }}" wire:navigate
-                        class="inline-flex min-h-11 items-center justify-center rounded-xl border border-black/15 bg-white px-4 py-2.5 text-sm font-semibold text-black/70 transition hover:bg-black/[0.03]">
+                    <a href="{{ route('admin.users') }}" wire:navigate class="btn btn-outline">
                         Gestionar usuarios
                     </a>
                 @endif
@@ -83,10 +80,10 @@ new #[Layout('layouts.app')] #[Title('Inicio')] class extends Component
     <section>
         <div class="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
             <div>
-                <p class="text-xs font-bold uppercase tracking-[0.14em] text-brand-700">Operación diaria</p>
+                <p class="eyebrow">Operación diaria</p>
                 <h2 class="mt-1 text-xl font-semibold tracking-tight text-ink">Módulos</h2>
             </div>
-            <p class="text-sm text-black/60">Accesos disponibles según tu rol.</p>
+            <p class="text-sm text-muted">Accesos disponibles según tu rol.</p>
         </div>
 
         <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -105,19 +102,19 @@ new #[Layout('layouts.app')] #[Title('Inicio')] class extends Component
 
                 <{{ $tag }} wire:key="module-{{ $module['title'] }}"
                     @if ($isAvailable) href="{{ $module['route'] }}" wire:navigate @endif
-                    class="group rounded-2xl border border-black/10 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-md">
+                    class="card card-hover group p-5">
                     <div class="flex items-center justify-between">
                         <div class="flex size-10 items-center justify-center rounded-xl bg-brand-50 text-brand-700 transition group-hover:bg-brand-500 group-hover:text-ink">
                             <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="{{ $module['icon'] }}" />
                             </svg>
                         </div>
-                        <span class="rounded-full {{ $isAvailable ? 'bg-brand-50 text-brand-700' : 'bg-black/[0.04] text-black/60' }} px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide">
+                        <span class="badge {{ $isAvailable ? 'bg-brand-50 text-brand-700' : 'bg-black/[0.04] text-muted' }}">
                             {{ $isAvailable ? 'Disponible' : 'Próximamente' }}
                         </span>
                     </div>
                     <h3 class="mt-4 text-sm font-semibold text-ink">{{ $module['title'] }}</h3>
-                    <p class="mt-1 text-sm leading-6 text-black/60">{{ $module['description'] }}</p>
+                    <p class="mt-1 text-sm leading-6 text-muted">{{ $module['description'] }}</p>
                 </{{ $tag }}>
             @endforeach
         </div>
@@ -134,23 +131,19 @@ new #[Layout('layouts.app')] #[Title('Inicio')] class extends Component
 
             <div class="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 @if ($canManageTenant)
-                    <a href="{{ route('admin.users') }}" wire:navigate
-                        class="rounded-xl border border-brand-300 bg-white px-4 py-3 text-sm font-semibold text-brand-800 transition hover:bg-brand-100">
+                    <a href="{{ route('admin.users') }}" wire:navigate class="btn border border-brand-300 bg-surface text-brand-800 hover:bg-brand-100">
                         Usuarios
                     </a>
-                    <a href="{{ route('admin.assignments') }}" wire:navigate
-                        class="rounded-xl border border-brand-300 bg-white px-4 py-3 text-sm font-semibold text-brand-800 transition hover:bg-brand-100">
+                    <a href="{{ route('admin.assignments') }}" wire:navigate class="btn border border-brand-300 bg-surface text-brand-800 hover:bg-brand-100">
                         Asignaciones
                     </a>
                 @endif
 
                 @if ($canApprove)
-                    <a href="{{ route('admin.audit') }}" wire:navigate
-                        class="rounded-xl border border-brand-300 bg-white px-4 py-3 text-sm font-semibold text-brand-800 transition hover:bg-brand-100">
+                    <a href="{{ route('admin.audit') }}" wire:navigate class="btn border border-brand-300 bg-surface text-brand-800 hover:bg-brand-100">
                         Auditor&iacute;a
                     </a>
-                    <a href="{{ route('admin.verification-codes') }}" wire:navigate
-                        class="rounded-xl border border-brand-300 bg-white px-4 py-3 text-sm font-semibold text-brand-800 transition hover:bg-brand-100">
+                    <a href="{{ route('admin.verification-codes') }}" wire:navigate class="btn border border-brand-300 bg-surface text-brand-800 hover:bg-brand-100">
                         Comprobantes
                     </a>
                 @endif

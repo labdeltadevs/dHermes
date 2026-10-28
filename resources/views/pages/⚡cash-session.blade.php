@@ -204,18 +204,18 @@ $statusClasses = fn (CashSessionStatus $value): string => match ($value) {
     <section class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
             <a href="{{ route('cash-sessions.index') }}" wire:navigate class="text-sm font-semibold text-brand-700 hover:text-brand-800">Volver a arqueos</a>
-            <h1 class="mt-2 text-2xl font-semibold tracking-tight text-ink sm:text-3xl">Arqueo de {{ $cashSession->seller?->name ?? 'vendedor' }}</h1>
-            <p class="mt-1.5 text-sm text-black/60">Apertura {{ $cashSession->opened_at?->format('d/m/Y H:i') }} · Moneda {{ $cashSession->currency }}</p>
+            <h1 class="page-title">Arqueo de {{ $cashSession->seller?->name ?? 'vendedor' }}</h1>
+            <p class="page-subtitle">Apertura {{ $cashSession->opened_at?->format('d/m/Y H:i') }} · Moneda {{ $cashSession->currency }}</p>
         </div>
 
         <div class="flex flex-col items-start gap-2 sm:items-end">
-            <span class="inline-flex w-fit rounded-full px-3 py-1.5 text-sm font-semibold {{ $statusClasses($cashSession->status) }}">
+            <span class="badge {{ $statusClasses($cashSession->status) }}">
                 {{ $statusLabels[$cashSession->status->value] }}
             </span>
 
             @if ($canPrint)
                 <button type="button" wire:click="issueComprobante" wire:loading.attr="disabled"
-                    class="inline-flex min-h-10 items-center justify-center rounded-xl border border-brand-200 bg-brand-50 px-3.5 py-2 text-sm font-semibold text-brand-700 transition hover:bg-brand-100 disabled:opacity-50">
+                    class="btn btn-soft btn-sm">
                     Emitir comprobante
                 </button>
             @endif
@@ -223,61 +223,61 @@ $statusClasses = fn (CashSessionStatus $value): string => match ($value) {
     </section>
 
     <section class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <article class="rounded-2xl border border-black/10 bg-white p-5 shadow-sm">
-            <p class="text-xs font-bold uppercase tracking-[0.12em] text-black/60">Esperado</p>
-            <p class="mt-2 text-2xl font-semibold text-ink">{{ $money($cashSession->expected_amount) }}</p>
+        <article class="stat">
+            <p class="stat-label">Esperado</p>
+            <p class="stat-value">{{ $money($cashSession->expected_amount) }}</p>
         </article>
 
-        <article class="rounded-2xl border border-black/10 bg-white p-5 shadow-sm">
-            <p class="text-xs font-bold uppercase tracking-[0.12em] text-black/60">Contado</p>
-            <p class="mt-2 text-2xl font-semibold text-ink">{{ $cashSession->counted_amount === null ? '—' : $money($cashSession->counted_amount) }}</p>
+        <article class="stat">
+            <p class="stat-label">Contado</p>
+            <p class="stat-value">{{ $cashSession->counted_amount === null ? '—' : $money($cashSession->counted_amount) }}</p>
         </article>
 
-        <article class="rounded-2xl border border-black/10 bg-white p-5 shadow-sm">
-            <p class="text-xs font-bold uppercase tracking-[0.12em] text-black/60">Diferencia</p>
-            <p class="mt-2 text-2xl font-semibold {{ (float) $cashSession->difference < 0 ? 'text-rose-700' : 'text-ink' }}">
+        <article class="stat">
+            <p class="stat-label">Diferencia</p>
+            <p class="stat-value {{ (float) $cashSession->difference < 0 ? 'text-rose-700' : 'text-ink' }}">
                 {{ $cashSession->difference === null ? '—' : $money($cashSession->difference) }}
             </p>
         </article>
 
-        <article class="rounded-2xl border border-black/10 bg-white p-5 shadow-sm">
-            <p class="text-xs font-bold uppercase tracking-[0.12em] text-black/60">Cierre</p>
+        <article class="stat">
+            <p class="stat-label">Cierre</p>
             <p class="mt-2 text-sm font-semibold text-ink">{{ $cashSession->closed_at?->format('d/m/Y H:i') ?? 'Sin cerrar' }}</p>
-            <p class="mt-1 text-xs text-black/60">Aprobador: {{ $cashSession->approver?->name ?? '—' }}</p>
+            <p class="mt-1 text-xs text-muted">Aprobador: {{ $cashSession->approver?->name ?? '—' }}</p>
         </article>
     </section>
 
     @if ($cashSession->notes)
-        <section class="rounded-2xl border border-black/10 bg-white p-5 shadow-sm">
+        <section class="card p-5">
             <h2 class="text-base font-semibold text-ink">Notas</h2>
-            <p class="mt-2 whitespace-pre-line text-sm text-black/70">{{ $cashSession->notes }}</p>
+            <p class="mt-2 whitespace-pre-line text-sm text-muted">{{ $cashSession->notes }}</p>
         </section>
     @endif
 
-    <section class="overflow-hidden rounded-2xl border border-black/10 bg-white shadow-sm">
-        <div class="flex flex-col gap-2 border-b border-black/10 p-5 sm:flex-row sm:items-center sm:justify-between">
+    <section class="overflow-hidden card">
+        <div class="flex flex-col gap-2 border-b border-line p-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h2 class="text-base font-semibold text-ink">Detalle del arqueo</h2>
-                <p class="mt-1 text-sm text-black/60">{{ $items->count() }} cobro(s) registrado(s).</p>
+                <p class="mt-1 text-sm text-muted">{{ $items->count() }} cobro(s) registrado(s).</p>
             </div>
         </div>
 
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-black/10">
+            <table class="min-w-full divide-y divide-line">
                 <thead class="bg-canvas">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-black/60">Método</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-black/60">Referencia</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-black/60">Cobro</th>
-                        <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-black/60">Monto</th>
+                        <th class="table-head">Método</th>
+                        <th class="table-head">Referencia</th>
+                        <th class="table-head">Cobro</th>
+                        <th class="table-head text-right">Monto</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-black/5">
+                <tbody class="divide-y divide-line">
                     @forelse ($items as $item)
                         <tr wire:key="cash-item-{{ $item->id }}">
-                            <td class="px-4 py-4 text-sm text-ink">{{ $paymentMethods[$item->payment_method->value] ?? $item->payment_method->value }}</td>
-                            <td class="px-4 py-4 text-sm text-black/70">{{ $item->reference ?: '—' }}</td>
-                            <td class="px-4 py-4 text-sm text-black/70">
+                            <td class="table-cell">{{ $paymentMethods[$item->payment_method->value] ?? $item->payment_method->value }}</td>
+                            <td class="table-cell text-muted">{{ $item->reference ?: '—' }}</td>
+                            <td class="table-cell whitespace-nowrap text-muted">
                                 @if ($item->collectionEvent)
                                     {{ $item->collectionEvent->collected_on?->format('d/m/Y') }}
                                     · {{ $money($item->collectionEvent->amount) }} {{ $item->collectionEvent->currency }}
@@ -285,11 +285,11 @@ $statusClasses = fn (CashSessionStatus $value): string => match ($value) {
                                     —
                                 @endif
                             </td>
-                            <td class="whitespace-nowrap px-4 py-4 text-right text-sm font-semibold text-ink">{{ $money($item->amount) }}</td>
+                            <td class="table-cell whitespace-nowrap text-right font-semibold text-ink">{{ $money($item->amount) }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-4 py-10 text-center text-sm text-black/60">Aún no hay cobros en este arqueo.</td>
+                            <td colspan="4" class="px-4 py-10 text-center text-sm text-muted">Aún no hay cobros en este arqueo.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -298,46 +298,46 @@ $statusClasses = fn (CashSessionStatus $value): string => match ($value) {
     </section>
 
     @if ($canManage && $isOpen)
-        <section class="rounded-2xl border border-black/10 bg-white p-5 shadow-sm sm:p-6">
+        <section class="card p-4 sm:p-6">
             <h2 class="text-base font-semibold text-ink">Agregar cobro</h2>
-            <p class="mt-1 text-sm text-black/60">Registra el efectivo, cheque o transferencia recibida.</p>
+            <p class="mt-1 text-sm text-muted">Registra el efectivo, cheque o transferencia recibida.</p>
 
             <form wire:submit="addItem" class="mt-5 grid gap-4 sm:grid-cols-2">
                 <div>
-                    <label for="item-payment-method" class="mb-1.5 block text-sm font-medium text-black/70">Método de pago</label>
+                    <label for="item-payment-method" class="label">Método de pago</label>
                     <select id="item-payment-method" wire:model="itemPaymentMethod"
-                        class="block min-h-11 w-full rounded-xl border border-black/15 bg-white px-3.5 py-2.5 text-base text-ink outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 sm:text-sm">
+                        class="select">
                         @foreach ($paymentMethods as $value => $label)
                             <option value="{{ $value }}">{{ $label }}</option>
                         @endforeach
                     </select>
                     @error('payment_method')
-                        <p class="mt-1.5 text-sm text-rose-600">{{ $message }}</p>
+                        <p class="field-error">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <div>
-                    <label for="item-amount" class="mb-1.5 block text-sm font-medium text-black/70">Monto</label>
+                    <label for="item-amount" class="label">Monto</label>
                     <input id="item-amount" type="number" step="0.01" min="0" wire:model="itemAmount" inputmode="decimal"
-                        class="block min-h-11 w-full rounded-xl border border-black/15 px-3.5 py-2.5 text-base text-ink outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 sm:text-sm">
+                        class="input">
                     @error('amount')
-                        <p class="mt-1.5 text-sm text-rose-600">{{ $message }}</p>
+                        <p class="field-error">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <div>
-                    <label for="item-reference" class="mb-1.5 block text-sm font-medium text-black/70">Referencia (opcional)</label>
+                    <label for="item-reference" class="label">Referencia (opcional)</label>
                     <input id="item-reference" type="text" wire:model="itemReference" maxlength="255"
-                        class="block min-h-11 w-full rounded-xl border border-black/15 px-3.5 py-2.5 text-base text-ink outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 sm:text-sm">
+                        class="input">
                     @error('reference')
-                        <p class="mt-1.5 text-sm text-rose-600">{{ $message }}</p>
+                        <p class="field-error">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <div>
-                    <label for="item-collection" class="mb-1.5 block text-sm font-medium text-black/70">Cobro pendiente (opcional)</label>
+                    <label for="item-collection" class="label">Cobro pendiente (opcional)</label>
                     <select id="item-collection" wire:model="itemCollectionEventId"
-                        class="block min-h-11 w-full rounded-xl border border-black/15 bg-white px-3.5 py-2.5 text-base text-ink outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 sm:text-sm">
+                        class="select">
                         <option value="">Sin cobro asociado</option>
                         @foreach ($availableCollections as $collection)
                             <option value="{{ $collection->id }}">
@@ -346,45 +346,45 @@ $statusClasses = fn (CashSessionStatus $value): string => match ($value) {
                         @endforeach
                     </select>
                     @error('collection_event_id')
-                        <p class="mt-1.5 text-sm text-rose-600">{{ $message }}</p>
+                        <p class="field-error">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <div class="sm:col-span-2">
                     <button type="submit" wire:loading.attr="disabled"
-                        class="min-h-11 w-full rounded-xl bg-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-black/80 disabled:opacity-50 sm:w-auto">
+                        class="btn btn-dark w-full sm:w-auto">
                         Agregar cobro
                     </button>
                 </div>
             </form>
         </section>
 
-        <section class="rounded-2xl border border-black/10 bg-white p-5 shadow-sm sm:p-6">
+        <section class="card p-4 sm:p-6">
             <h2 class="text-base font-semibold text-ink">Enviar arqueo</h2>
-            <p class="mt-1 text-sm text-black/60">Indica el monto contado para calcular la diferencia.</p>
+            <p class="mt-1 text-sm text-muted">Indica el monto contado para calcular la diferencia.</p>
 
             <form wire:submit="submit" class="mt-5 grid gap-4 sm:grid-cols-2">
                 <div>
-                    <label for="counted-amount" class="mb-1.5 block text-sm font-medium text-black/70">Monto contado</label>
+                    <label for="counted-amount" class="label">Monto contado</label>
                     <input id="counted-amount" type="number" step="0.01" min="0" wire:model="countedAmount" inputmode="decimal"
-                        class="block min-h-11 w-full rounded-xl border border-black/15 px-3.5 py-2.5 text-base text-ink outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 sm:text-sm">
+                        class="input">
                     @error('counted_amount')
-                        <p class="mt-1.5 text-sm text-rose-600">{{ $message }}</p>
+                        <p class="field-error">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <div class="sm:col-span-2">
-                    <label for="cash-notes" class="mb-1.5 block text-sm font-medium text-black/70">Notas (opcional)</label>
+                    <label for="cash-notes" class="label">Notas (opcional)</label>
                     <textarea id="cash-notes" rows="2" wire:model="notes"
-                        class="block min-h-11 w-full rounded-xl border border-black/15 px-3.5 py-2.5 text-base text-ink outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 sm:text-sm"></textarea>
+                        class="input"></textarea>
                     @error('notes')
-                        <p class="mt-1.5 text-sm text-rose-600">{{ $message }}</p>
+                        <p class="field-error">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <div class="sm:col-span-2">
                     <button type="submit" wire:loading.attr="disabled"
-                        class="min-h-11 w-full rounded-xl bg-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-black/80 disabled:opacity-50 sm:w-auto">
+                        class="btn btn-dark w-full sm:w-auto">
                         Enviar arqueo
                     </button>
                 </div>
@@ -393,41 +393,41 @@ $statusClasses = fn (CashSessionStatus $value): string => match ($value) {
     @endif
 
     @if ($canManage && $isRejected)
-        <section class="rounded-2xl border border-rose-200 bg-rose-50 p-5 shadow-sm sm:p-6">
+        <section class="rounded-2xl border border-rose-200 bg-rose-50 p-5 sm:p-6">
             <h2 class="text-base font-semibold text-ink">Arqueo rechazado</h2>
-            <p class="mt-1 text-sm text-black/70">Corrige los cobros o vuelve a enviar el arqueo.</p>
+            <p class="mt-1 text-sm text-muted">Corrige los cobros o vuelve a enviar el arqueo.</p>
 
             <button type="button" wire:click="reopen" wire:loading.attr="disabled"
-                class="mt-4 min-h-11 w-full rounded-xl bg-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-black/80 disabled:opacity-50 sm:w-auto">
+                class="mt-4 btn btn-dark w-full sm:w-auto">
                 Reabrir arqueo
             </button>
         </section>
     @endif
 
     @if ($canApprove && $isSubmitted)
-        <section class="rounded-2xl border border-black/10 bg-white p-5 shadow-sm sm:p-6">
+        <section class="card p-4 sm:p-6">
             <h2 class="text-base font-semibold text-ink">Revisión</h2>
-            <p class="mt-1 text-sm text-black/60">Aprueba el arqueo o recházalo indicando el motivo.</p>
+            <p class="mt-1 text-sm text-muted">Aprueba el arqueo o recházalo indicando el motivo.</p>
 
             <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-3">
                 <button type="button" wire:click="approve" wire:loading.attr="disabled"
-                    class="min-h-11 w-full rounded-xl bg-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-black/80 disabled:opacity-50 sm:w-auto">
+                    class="btn btn-dark w-full sm:w-auto">
                     Aprobar arqueo
                 </button>
             </div>
 
             <form wire:submit="reject" class="mt-5 space-y-3">
                 <div>
-                    <label for="reject-reason" class="mb-1.5 block text-sm font-medium text-black/70">Motivo del rechazo</label>
+                    <label for="reject-reason" class="label">Motivo del rechazo</label>
                     <textarea id="reject-reason" rows="3" wire:model="rejectReason"
-                        class="block min-h-11 w-full rounded-xl border border-black/15 px-3.5 py-2.5 text-base text-ink outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 sm:text-sm"></textarea>
+                        class="input"></textarea>
                     @error('rejectReason')
-                        <p class="mt-1.5 text-sm text-rose-600">{{ $message }}</p>
+                        <p class="field-error">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <button type="submit" wire:loading.attr="disabled"
-                    class="min-h-11 w-full rounded-xl border border-rose-200 bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-500 disabled:opacity-50 sm:w-auto">
+                    class="btn btn-danger w-full sm:w-auto">
                     Rechazar arqueo
                 </button>
             </form>
