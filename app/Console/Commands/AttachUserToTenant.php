@@ -28,12 +28,6 @@ class AttachUserToTenant extends Command
         $emailArgument = $this->argument('email');
         $roleArgument = $this->option('role');
 
-        if (! is_string($tenantArgument) || ! is_string($emailArgument) || ! is_string($roleArgument)) {
-            $this->components->error('Argumentos inválidos.');
-
-            return self::FAILURE;
-        }
-
         $tenantCode = Str::upper(trim($tenantArgument));
         $email = Str::lower(trim($emailArgument));
         $role = TenantRole::tryFrom($roleArgument);

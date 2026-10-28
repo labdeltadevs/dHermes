@@ -16,7 +16,7 @@ class CheckIntegrationQuality extends Command
     {
         $tenantId = null;
         $raw = $this->option('tenant');
-        $tenantOption = is_string($raw) ? $raw : (is_array($raw) && isset($raw[0]) ? (string) $raw[0] : '');
+        $tenantOption = is_string($raw) ? $raw : '';
 
         if ($tenantOption !== '') {
             $tenant = Tenant::query()

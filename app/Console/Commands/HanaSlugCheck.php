@@ -15,7 +15,7 @@ class HanaSlugCheck extends Command
     public function handle(): int
     {
         $raw = $this->option('tenant');
-        $tenantOption = is_string($raw) ? $raw : (is_array($raw) && isset($raw[0]) ? (string) $raw[0] : '');
+        $tenantOption = is_string($raw) ? $raw : '';
 
         $tenantId = null;
         if ($tenantOption !== '') {
