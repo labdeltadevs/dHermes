@@ -55,8 +55,13 @@ class MasterAdminSeeder extends Seeder
                     'name' => $adminName,
                     'password_hash' => bcrypt($adminPassword),
                     'active' => true,
+                    'is_platform_admin' => true,
                 ],
             );
+
+            if (! $user->is_platform_admin) {
+                $user->forceFill(['is_platform_admin' => true])->save();
+            }
 
             app(CurrentTenant::class)->set($tenant->id);
 

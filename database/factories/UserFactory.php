@@ -32,6 +32,13 @@ class UserFactory extends Factory
         ]);
     }
 
+    public function platformAdmin(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'is_platform_admin' => true,
+        ]);
+    }
+
     public function withoutPassword(): static
     {
         return $this->state(fn (array $attributes): array => [

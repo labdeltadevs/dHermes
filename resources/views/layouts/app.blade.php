@@ -16,6 +16,7 @@
             $membership = $memberships->firstWhere('tenant_id', $user?->currentTenantId()) ?? $memberships->first();
             $canManageTenant = $user?->can(\App\Enums\Permission::UsersManage->value) ?? false;
             $canApprove = $user?->can(\App\Enums\Permission::VerificationCodesView->value) ?? false;
+            $isPlatformAdmin = $user?->is_platform_admin ?? false;
         @endphp
 
         <a href="#contenido" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-ink focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white">
@@ -50,6 +51,11 @@
                             @if ($canManageTenant)
                                 <a href="{{ route('admin.users') }}" wire:navigate wire:current="nav-link-active" class="nav-link">
                                     Usuarios
+                                </a>
+                            @endif
+                            @if ($isPlatformAdmin)
+                                <a href="{{ route('admin.tenants') }}" wire:navigate wire:current="nav-link-active" class="nav-link">
+                                    Empresas
                                 </a>
                             @endif
                         </nav>
@@ -226,6 +232,16 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
                                 </svg>
                                 Usuarios
+                            </a>
+                        @endif
+
+                        @if ($isPlatformAdmin)
+                            <a href="{{ route('admin.tenants') }}" wire:navigate
+                                class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-ink-soft transition hover:bg-brand-50 hover:text-brand-800">
+                                <svg class="size-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01" />
+                                </svg>
+                                Empresas
                             </a>
                         @endif
 

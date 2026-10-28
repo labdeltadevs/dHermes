@@ -24,6 +24,7 @@ it('seeds the tenant and the master administrator', function () {
     expect($user)->not->toBeNull()
         ->and($user->name)->toBe('Administrador Maestro')
         ->and($user->active)->toBeTrue()
+        ->and($user->is_platform_admin)->toBeTrue()
         ->and(Hash::check('admin-password-1234', $user->password_hash))->toBeTrue();
 
     $membership = TenantUser::query()

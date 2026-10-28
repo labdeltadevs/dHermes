@@ -66,6 +66,10 @@ Route::livewire('/admin/usuarios', 'pages::admin.users')
     ->middleware(['auth', 'can:users.manage'])
     ->name('admin.users');
 
+Route::livewire('/admin/empresas', 'pages::admin.tenants')
+    ->middleware(['auth', 'can:viewAny,App\Models\Tenant'])
+    ->name('admin.tenants');
+
 Route::get('/cobranzas/{collectionEvent}/comprobante', CollectionProofController::class)
     ->middleware('auth')
     ->name('collections.proof');

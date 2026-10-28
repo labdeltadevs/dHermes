@@ -13,8 +13,9 @@ final class EnsureUserCanAccess
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
+        $hasTenant = app(CurrentTenant::class)->id() !== null;
 
-        if ($user !== null && (! $user->active || app(CurrentTenant::class)->id() === null)) {
+        if ($user !== null && (! $user->active || (! $user->is_platform_admin && ! $hasTenant))) {
             Auth::guard('web')->logout();
 
             $request->session()->invalidate();
