@@ -53,7 +53,7 @@ class MasterAdminSeeder extends Seeder
                 ['email' => $adminEmail],
                 [
                     'name' => $adminName,
-                    'password_hash' => $adminPassword,
+                    'password_hash' => bcrypt($adminPassword),
                     'active' => true,
                 ],
             );
