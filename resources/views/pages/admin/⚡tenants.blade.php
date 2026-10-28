@@ -18,8 +18,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-new #[Layout('layouts.app')] #[Title('Empresas')] class extends Component
-{
+new #[Layout('layouts.app')] #[Title('Empresas')] class extends Component {
     use WithPagination;
 
     public bool $showForm = false;
@@ -108,18 +107,11 @@ new #[Layout('layouts.app')] #[Title('Empresas')] class extends Component
             return;
         }
 
-        $newState = ! $tenant->active;
+        $newState = !$tenant->active;
 
         $tenant->update(['active' => $newState]);
 
-        app(AuditLogger::class)->record(
-            $tenant->id,
-            $newState ? 'tenant.activated' : 'tenant.deactivated',
-            'tenant',
-            $tenant->id,
-            ['code' => $tenant->code, 'name' => $tenant->name],
-            auth()->user(),
-        );
+        app(AuditLogger::class)->record($tenant->id, $newState ? 'tenant.activated' : 'tenant.deactivated', 'tenant', $tenant->id, ['code' => $tenant->code, 'name' => $tenant->name], auth()->user());
 
         session()->flash('status', $newState ? 'Empresa activada.' : 'Empresa desactivada.');
     }
@@ -134,18 +126,16 @@ new #[Layout('layouts.app')] #[Title('Empresas')] class extends Component
         $search = trim($this->search);
 
         $tenants = Tenant::query()
-            ->withCount(['memberships' => fn (Builder $query): Builder => $query->withoutGlobalScope('tenant')])
+            ->withCount(['memberships' => fn(Builder $query): Builder => $query->withoutGlobalScope('tenant')])
             ->when($search !== '', function (Builder $query) use ($search): void {
                 $query->where(function (Builder $query) use ($search): void {
-                    $like = '%'.$search.'%';
+                    $like = '%' . $search . '%';
 
-                    $query->whereLike('code', $like)
-                        ->orWhereLike('name', $like)
-                        ->orWhereLike('tax_id', $like);
+                    $query->whereLike('code', $like)->orWhereLike('name', $like)->orWhereLike('tax_id', $like);
                 });
             })
-            ->when($this->status === 'active', fn (Builder $query): Builder => $query->where('active', true))
-            ->when($this->status === 'inactive', fn (Builder $query): Builder => $query->where('active', false))
+            ->when($this->status === 'active', fn(Builder $query): Builder => $query->where('active', true))
+            ->when($this->status === 'inactive', fn(Builder $query): Builder => $query->where('active', false))
             ->orderBy('name')
             ->paginate(20)
             ->onEachSide(1)
@@ -173,13 +163,7 @@ new #[Layout('layouts.app')] #[Title('Empresas')] class extends Component
         $existingAdmin = $this->existingAdmin();
 
         $this->validate([
-            'code' => [
-                'required',
-                'string',
-                'max:20',
-                'regex:/^[A-Z0-9_]{2,20}$/',
-                Rule::unique('tenants', 'code'),
-            ],
+            'code' => ['required', 'string', 'max:20', 'regex:/^[A-Z0-9_]{2,20}$/', Rule::unique('tenants', 'code')],
             'name' => ['required', 'string', 'max:255'],
             'taxId' => ['nullable', 'string', 'max:50'],
             'timezone' => ['required', 'string', Rule::in(DateTimeZone::listIdentifiers())],
@@ -187,15 +171,10 @@ new #[Layout('layouts.app')] #[Title('Empresas')] class extends Component
             'active' => ['boolean'],
             'adminName' => [Rule::requiredIf($existingAdmin === null), 'nullable', 'string', 'max:255'],
             'adminEmail' => ['required', 'string', 'email', 'max:255'],
-            'adminPassword' => [
-                Rule::requiredIf($existingAdmin === null),
-                'nullable',
-                'string',
-                Password::defaults(),
-            ],
+            'adminPassword' => [Rule::requiredIf($existingAdmin === null), 'nullable', 'string', Password::defaults()],
         ]);
 
-        if ($existingAdmin !== null && ! $existingAdmin->active) {
+        if ($existingAdmin !== null && !$existingAdmin->active) {
             $this->addError('adminEmail', 'El usuario existe pero está inactivo. Actívalo antes de asignarlo.');
 
             return;
@@ -211,12 +190,14 @@ new #[Layout('layouts.app')] #[Title('Empresas')] class extends Component
                 'active' => $this->active,
             ]);
 
-            $admin = $existingAdmin ?? User::create([
-                'name' => trim($this->adminName),
-                'email' => Str::lower(trim($this->adminEmail)),
-                'password_hash' => Hash::make($this->adminPassword),
-                'active' => true,
-            ]);
+            $admin =
+                $existingAdmin ??
+                User::create([
+                    'name' => trim($this->adminName),
+                    'email' => Str::lower(trim($this->adminEmail)),
+                    'password_hash' => Hash::make($this->adminPassword),
+                    'active' => true,
+                ]);
 
             TenantUser::create([
                 'tenant_id' => $tenant->id,
@@ -242,7 +223,7 @@ new #[Layout('layouts.app')] #[Title('Empresas')] class extends Component
         });
 
         $this->resetForm();
-        session()->flash('status', 'Empresa '.$tenant->name.' creada.');
+        session()->flash('status', 'Empresa ' . $tenant->name . ' creada.');
     }
 
     private function updateTenant(): void
@@ -293,26 +274,12 @@ new #[Layout('layouts.app')] #[Title('Empresas')] class extends Component
     {
         $email = Str::lower(trim($this->adminEmail));
 
-        return $email === ''
-            ? null
-            : User::query()->where('email', $email)->first();
+        return $email === '' ? null : User::query()->where('email', $email)->first();
     }
 
     private function resetForm(): void
     {
-        $this->reset(
-            'showForm',
-            'editingTenantId',
-            'code',
-            'name',
-            'taxId',
-            'timezone',
-            'localCurrency',
-            'active',
-            'adminName',
-            'adminEmail',
-            'adminPassword',
-        );
+        $this->reset('showForm', 'editingTenantId', 'code', 'name', 'taxId', 'timezone', 'localCurrency', 'active', 'adminName', 'adminEmail', 'adminPassword');
 
         $this->timezone = 'America/La_Paz';
         $this->localCurrency = 'BOB';
@@ -322,157 +289,153 @@ new #[Layout('layouts.app')] #[Title('Empresas')] class extends Component
 };
 ?>
 
-<div class="space-y-5 sm:space-y-6">
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-            <p class="eyebrow">Plataforma</p>
-            <h1 class="page-title">Empresas</h1>
-            <p class="mt-1.5 text-sm text-muted">Crea y administra los tenants del sistema.</p>
+<div class="space-y-5 sm:space-y-6" x-data="{ alertVisible: true }">
+    <!-- ===== Header ===== -->
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-center gap-3.5">
+            <div
+                class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-50 text-brand-700 ring-1 ring-brand-100">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M16.5 6.75h.75m-.75 3h.75m-.75 3h.75" />
+                </svg>
+            </div>
+            <div>
+                <p class="eyebrow">Plataforma</p>
+                <h1 class="page-title">Empresas</h1>
+                <p class="mt-1 text-sm text-muted">Crea y administra los tenants del sistema.</p>
+            </div>
         </div>
 
-        <button type="button" wire:click="create" class="btn btn-primary w-full sm:w-auto">
-            Nueva empresa
+        <button type="button" wire:click="create" class="btn btn-primary w-full shrink-0 sm:w-auto">
+            <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+                xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            <span>Nueva empresa</span>
         </button>
     </div>
 
-    <div class="grid gap-3 sm:grid-cols-3">
-        <div class="card p-4">
-            <p class="text-xs font-medium text-muted">Total</p>
-            <p class="mt-1 text-2xl font-semibold text-ink">{{ $stats['total'] }}</p>
+    <!-- ===== Stats ===== -->
+    <div class="grid gap-4 sm:grid-cols-3">
+        {{-- Total --}}
+        <div class="card relative overflow-hidden p-5">
+            <div class="absolute inset-x-0 top-0 h-1 bg-brand-500"></div>
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium uppercase tracking-wide text-muted">Total</p>
+                    <p class="mt-1.5 text-3xl font-bold tabular-nums text-ink">{{ $stats['total'] }}</p>
+                </div>
+                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5" />
+                    </svg>
+                </div>
+            </div>
         </div>
-        <div class="card p-4">
-            <p class="text-xs font-medium text-muted">Activas</p>
-            <p class="mt-1 text-2xl font-semibold text-emerald-700">{{ $stats['active'] }}</p>
+
+        {{-- Activas --}}
+        <div class="card relative overflow-hidden p-5">
+            <div class="absolute inset-x-0 top-0 h-1 bg-emerald-500"></div>
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium uppercase tracking-wide text-muted">Activas</p>
+                    <p class="mt-1.5 text-3xl font-bold tabular-nums text-emerald-700">{{ $stats['active'] }}</p>
+                </div>
+                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+            </div>
         </div>
-        <div class="card p-4">
-            <p class="text-xs font-medium text-muted">Inactivas</p>
-            <p class="mt-1 text-2xl font-semibold text-muted">{{ $stats['inactive'] }}</p>
+
+        {{-- Inactivas --}}
+        <div class="card relative overflow-hidden p-5">
+            <div class="absolute inset-x-0 top-0 h-1 bg-gray-300"></div>
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium uppercase tracking-wide text-muted">Inactivas</p>
+                    <p class="mt-1.5 text-3xl font-bold tabular-nums text-muted">{{ $stats['inactive'] }}</p>
+                </div>
+                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-gray-100 text-gray-500">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                    </svg>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- ===== Flash error ===== -->
     @if ($errors->has('status'))
-        <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-            {{ $errors->first('status') }}
+        <div x-show="alertVisible" x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            class="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3.5 text-sm text-rose-700">
+            <svg class="mt-0.5 h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+            <span class="flex-1">{{ $errors->first('status') }}</span>
+            <button type="button" @click="alertVisible = false"
+                class="shrink-0 text-rose-400 transition-colors hover:text-rose-600">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
         </div>
     @endif
 
+    <!-- ===== Form (inline) ===== -->
     @if ($showForm)
-        <section class="card p-5 sm:p-6">
-            <div class="flex items-start justify-between gap-4">
-                <div>
-                    <h2 class="text-base font-semibold text-ink">{{ $editingTenantId ? 'Editar empresa' : 'Nueva empresa' }}</h2>
-                    <p class="mt-1 text-sm text-muted">
-                        {{ $editingTenantId ? 'El código de la empresa no se puede modificar.' : 'Al crearla se provisionan sus roles y su administrador inicial.' }}
-                    </p>
-                </div>
-                <button type="button" wire:click="cancel" class="text-sm font-medium text-muted hover:text-ink">Cancelar</button>
-            </div>
-
-            <form wire:submit="save" class="mt-6 space-y-6">
-                <div class="grid gap-5 sm:grid-cols-2">
-                    <div>
-                        <label for="tenant-code" class="label">Código</label>
-                        <input id="tenant-code" type="text" wire:model="code" maxlength="20"
-                            class="input uppercase disabled:bg-canvas disabled:text-muted" @disabled($editingTenantId !== null)>
-                        @error('code')
-                            <p class="field-error">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label for="tenant-name" class="label">Nombre</label>
-                        <input id="tenant-name" type="text" wire:model="name" required class="input">
-                        @error('name')
-                            <p class="field-error">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label for="tenant-tax-id" class="label">NIT</label>
-                        <input id="tenant-tax-id" type="text" wire:model="taxId" class="input">
-                        @error('taxId')
-                            <p class="field-error">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label for="tenant-timezone" class="label">Zona horaria</label>
-                        <select id="tenant-timezone" wire:model="timezone" class="input">
-                            @foreach ($timezones as $zone)
-                                <option value="{{ $zone }}">{{ $zone }}</option>
-                            @endforeach
-                        </select>
-                        @error('timezone')
-                            <p class="field-error">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label for="tenant-currency" class="label">Moneda local</label>
-                        <input id="tenant-currency" type="text" wire:model="localCurrency" maxlength="3"
-                            class="input uppercase">
-                        @error('localCurrency')
-                            <p class="field-error">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <label class="flex items-center gap-2 self-end pb-2 label">
-                        <input type="checkbox" wire:model="active" class="size-4 rounded border-line text-brand-700 focus:ring-brand-500">
-                        Empresa activa
-                    </label>
-                </div>
-
-                @if ($editingTenantId === null)
-                    <div class="rounded-xl border border-line bg-canvas p-4 sm:p-5">
-                        <h3 class="text-sm font-semibold text-ink">Administrador inicial</h3>
-                        <p class="mt-1 text-sm text-muted">
-                            Si el correo ya existe, se adjunta como administrador sin cambiar su contraseña.
-                        </p>
-
-                        <div class="mt-4 grid gap-5 sm:grid-cols-2">
-                            <div>
-                                <label for="tenant-admin-name" class="label">Nombre</label>
-                                <input id="tenant-admin-name" type="text" wire:model="adminName" class="input">
-                                @error('adminName')
-                                    <p class="field-error">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <div>
-                                <label for="tenant-admin-email" class="label">Correo electrónico</label>
-                                <input id="tenant-admin-email" type="email" wire:model.live.debounce.400ms="adminEmail" class="input">
-                                @error('adminEmail')
-                                    <p class="field-error">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <div>
-                                <label for="tenant-admin-password" class="label">Contraseña temporal</label>
-                                <input id="tenant-admin-password" type="password" wire:model="adminPassword"
-                                    autocomplete="new-password" class="input">
-                                @error('adminPassword')
-                                    <p class="field-error">{{ $message }}</p>
-                                @enderror
-                            </div>
-                        </div>
-                    </div>
-                @endif
-
-                @error('status')
-                    <p class="text-sm text-rose-600">{{ $message }}</p>
-                @enderror
-
-                <button type="submit" wire:loading.attr="disabled" class="btn btn-dark w-full sm:w-auto">
-                    {{ $editingTenantId ? 'Guardar cambios' : 'Crear empresa' }}
-                </button>
-            </form>
-        </section>
+        <x-tenant-form
+            :editing-tenant-id="$editingTenantId"
+            :code="$code"
+            :name="$name"
+            :tax-id="$taxId"
+            :timezone="$timezone"
+            :local-currency="$localCurrency"
+            :active="$active"
+            :admin-name="$adminName"
+            :admin-email="$adminEmail"
+            :admin-password="$adminPassword"
+            :timezones="$timezones"
+        />
     @endif
 
+    <!-- ===== Search & filter ===== -->
     <section class="card p-4">
         <div class="grid gap-3 sm:grid-cols-[1fr_12rem]">
-            <input type="search" wire:model.live.debounce.400ms="search"
-                placeholder="Buscar por código, nombre o NIT" class="input" aria-label="Buscar empresas">
+            <div class="relative">
+                <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
+                    fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+                <input type="search" wire:model.live.debounce.400ms="search"
+                    placeholder="Buscar por código, nombre o NIT" class="input pl-10" aria-label="Buscar empresas">
+                <div wire:loading.delay wire:target="search" class="absolute right-3 top-1/2 -translate-y-1/2">
+                    <svg class="h-4 w-4 animate-spin text-muted" fill="none" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                            stroke-width="3"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z">
+                        </path>
+                    </svg>
+                </div>
+            </div>
             <select wire:model.live="status" class="input" aria-label="Filtrar por estado">
                 <option value="">Todas</option>
                 <option value="active">Activas</option>
@@ -481,6 +444,7 @@ new #[Layout('layouts.app')] #[Title('Empresas')] class extends Component
         </div>
     </section>
 
+    <!-- ===== Desktop table ===== -->
     <section class="hidden overflow-hidden card md:block">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-line">
@@ -495,38 +459,118 @@ new #[Layout('layouts.app')] #[Title('Empresas')] class extends Component
                         <th class="table-head text-right">Acciones</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-line">
+                <tbody class="divide-y divide-line" wire:loading.delay.class="opacity-40"
+                    wire:target="search,status,toggleActive">
                     @forelse ($tenants as $tenant)
-                        <tr wire:key="tenant-{{ $tenant->id }}">
+                        <tr wire:key="tenant-{{ $tenant->id }}" class="transition-colors hover:bg-canvas/60">
+                            {{-- Empresa --}}
                             <td class="whitespace-nowrap px-4 py-4">
-                                <p class="text-sm font-medium text-ink">{{ $tenant->name }}</p>
-                                <p class="text-xs text-muted">{{ $tenant->code }}</p>
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-xs font-bold text-brand-700">
+                                        {{ mb_strtoupper(mb_substr($tenant->name, 0, 2)) }}
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-ink">{{ $tenant->name }}</p>
+                                        <p class="font-mono text-xs text-muted">{{ $tenant->code }}</p>
+                                    </div>
+                                </div>
                             </td>
-                            <td class="whitespace-nowrap px-4 py-4 text-sm text-ink-soft">{{ $tenant->tax_id ?? '—' }}</td>
+                            {{-- NIT --}}
+                            <td class="whitespace-nowrap px-4 py-4 text-sm text-ink-soft">{{ $tenant->tax_id ?? '—' }}
+                            </td>
+                            {{-- Zona horaria --}}
                             <td class="whitespace-nowrap px-4 py-4 text-sm text-ink-soft">{{ $tenant->timezone }}</td>
-                            <td class="whitespace-nowrap px-4 py-4 text-sm text-ink-soft">{{ $tenant->local_currency }}</td>
-                            <td class="whitespace-nowrap px-4 py-4 text-sm text-ink-soft">{{ $tenant->memberships_count }}</td>
+                            {{-- Moneda --}}
+                            <td class="whitespace-nowrap px-4 py-4">
+                                <span
+                                    class="inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                                    {{ $tenant->local_currency }}
+                                </span>
+                            </td>
+                            {{-- Usuarios --}}
+                            <td class="whitespace-nowrap px-4 py-4 text-sm text-ink-soft">
+                                <span class="inline-flex items-center gap-1.5">
+                                    <svg class="h-4 w-4 text-muted" fill="none" viewBox="0 0 24 24"
+                                        stroke-width="1.5" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                                    </svg>
+                                    <span class="tabular-nums">{{ $tenant->memberships_count }}</span>
+                                </span>
+                            </td>
+                            {{-- Estado --}}
                             <td class="whitespace-nowrap px-4 py-4">
                                 @if ($tenant->active)
-                                    <span class="badge bg-emerald-100 text-emerald-700">Activa</span>
+                                    <span
+                                        class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                                        Activa
+                                    </span>
                                 @else
-                                    <span class="badge bg-black/[0.04] text-muted">Inactiva</span>
+                                    <span
+                                        class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-gray-400"></span>
+                                        Inactiva
+                                    </span>
                                 @endif
                             </td>
+                            {{-- Acciones --}}
                             <td class="whitespace-nowrap px-4 py-4 text-right text-sm">
-                                <button type="button" wire:click="edit('{{ $tenant->id }}')"
-                                    class="font-medium text-brand-700 hover:text-brand-800">
-                                    Editar
-                                </button>
-                                <button type="button" wire:click="toggleActive('{{ $tenant->id }}')"
-                                    class="ml-4 font-medium text-muted hover:text-ink">
-                                    {{ $tenant->active ? 'Desactivar' : 'Activar' }}
-                                </button>
+                                <div class="flex items-center justify-end gap-1">
+                                    <button type="button" wire:click="edit('{{ $tenant->id }}')"
+                                        class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-brand-700 transition-colors hover:bg-brand-50">
+                                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
+                                            stroke-width="1.5" stroke="currentColor"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+                                        </svg>
+                                        Editar
+                                    </button>
+                                    <button type="button" wire:click="toggleActive('{{ $tenant->id }}')"
+                                        class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-gray-100 hover:text-ink">
+                                        @if ($tenant->active)
+                                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor"
+                                                xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6 6.228a10.45 10.45 0 015.998-1.728c4.756 0 8.774 3.162 10.066 7.5a10.477 10.477 0 01-3.127 4.318M6 6.228L18 18M6 6.228L3 3.252M18 18l3 3M18 18l3-3" />
+                                            </svg>
+                                            Desactivar
+                                        @else
+                                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor"
+                                                xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                            Activar
+                                        @endif
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-4 py-8 text-center text-sm text-muted">No hay empresas registradas.</td>
+                            <td colspan="7" class="px-4 py-16">
+                                <div class="flex flex-col items-center justify-center gap-3 text-center">
+                                    <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-canvas">
+                                        <svg class="h-7 w-7 text-muted" fill="none" viewBox="0 0 24 24"
+                                            stroke-width="1.5" stroke="currentColor"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M16.5 6.75h.75m-.75 3h.75m-.75 3h.75" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-ink">No hay empresas registradas</p>
+                                        <p class="mt-0.5 text-sm text-muted">Crea la primera empresa para empezar.</p>
+                                    </div>
+                                </div>
+                            </td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -534,54 +578,113 @@ new #[Layout('layouts.app')] #[Title('Empresas')] class extends Component
         </div>
     </section>
 
+    <!-- ===== Mobile cards ===== -->
     <section class="space-y-3 md:hidden" aria-label="Listado de empresas">
         @forelse ($tenants as $tenant)
             <article wire:key="tenant-card-{{ $tenant->id }}" class="card p-4">
                 <div class="flex items-start justify-between gap-3">
-                    <div class="min-w-0">
-                        <p class="truncate text-sm font-semibold text-ink">{{ $tenant->name }}</p>
-                        <p class="mt-0.5 truncate text-xs text-muted">{{ $tenant->code }}</p>
+                    <div class="flex min-w-0 items-center gap-3">
+                        <div
+                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-sm font-bold text-brand-700">
+                            {{ mb_strtoupper(mb_substr($tenant->name, 0, 2)) }}
+                        </div>
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-semibold text-ink">{{ $tenant->name }}</p>
+                            <p class="mt-0.5 font-mono text-xs text-muted">{{ $tenant->code }}</p>
+                        </div>
                     </div>
 
                     @if ($tenant->active)
-                        <span class="shrink-0 badge bg-emerald-100 text-emerald-700">Activa</span>
+                        <span
+                            class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                            <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                            Activa
+                        </span>
                     @else
-                        <span class="shrink-0 badge bg-black/[0.04] text-muted">Inactiva</span>
+                        <span
+                            class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-500">
+                            <span class="h-1.5 w-1.5 rounded-full bg-gray-400"></span>
+                            Inactiva
+                        </span>
                     @endif
                 </div>
 
-                <dl class="mt-3 grid grid-cols-2 gap-2 rounded-xl bg-canvas p-3 text-xs">
+                <dl class="mt-4 grid grid-cols-2 gap-3 rounded-xl bg-canvas p-3.5 text-xs">
                     <div>
                         <dt class="font-medium text-muted">NIT</dt>
-                        <dd class="mt-0.5 font-semibold text-ink">{{ $tenant->tax_id ?? '—' }}</dd>
+                        <dd class="mt-1 font-semibold text-ink">{{ $tenant->tax_id ?? '—' }}</dd>
                     </div>
                     <div>
                         <dt class="font-medium text-muted">Usuarios</dt>
-                        <dd class="mt-0.5 font-semibold text-ink">{{ $tenant->memberships_count }}</dd>
+                        <dd class="mt-1 inline-flex items-center gap-1 font-semibold text-ink">
+                            <svg class="h-3.5 w-3.5 text-muted" fill="none" viewBox="0 0 24 24"
+                                stroke-width="1.5" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                            </svg>
+                            <span class="tabular-nums">{{ $tenant->memberships_count }}</span>
+                        </dd>
                     </div>
                     <div>
                         <dt class="font-medium text-muted">Zona horaria</dt>
-                        <dd class="mt-0.5 truncate font-semibold text-ink">{{ $tenant->timezone }}</dd>
+                        <dd class="mt-1 truncate font-semibold text-ink">{{ $tenant->timezone }}</dd>
                     </div>
                     <div>
                         <dt class="font-medium text-muted">Moneda</dt>
-                        <dd class="mt-0.5 font-semibold text-ink">{{ $tenant->local_currency }}</dd>
+                        <dd class="mt-1">
+                            <span
+                                class="inline-flex rounded bg-gray-200 px-1.5 py-0.5 text-xs font-medium text-gray-600">
+                                {{ $tenant->local_currency }}
+                            </span>
+                        </dd>
                     </div>
                 </dl>
 
-                <div class="mt-3 grid grid-cols-2 gap-2">
+                <div class="mt-4 grid grid-cols-2 gap-2">
                     <button type="button" wire:click="edit('{{ $tenant->id }}')" class="btn btn-soft btn-sm">
+                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+                        </svg>
                         Editar
                     </button>
-                    <button type="button" wire:click="toggleActive('{{ $tenant->id }}')" class="btn btn-ghost btn-sm">
-                        {{ $tenant->active ? 'Desactivar' : 'Activar' }}
+                    <button type="button" wire:click="toggleActive('{{ $tenant->id }}')"
+                        class="btn btn-ghost btn-sm">
+                        @if ($tenant->active)
+                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6 6.228a10.45 10.45 0 015.998-1.728c4.756 0 8.774 3.162 10.066 7.5a10.477 10.477 0 01-3.127 4.318M6 6.228L18 18M6 6.228L3 3.252M18 18l3 3M18 18l3-3" />
+                            </svg>
+                            Desactivar
+                        @else
+                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            Activar
+                        @endif
                     </button>
                 </div>
             </article>
         @empty
-            <div class="empty-state">
-                <p class="text-sm font-medium text-ink">No hay empresas registradas.</p>
-                <p class="mt-1 text-sm text-muted">Crea la primera empresa para empezar.</p>
+            <div
+                class="flex flex-col items-center justify-center gap-3 rounded-2xl border border-line bg-canvas/50 px-6 py-16 text-center">
+                <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white">
+                    <svg class="h-7 w-7 text-muted" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M16.5 6.75h.75m-.75 3h.75m-.75 3h.75" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-ink">No hay empresas registradas</p>
+                    <p class="mt-0.5 text-sm text-muted">Crea la primera empresa para empezar.</p>
+                </div>
             </div>
         @endforelse
     </section>
