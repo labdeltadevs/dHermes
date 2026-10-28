@@ -7,6 +7,8 @@ use App\Support\Integration\IntegrationDiagnostics;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 
 #[Signature('dhermes:integration-check {--tenant= : Codigo o ID de empresa} {--json : Emite el resultado en JSON}')]
 #[Description('Valida la calidad de los datos importados desde SAP Business One')]
@@ -20,8 +22,8 @@ class CheckIntegrationQuality extends Command
 
         if ($tenantOption !== '') {
             $tenant = Tenant::query()
-                ->where('id', $tenantOption)
-                ->orWhere('code', $tenantOption)
+                ->where('code', $tenantOption)
+                ->when(Str::isUuid($tenantOption), fn (Builder $query): Builder => $query->orWhere('id', $tenantOption))
                 ->first();
 
             if ($tenant === null) {

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Permission;
 use App\Enums\TenantRole;
 use App\Models\SalesRep;
 use App\Models\TenantUser;
@@ -39,12 +40,12 @@ new #[Layout('layouts.app')] #[Title('Usuarios')] class extends Component
 
     public function mount(): void
     {
-        Gate::authorize('manage-users');
+        Gate::authorize(Permission::UsersManage->value);
     }
 
     public function create(): void
     {
-        Gate::authorize('manage-users');
+        Gate::authorize(Permission::UsersManage->value);
 
         $this->resetForm();
         $this->showForm = true;
@@ -52,7 +53,7 @@ new #[Layout('layouts.app')] #[Title('Usuarios')] class extends Component
 
     public function edit(string $userId): void
     {
-        Gate::authorize('manage-users');
+        Gate::authorize(Permission::UsersManage->value);
 
         $membership = $this->membership($userId);
 
@@ -69,7 +70,7 @@ new #[Layout('layouts.app')] #[Title('Usuarios')] class extends Component
 
     public function save(): void
     {
-        Gate::authorize('manage-users');
+        Gate::authorize(Permission::UsersManage->value);
 
         $tenantId = app(CurrentTenant::class)->requireId();
 
@@ -110,7 +111,7 @@ new #[Layout('layouts.app')] #[Title('Usuarios')] class extends Component
 
     public function toggleActive(string $userId): void
     {
-        Gate::authorize('manage-users');
+        Gate::authorize(Permission::UsersManage->value);
 
         $tenantId = app(CurrentTenant::class)->requireId();
         $membership = $this->membership($userId);

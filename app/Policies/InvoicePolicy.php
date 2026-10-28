@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\Permission;
 use App\Models\Invoice;
 use App\Models\User;
 use App\Policies\Concerns\AuthorizesTenant;
@@ -12,7 +13,7 @@ class InvoicePolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->currentMembership() !== null;
+        return $this->hasCurrentPermission($user, Permission::PortfolioView);
     }
 
     public function view(User $user, Invoice $invoice): bool

@@ -43,7 +43,7 @@ Route::livewire('/cartera/vendedores', 'pages::portfolio-by-rep')
     ->name('portfolio.by-rep');
 
 Route::livewire('/admin/asignaciones', 'pages::admin.assignments')
-    ->middleware(['auth', 'can:manage-users'])
+    ->middleware(['auth', 'can:assignments.manage'])
     ->name('admin.assignments');
 
 Route::livewire('/admin/auditoria', 'pages::admin.audit')
@@ -63,7 +63,7 @@ Route::livewire('/user/profile', 'pages::profile')
     ->name('profile');
 
 Route::livewire('/admin/usuarios', 'pages::admin.users')
-    ->middleware(['auth', 'can:manage-users'])
+    ->middleware(['auth', 'can:users.manage'])
     ->name('admin.users');
 
 Route::get('/cobranzas/{collectionEvent}/comprobante', CollectionProofController::class)

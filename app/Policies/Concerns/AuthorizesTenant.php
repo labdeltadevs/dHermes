@@ -2,9 +2,10 @@
 
 namespace App\Policies\Concerns;
 
-use App\Enums\TenantRole;
+use App\Enums\Permission;
 use App\Models\TenantUser;
 use App\Models\User;
+use App\Support\Permissions\TenantRoleSyncer;
 use Illuminate\Database\Eloquent\Model;
 
 trait AuthorizesTenant
@@ -21,13 +22,31 @@ trait AuthorizesTenant
         return $this->membership($user, $subject) !== null;
     }
 
-    protected function role(User $user, Model|string $subject): ?TenantRole
+    protected function hasCurrentPermission(User $user, Permission $permission): bool
     {
-        return $this->membership($user, $subject)?->role;
+        return $user->currentMembership() !== null
+            && $user->can($permission->value);
     }
 
-    protected function isApprover(User $user, Model|string $subject): bool
+    protected function hasPermission(User $user, Model|string $subject, Permission $permission): bool
     {
-        return $this->role($user, $subject)?->canApprove() ?? false;
+        $tenantId = $subject instanceof Model ? $subject->getAttribute('tenant_id') : $subject;
+
+        if (! is_string($tenantId) || $tenantId === '' || ! $this->isMember($user, $tenantId)) {
+            return false;
+        }
+
+        try {
+            return app(TenantRoleSyncer::class)->withTeam(
+                $tenantId,
+                function () use ($user, $permission): bool {
+                    $user->unsetRelation('roles')->unsetRelation('permissions');
+
+                    return $user->can($permission->value);
+                },
+            );
+        } finally {
+            $user->unsetRelation('roles')->unsetRelation('permissions');
+        }
     }
 }

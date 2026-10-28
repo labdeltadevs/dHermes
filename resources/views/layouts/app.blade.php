@@ -14,8 +14,8 @@
             $user = auth()->user();
             $memberships = $user?->activeMemberships() ?? collect();
             $membership = $memberships->firstWhere('tenant_id', $user?->currentTenantId()) ?? $memberships->first();
-            $canManageTenant = $membership?->role->canManageTenant() ?? false;
-            $canApprove = $membership?->role->canApprove() ?? false;
+            $canManageTenant = $user?->can(\App\Enums\Permission::UsersManage->value) ?? false;
+            $canApprove = $user?->can(\App\Enums\Permission::VerificationCodesView->value) ?? false;
         @endphp
 
         <a href="#contenido" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-ink focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white">

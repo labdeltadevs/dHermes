@@ -6,7 +6,9 @@ use App\Models\Tenant;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 #[Signature('dhermes:hana-slug-check {--tenant= }')]
 #[Description('Verifica que el contrato HANA escriba la empresa SALES_ORG y la ruta de documentos en el formato esperado')]
@@ -20,8 +22,8 @@ class HanaSlugCheck extends Command
         $tenantId = null;
         if ($tenantOption !== '') {
             $tenant = Tenant::query()
-                ->where('id', $tenantOption)
-                ->orWhere('code', $tenantOption)
+                ->where('code', $tenantOption)
+                ->when(Str::isUuid($tenantOption), fn (Builder $query): Builder => $query->orWhere('id', $tenantOption))
                 ->first();
 
             if ($tenant === null) {

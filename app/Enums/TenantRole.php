@@ -35,6 +35,56 @@ enum TenantRole: string
     }
 
     /**
+     * @return array<int, Permission>
+     */
+    public function permissions(): array
+    {
+        return match ($this) {
+            self::Admin => [
+                Permission::UsersManage,
+                Permission::AssignmentsManage,
+                Permission::PortfolioView,
+                Permission::ReceiptsView,
+                Permission::CollectionsView,
+                Permission::CollectionsApprove,
+                Permission::CollectionsCancelAny,
+                Permission::CollectionsVoid,
+                Permission::CashSessionsView,
+                Permission::CashSessionsApprove,
+                Permission::AuditView,
+                Permission::VerificationCodesView,
+            ],
+            self::Supervisor => [
+                Permission::PortfolioView,
+                Permission::ReceiptsView,
+                Permission::CollectionsView,
+                Permission::CollectionsApprove,
+                Permission::CollectionsCancelAny,
+                Permission::CashSessionsView,
+                Permission::CashSessionsApprove,
+                Permission::AuditView,
+                Permission::VerificationCodesView,
+            ],
+            self::Seller => [
+                Permission::PortfolioView,
+                Permission::ReceiptsView,
+                Permission::CollectionsView,
+                Permission::CollectionsCreate,
+                Permission::CashSessionsView,
+                Permission::CashSessionsOperate,
+            ],
+            self::Collector => [
+                Permission::PortfolioView,
+                Permission::ReceiptsView,
+                Permission::CollectionsView,
+                Permission::CollectionsCreate,
+                Permission::CashSessionsView,
+                Permission::CashSessionsOperate,
+            ],
+        };
+    }
+
+    /**
      * @return array<int, string>
      */
     public static function values(): array

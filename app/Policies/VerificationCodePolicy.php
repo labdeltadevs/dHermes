@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Enums\CollectionStatus;
+use App\Enums\Permission;
 use App\Models\CollectionEvent;
 use App\Models\User;
 use App\Models\VerificationCode;
@@ -15,18 +16,16 @@ class VerificationCodePolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->currentMembership()?->role->canApprove() ?? false;
+        return $this->hasCurrentPermission($user, Permission::VerificationCodesView);
     }
 
     public function view(User $user, VerificationCode $verificationCode): bool
     {
-        $membership = $this->membership($user, $verificationCode);
-
-        if ($membership === null) {
+        if (! $this->isMember($user, $verificationCode)) {
             return false;
         }
 
-        if ($membership->role->canApprove()) {
+        if ($this->hasPermission($user, $verificationCode, Permission::VerificationCodesView)) {
             return true;
         }
 
@@ -46,6 +45,6 @@ class VerificationCodePolicy
 
     public function revoke(User $user, VerificationCode $verificationCode): bool
     {
-        return $this->isApprover($user, $verificationCode);
+        return $this->hasPermission($user, $verificationCode, Permission::VerificationCodesView);
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Permission;
 use App\Enums\TenantRole;
 use App\Models\Customer;
 use App\Models\SalesRep;
@@ -34,7 +35,7 @@ new #[Layout('layouts.app')] #[Title('Asignaciones')] class extends Component
 
     public function mount(): void
     {
-        Gate::authorize('manage-users');
+        Gate::authorize(Permission::AssignmentsManage->value);
     }
 
     public function updated(string $property): void
@@ -52,7 +53,7 @@ new #[Layout('layouts.app')] #[Title('Asignaciones')] class extends Component
 
     public function assignSingle(string $customerId, string $collectorId = ''): void
     {
-        Gate::authorize('manage-users');
+        Gate::authorize(Permission::AssignmentsManage->value);
 
         if ($collectorId === '') {
             $this->applyCollector([$customerId], null, 'collector');
@@ -65,21 +66,21 @@ new #[Layout('layouts.app')] #[Title('Asignaciones')] class extends Component
 
     public function unassignSingle(string $customerId): void
     {
-        Gate::authorize('manage-users');
+        Gate::authorize(Permission::AssignmentsManage->value);
 
         $this->applyCollector([$customerId], null, 'collector');
     }
 
     public function assignSelected(): void
     {
-        Gate::authorize('manage-users');
+        Gate::authorize(Permission::AssignmentsManage->value);
 
         $this->applyCollector($this->selected, $this->bulkCollectorId, 'bulkCollectorId');
     }
 
     public function unassignSelected(): void
     {
-        Gate::authorize('manage-users');
+        Gate::authorize(Permission::AssignmentsManage->value);
 
         $this->applyCollector($this->selected, null, 'bulkCollectorId');
     }

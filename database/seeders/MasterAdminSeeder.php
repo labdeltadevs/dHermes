@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
  */
 class MasterAdminSeeder extends Seeder
 {
-    private const DEFAULT_PASSWORD = 'admin-password-1234';
+    private const DEFAULT_PASSWORD = '$Laboratorios.Delta.Dhermes.0101$';
 
     public function run(): void
     {
@@ -27,7 +27,7 @@ class MasterAdminSeeder extends Seeder
         $tenantTimezone = (string) config('dhermes.tenant.timezone', 'America/La_Paz');
         $tenantCurrency = (string) config('dhermes.tenant.local_currency', 'BOB');
         $adminName = (string) config('dhermes.admin.name', 'Administrador Maestro');
-        $adminEmail = (string) config('dhermes.admin.email', 'admin@dhermes.local');
+        $adminEmail = (string) config('dhermes.admin.email', 'kevinaltamirano@laboratoriosdelta.net');
         $adminPassword = (string) config('dhermes.admin.password', self::DEFAULT_PASSWORD);
 
         $tenant = DB::transaction(function () use (

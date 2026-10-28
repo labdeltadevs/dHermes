@@ -4,6 +4,7 @@ use App\Models\AuditEvent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -74,9 +75,9 @@ new #[Layout('layouts.app')] #[Title('Auditoría')] class extends Component
 
         if ($actor !== '') {
             $query->whereHas('actor', function (Builder $query) use ($actor): void {
-                $query->where('id', $actor)
-                    ->orWhere('email', 'like', '%'.$actor.'%')
-                    ->orWhere('name', 'like', '%'.$actor.'%');
+                $query->where('email', 'like', '%'.$actor.'%')
+                    ->orWhere('name', 'like', '%'.$actor.'%')
+                    ->when(Str::isUuid($actor), fn (Builder $query): Builder => $query->orWhere('id', $actor));
             });
         }
 

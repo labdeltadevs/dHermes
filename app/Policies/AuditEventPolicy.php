@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\Permission;
 use App\Models\AuditEvent;
 use App\Models\User;
 use App\Policies\Concerns\AuthorizesTenant;
@@ -12,12 +13,12 @@ class AuditEventPolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->currentMembership()?->role->canApprove() ?? false;
+        return $this->hasCurrentPermission($user, Permission::AuditView);
     }
 
     public function view(User $user, AuditEvent $auditEvent): bool
     {
-        return $this->isApprover($user, $auditEvent);
+        return $this->hasPermission($user, $auditEvent, Permission::AuditView);
     }
 
     public function create(User $user): bool

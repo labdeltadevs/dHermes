@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\Permission;
 use App\Models\Receipt;
 use App\Models\User;
 use App\Policies\Concerns\AuthorizesTenant;
@@ -12,7 +13,7 @@ class ReceiptPolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->currentMembership() !== null;
+        return $this->hasCurrentPermission($user, Permission::ReceiptsView);
     }
 
     public function view(User $user, Receipt $receipt): bool

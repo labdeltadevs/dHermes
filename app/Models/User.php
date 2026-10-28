@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Spatie\Permission\Traits\HasRoles;
 
 /**
  * @property string $id
@@ -37,7 +38,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasUuids, Notifiable, TwoFactorAuthenticatable;
+    use HasFactory, HasRoles, HasUuids, Notifiable, TwoFactorAuthenticatable;
 
     protected $keyType = 'string';
 

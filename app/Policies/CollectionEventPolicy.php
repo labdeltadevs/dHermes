@@ -3,7 +3,7 @@
 namespace App\Policies;
 
 use App\Enums\CollectionStatus;
-use App\Enums\TenantRole;
+use App\Enums\Permission;
 use App\Models\CollectionEvent;
 use App\Models\Invoice;
 use App\Models\User;
@@ -15,18 +15,20 @@ class CollectionEventPolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->currentMembership() !== null;
+        return $this->hasCurrentPermission($user, Permission::CollectionsView);
     }
 
     public function view(User $user, CollectionEvent $collectionEvent): bool
     {
-        $membership = $this->membership($user, $collectionEvent);
-
-        if ($membership === null) {
+        if (! $this->isMember($user, $collectionEvent)) {
             return false;
         }
 
-        if ($membership->role->canApprove() || $collectionEvent->seller_user_id === $user->id) {
+        if ($this->hasPermission($user, $collectionEvent, Permission::CollectionsApprove)) {
+            return true;
+        }
+
+        if ($collectionEvent->seller_user_id === $user->id) {
             return true;
         }
 
@@ -35,23 +37,19 @@ class CollectionEventPolicy
 
     public function create(User $user, Invoice $invoice): bool
     {
-        $membership = $this->membership($user, $invoice);
-
-        if ($membership === null || ! $membership->role->sells() || ! $invoice->isOpen()) {
+        if (! $invoice->isOpen()) {
             return false;
         }
 
-        return $user->canAccessInvoice($invoice);
+        return $this->hasPermission($user, $invoice, Permission::CollectionsCreate)
+            && $user->canAccessInvoice($invoice);
     }
 
     public function update(User $user, CollectionEvent $collectionEvent): bool
     {
-        $membership = $this->membership($user, $collectionEvent);
-
-        return $membership !== null
-            && $membership->role->sells()
+        return $collectionEvent->status === CollectionStatus::Pending
             && $collectionEvent->seller_user_id === $user->id
-            && $collectionEvent->status === CollectionStatus::Pending;
+            && $this->hasPermission($user, $collectionEvent, Permission::CollectionsCreate);
     }
 
     public function delete(User $user, CollectionEvent $collectionEvent): bool
@@ -61,12 +59,12 @@ class CollectionEventPolicy
 
     public function accept(User $user, CollectionEvent $collectionEvent): bool
     {
-        return $this->role($user, $collectionEvent)?->canApprove() ?? false;
+        return $this->hasPermission($user, $collectionEvent, Permission::CollectionsApprove);
     }
 
     public function reject(User $user, CollectionEvent $collectionEvent): bool
     {
-        return $this->role($user, $collectionEvent)?->canApprove() ?? false;
+        return $this->hasPermission($user, $collectionEvent, Permission::CollectionsApprove);
     }
 
     public function cancel(User $user, CollectionEvent $collectionEvent): bool
@@ -75,20 +73,17 @@ class CollectionEventPolicy
             return false;
         }
 
-        if ($this->role($user, $collectionEvent)?->canApprove() ?? false) {
+        if ($this->hasPermission($user, $collectionEvent, Permission::CollectionsCancelAny)) {
             return true;
         }
 
-        $membership = $this->membership($user, $collectionEvent);
-
-        return $membership !== null
-            && $membership->role->sells()
-            && $collectionEvent->seller_user_id === $user->id
-            && $collectionEvent->collected_on->isToday();
+        return $collectionEvent->seller_user_id === $user->id
+            && $collectionEvent->collected_on->isToday()
+            && $this->hasPermission($user, $collectionEvent, Permission::CollectionsCreate);
     }
 
     public function void(User $user, CollectionEvent $collectionEvent): bool
     {
-        return $this->role($user, $collectionEvent) === TenantRole::Admin;
+        return $this->hasPermission($user, $collectionEvent, Permission::CollectionsVoid);
     }
 }

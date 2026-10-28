@@ -4,8 +4,10 @@ namespace App\Models;
 
 use App\Enums\TenantRole;
 use App\Models\Concerns\BelongsToTenant;
+use App\Observers\TenantUserObserver;
 use Database\Factories\TenantUserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,6 +25,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  */
 #[Fillable(['tenant_id', 'user_id', 'role', 'sales_rep_id', 'active'])]
+#[ObservedBy(TenantUserObserver::class)]
 class TenantUser extends Model
 {
     /** @use HasFactory<TenantUserFactory> */

@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Observers\TenantObserver;
 use Database\Factories\TenantFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,6 +25,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  */
 #[Fillable(['code', 'name', 'tax_id', 'timezone', 'local_currency', 'active'])]
+#[ObservedBy(TenantObserver::class)]
 class Tenant extends Model
 {
     /** @use HasFactory<TenantFactory> */

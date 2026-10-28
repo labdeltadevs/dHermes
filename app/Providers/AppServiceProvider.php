@@ -2,15 +2,14 @@
 
 namespace App\Providers;
 
-use App\Enums\TenantRole;
-use App\Models\User;
+use App\Support\Permissions\TenantRoleSyncer;
 use App\Support\Tenancy\CurrentTenant;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Spatie\Permission\PermissionRegistrar;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,7 +18,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->scoped(CurrentTenant::class, fn (): CurrentTenant => new CurrentTenant);
+        $this->app->scoped(CurrentTenant::class, fn (): CurrentTenant => new CurrentTenant(
+            $this->app->make(PermissionRegistrar::class),
+        ));
+
+        $this->app->scoped(TenantRoleSyncer::class);
     }
 
     /**
@@ -28,12 +31,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
-
-        Gate::define(
-            'manage-users',
-            fn (User $user): bool => $user->active
-                && $user->currentMembership()?->role === TenantRole::Admin,
-        );
     }
 
     /**
