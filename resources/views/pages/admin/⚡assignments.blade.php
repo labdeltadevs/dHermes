@@ -33,6 +33,8 @@ new #[Layout('layouts.app')] #[Title('Asignaciones')] class extends Component
 
     public string $bulkCollectorId = '';
 
+    private const AUDIT_CUSTOMER_IDS_LIMIT = 500;
+
     public function mount(): void
     {
         Gate::authorize(Permission::AssignmentsManage->value);
@@ -85,6 +87,20 @@ new #[Layout('layouts.app')] #[Title('Asignaciones')] class extends Component
         $this->applyCollector($this->selected, null, 'bulkCollectorId');
     }
 
+    public function assignAll(): void
+    {
+        Gate::authorize(Permission::AssignmentsManage->value);
+
+        $this->applyCollectorToFiltered($this->bulkCollectorId);
+    }
+
+    public function unassignAll(): void
+    {
+        Gate::authorize(Permission::AssignmentsManage->value);
+
+        $this->applyCollectorToFiltered(null);
+    }
+
     public function render()
     {
         $tenantId = app(CurrentTenant::class)->requireId();
@@ -94,6 +110,7 @@ new #[Layout('layouts.app')] #[Title('Asignaciones')] class extends Component
                 ->paginate(25)
                 ->onEachSide(1)
                 ->withQueryString(),
+            'filteredCount' => $this->customersQuery()->count(),
             'collectors' => $this->collectorsQuery()->get(),
             'salesReps' => SalesRep::query()->where('active', true)->orderBy('name')->get(['id', 'name', 'slpcode']),
         ]);
@@ -161,8 +178,9 @@ new #[Layout('layouts.app')] #[Title('Asignaciones')] class extends Component
 
     /**
      * @param  array<int, mixed>  $customerIds
+     * @param  array<string, string>  $filters
      */
-    private function applyCollector(array $customerIds, ?string $collectorId, string $errorKey): void
+    private function applyCollector(array $customerIds, ?string $collectorId, string $errorKey, array $filters = []): void
     {
         $tenantId = app(CurrentTenant::class)->requireId();
 
@@ -177,11 +195,7 @@ new #[Layout('layouts.app')] #[Title('Asignaciones')] class extends Component
             return;
         }
 
-        if ($collectorId !== null && ! in_array($collectorId, $this->collectorIds(), true)) {
-            throw ValidationException::withMessages([
-                $errorKey => 'El cobrador seleccionado no pertenece a la empresa.',
-            ]);
-        }
+        $this->validateCollector($collectorId, $errorKey);
 
         $customers = Customer::query()->whereIn('id', $ids)->pluck('id')->all();
 
@@ -193,7 +207,7 @@ new #[Layout('layouts.app')] #[Title('Asignaciones')] class extends Component
 
         $assigned = $collectorId !== null;
 
-        DB::transaction(function () use ($tenantId, $customers, $collectorId, $assigned): void {
+        DB::transaction(function () use ($tenantId, $customers, $collectorId, $assigned, $filters): void {
             Customer::query()
                 ->whereIn('id', $customers)
                 ->update(['collector_user_id' => $collectorId]);
@@ -203,11 +217,7 @@ new #[Layout('layouts.app')] #[Title('Asignaciones')] class extends Component
                 $assigned ? 'customer.collector_assigned' : 'customer.collector_unassigned',
                 'customer',
                 null,
-                [
-                    'customer_ids' => $customers,
-                    'count' => count($customers),
-                    'collector_user_id' => $collectorId,
-                ],
+                $this->auditDetails($customers, $collectorId, $filters),
                 auth()->user(),
             );
         });
@@ -218,8 +228,116 @@ new #[Layout('layouts.app')] #[Title('Asignaciones')] class extends Component
             ? 'Clientes asignados al cobrador.'
             : 'Clientes sin cobrador asignado.');
     }
+
+    private function applyCollectorToFiltered(?string $collectorId): void
+    {
+        $errorKey = 'bulkCollectorId';
+
+        $this->validateCollector($collectorId, $errorKey);
+
+        $query = $this->customersQuery();
+        $count = (clone $query)->count();
+
+        if ($count === 0) {
+            $this->addError($errorKey, 'No hay clientes con los filtros actuales.');
+
+            return;
+        }
+
+        $customerIds = $count <= self::AUDIT_CUSTOMER_IDS_LIMIT
+            ? (clone $query)->pluck('id')->all()
+            : [];
+
+        $tenantId = app(CurrentTenant::class)->requireId();
+        $assigned = $collectorId !== null;
+        $filters = $this->activeFilters();
+
+        DB::transaction(function () use ($query, $tenantId, $collectorId, $assigned, $count, $customerIds, $filters): void {
+            $query->update(['collector_user_id' => $collectorId]);
+
+            app(AuditLogger::class)->record(
+                $tenantId,
+                $assigned ? 'customer.collector_assigned' : 'customer.collector_unassigned',
+                'customer',
+                null,
+                $this->auditDetails($customerIds, $collectorId, $filters, $count),
+                auth()->user(),
+            );
+        });
+
+        $this->reset('selected', 'bulkCollectorId');
+        $this->resetErrorBag($errorKey);
+        $this->dispatch('bulk-assignment-completed');
+        session()->flash('status', $assigned
+            ? sprintf('%d clientes asignados al cobrador.', $count)
+            : sprintf('Se quitó el cobrador a %d clientes.', $count));
+    }
+
+    private function validateCollector(?string $collectorId, string $errorKey): void
+    {
+        if ($collectorId !== null && ! in_array($collectorId, $this->collectorIds(), true)) {
+            throw ValidationException::withMessages([
+                $errorKey => 'El cobrador seleccionado no pertenece a la empresa.',
+            ]);
+        }
+    }
+
+    /**
+     * @param  array<int, string>  $customerIds
+     * @param  array<string, string>  $filters
+     * @return array<string, mixed>
+     */
+    private function auditDetails(array $customerIds, ?string $collectorId, array $filters = [], ?int $count = null): array
+    {
+        $count ??= count($customerIds);
+
+        $details = [
+            'count' => $count,
+            'collector_user_id' => $collectorId,
+        ];
+
+        if ($count <= self::AUDIT_CUSTOMER_IDS_LIMIT) {
+            $details['customer_ids'] = $customerIds;
+        }
+
+        if ($filters !== []) {
+            $details['filters'] = $filters;
+        }
+
+        return $details;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function activeFilters(): array
+    {
+        return array_filter([
+            'search' => trim($this->search),
+            'collector' => $this->collectorFilter,
+            'sales_rep_id' => $this->salesRepId,
+            'active' => $this->active,
+        ], fn (string $value): bool => $value !== '');
+    }
 };
 ?>
+
+@php
+    $selectedCount = count($selected);
+    $bulkCollectorName = $bulkCollectorId !== ''
+        ? $collectors->firstWhere('user_id', $bulkCollectorId)?->user?->name
+        : null;
+    $activeFilterLabels = array_filter([
+        $search !== '' ? 'Búsqueda: "'.$search.'"' : null,
+        match ($collectorFilter) {
+            'unassigned' => 'Sin cobrador',
+            'assigned' => 'Con cobrador',
+            default => $collectorFilter !== '' ? 'Cobrador filtrado' : null,
+        },
+        $salesRepId !== '' ? 'Vendedor filtrado' : null,
+        $active !== '' ? ($active === '1' ? 'Solo activos' : 'Solo inactivos') : null,
+    ]);
+@endphp
 
 <div class="space-y-5 sm:space-y-6">
     <section class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -354,30 +472,117 @@ new #[Layout('layouts.app')] #[Title('Asignaciones')] class extends Component
             </div>
         </div>
 
-        <div class="mt-4 flex flex-col gap-3 rounded-xl bg-canvas p-3 sm:flex-row sm:items-end">
-            <div class="sm:min-w-64">
-                <label for="assignments-bulk-collector" class="label">Asignar seleccionados a</label>
-                <select id="assignments-bulk-collector" wire:model="bulkCollectorId"
-                    class="input">
-                    <option value="">Selecciona un cobrador</option>
-                    @foreach ($collectors as $collector)
-                        <option value="{{ $collector->user_id }}">{{ $collector->user->name }}</option>
-                    @endforeach
-                </select>
+        <div x-data="{ bulkOpen: false, bulkMode: 'assign' }"
+            x-on:bulk-assignment-completed.window="bulkOpen = false"
+            class="mt-4 space-y-3 rounded-xl bg-canvas p-3">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <div class="sm:min-w-64">
+                    <label for="assignments-bulk-collector" class="label">Asignar a</label>
+                    <select id="assignments-bulk-collector" wire:model.live="bulkCollectorId"
+                        class="input">
+                        <option value="">Selecciona un cobrador</option>
+                        @foreach ($collectors as $collector)
+                            <option value="{{ $collector->user_id }}">{{ $collector->user->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted sm:ml-auto">
+                    <span><span class="font-semibold text-ink">{{ $filteredCount }}</span> en filtros</span>
+                    <span aria-hidden="true">·</span>
+                    <span><span class="font-semibold text-ink">{{ $selectedCount }}</span> seleccionados</span>
+                </div>
             </div>
 
-            <div class="flex flex-col gap-2 sm:flex-row">
-                <button type="button" wire:click="assignSelected" wire:loading.attr="disabled"
+            @if ($activeFilterLabels !== [])
+                <p class="text-xs text-muted">Filtros activos: {{ implode(' · ', $activeFilterLabels) }}</p>
+            @endif
+
+            <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                <button type="button" x-on:click="bulkMode = 'assign'; bulkOpen = true"
+                    wire:loading.attr="disabled"
+                    wire:target="assignAll, assignSelected, unassignAll, unassignSelected"
+                    @disabled($filteredCount === 0 || $bulkCollectorId === '')
                     class="btn btn-primary">
-                    Asignar
+                    Asignar los {{ $filteredCount }} clientes
                 </button>
-                <button type="button" wire:click="unassignSelected" wire:loading.attr="disabled"
+
+                <button type="button" wire:click="assignSelected"
+                    wire:loading.attr="disabled"
+                    wire:target="assignAll, assignSelected, unassignAll, unassignSelected"
+                    @disabled($selectedCount === 0 || $bulkCollectorId === '')
                     class="btn btn-outline">
-                    Quitar asignación
+                    Asignar los {{ $selectedCount }} seleccionados
+                </button>
+
+                <button type="button" x-on:click="bulkMode = 'unassign'; bulkOpen = true"
+                    wire:loading.attr="disabled"
+                    wire:target="assignAll, assignSelected, unassignAll, unassignSelected"
+                    @disabled($filteredCount === 0)
+                    class="btn btn-outline">
+                    Quitar a los {{ $filteredCount }}
+                </button>
+
+                <button type="button" wire:click="unassignSelected"
+                    wire:loading.attr="disabled"
+                    wire:target="assignAll, assignSelected, unassignAll, unassignSelected"
+                    @disabled($selectedCount === 0)
+                    class="btn btn-outline">
+                    Quitar a los {{ $selectedCount }} seleccionados
                 </button>
             </div>
 
-            <p class="text-sm text-muted sm:ml-auto">{{ count($selected) }} seleccionados</p>
+            @error('bulkCollectorId')
+                <p class="text-sm text-rose-600">{{ $message }}</p>
+            @enderror
+
+            <div x-show="bulkOpen" x-cloak class="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
+                <div x-show="bulkOpen" x-transition.opacity class="absolute inset-0 bg-ink/40 backdrop-blur-sm"
+                    x-on:click="bulkOpen = false"></div>
+
+                <div x-show="bulkOpen"
+                    x-transition:enter="transition ease-out duration-150"
+                    x-transition:enter-start="translate-y-4 opacity-0 sm:scale-95"
+                    x-transition:enter-end="translate-y-0 opacity-100 sm:scale-100"
+                    x-transition:leave="transition ease-in duration-100"
+                    x-transition:leave-start="translate-y-0 opacity-100 sm:scale-100"
+                    x-transition:leave-end="translate-y-4 opacity-0 sm:scale-95"
+                    role="dialog" aria-modal="true" aria-labelledby="bulk-confirm-title"
+                    class="relative w-full max-w-md rounded-2xl border border-line bg-surface p-5 shadow-pop">
+                    <h2 id="bulk-confirm-title" class="text-base font-semibold text-ink">
+                        <span x-show="bulkMode === 'assign'">Asignar todos los clientes filtrados</span>
+                        <span x-show="bulkMode === 'unassign'">Quitar el cobrador a todos los clientes filtrados</span>
+                    </h2>
+
+                    <p class="mt-2 text-sm leading-6 text-muted" x-show="bulkMode === 'assign'">
+                        Se asignarán <span class="font-semibold text-ink">{{ $filteredCount }} clientes</span>
+                        a <span class="font-semibold text-ink">{{ $bulkCollectorName ?? 'el cobrador seleccionado' }}</span>.
+                        Quienes ya tengan un cobrador serán reasignados.
+                    </p>
+
+                    <p class="mt-2 text-sm leading-6 text-muted" x-show="bulkMode === 'unassign'">
+                        Se quitará el cobrador a <span class="font-semibold text-ink">{{ $filteredCount }} clientes</span>.
+                    </p>
+
+                    <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                        <button type="button" x-on:click="bulkOpen = false" class="btn btn-outline">
+                            Cancelar
+                        </button>
+                        <button type="button" wire:click="assignAll"
+                            wire:loading.attr="disabled" wire:target="assignAll"
+                            x-show="bulkMode === 'assign'" class="btn btn-primary">
+                            <span wire:loading.remove wire:target="assignAll">Asignar {{ $filteredCount }}</span>
+                            <span wire:loading wire:target="assignAll">Asignando {{ $filteredCount }} clientes...</span>
+                        </button>
+                        <button type="button" wire:click="unassignAll"
+                            wire:loading.attr="disabled" wire:target="unassignAll"
+                            x-show="bulkMode === 'unassign'" class="btn btn-danger">
+                            <span wire:loading.remove wire:target="unassignAll">Quitar a {{ $filteredCount }}</span>
+                            <span wire:loading wire:target="unassignAll">Quitando cobrador a {{ $filteredCount }} clientes...</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         @if ($collectors->isNotEmpty())
@@ -422,7 +627,7 @@ new #[Layout('layouts.app')] #[Title('Asignaciones')] class extends Component
                     @forelse ($customers as $customer)
                         <tr wire:key="assignment-{{ $customer->id }}" class="transition hover:bg-brand-50/40">
                             <td class="px-4 py-4">
-                                <input type="checkbox" wire:model="selected" value="{{ $customer->id }}"
+                                <input type="checkbox" wire:model.live="selected" value="{{ $customer->id }}"
                                     aria-label="Seleccionar {{ $customer->name }}"
                                     class="size-4 rounded border-line text-brand-700 focus:ring-brand-500">
                             </td>
@@ -474,7 +679,7 @@ new #[Layout('layouts.app')] #[Title('Asignaciones')] class extends Component
             <article wire:key="assignment-card-{{ $customer->id }}" class="card p-4">
                 <div class="flex items-start justify-between gap-3">
                     <div class="flex min-w-0 items-start gap-3">
-                        <input type="checkbox" wire:model="selected" value="{{ $customer->id }}"
+                        <input type="checkbox" wire:model.live="selected" value="{{ $customer->id }}"
                             aria-label="Seleccionar {{ $customer->name }}"
                             class="mt-0.5 size-4 rounded border-line text-brand-700 focus:ring-brand-500">
                         <div class="min-w-0">

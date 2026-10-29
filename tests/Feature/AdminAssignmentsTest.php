@@ -205,3 +205,117 @@ it('paginates assignments with numbered page links', function () {
         ->assertSee('Mostrando 26 a 30 de 30 resultados')
         ->assertSeeHtml('aria-current="page"');
 });
+
+it('lets an admin assign all filtered customers to a collector', function () {
+    $scenario = assignmentScenario();
+
+    $this->actingAs($scenario['admin']);
+    app(CurrentTenant::class)->set($scenario['tenant']->id);
+
+    Livewire::test('pages::admin.assignments')
+        ->set('bulkCollectorId', $scenario['collector']->id)
+        ->call('assignAll')
+        ->assertDispatched('bulk-assignment-completed')
+        ->assertHasNoErrors();
+
+    expect($scenario['customer']->fresh()->collector_user_id)->toBe($scenario['collector']->id)
+        ->and($scenario['otherCustomer']->fresh()->collector_user_id)->toBe($scenario['collector']->id)
+        ->and($scenario['unassignedCustomer']->fresh()->collector_user_id)->toBe($scenario['collector']->id);
+
+    $event = AuditEvent::query()
+        ->where('action', 'customer.collector_assigned')
+        ->firstOrFail();
+
+    expect($event->details['count'])->toBe(3)
+        ->and($event->details['customer_ids'])->toEqualCanonicalizing([
+            $scenario['customer']->id,
+            $scenario['otherCustomer']->id,
+            $scenario['unassignedCustomer']->id,
+        ])
+        ->and($event->details['collector_user_id'])->toBe($scenario['collector']->id);
+});
+
+it('lets an admin unassign all filtered customers', function () {
+    $scenario = assignmentScenario();
+
+    $scenario['customer']->forceFill(['collector_user_id' => $scenario['collector']->id])->save();
+    $scenario['otherCustomer']->forceFill(['collector_user_id' => $scenario['collector']->id])->save();
+
+    $this->actingAs($scenario['admin']);
+    app(CurrentTenant::class)->set($scenario['tenant']->id);
+
+    Livewire::test('pages::admin.assignments')
+        ->call('unassignAll')
+        ->assertDispatched('bulk-assignment-completed')
+        ->assertHasNoErrors();
+
+    expect($scenario['customer']->fresh()->collector_user_id)->toBeNull()
+        ->and($scenario['otherCustomer']->fresh()->collector_user_id)->toBeNull()
+        ->and($scenario['unassignedCustomer']->fresh()->collector_user_id)->toBeNull();
+
+    $event = AuditEvent::query()
+        ->where('action', 'customer.collector_unassigned')
+        ->firstOrFail();
+
+    expect($event->details['count'])->toBe(3);
+});
+
+it('assignAll only applies to customers matching the active filters', function () {
+    $scenario = assignmentScenario();
+
+    $scenario['customer']->forceFill(['collector_user_id' => $scenario['collector']->id])->save();
+    $scenario['otherCustomer']->forceFill(['collector_user_id' => $scenario['collector']->id])->save();
+
+    $this->actingAs($scenario['admin']);
+    app(CurrentTenant::class)->set($scenario['tenant']->id);
+
+    Livewire::test('pages::admin.assignments')
+        ->set('collectorFilter', 'assigned')
+        ->set('bulkCollectorId', null)
+        ->call('unassignAll')
+        ->assertHasNoErrors();
+
+    expect($scenario['customer']->fresh()->collector_user_id)->toBeNull()
+        ->and($scenario['otherCustomer']->fresh()->collector_user_id)->toBeNull()
+        ->and($scenario['unassignedCustomer']->fresh()->collector_user_id)->toBeNull();
+});
+
+it('rejects assignAll/unassignAll with a foreign collector', function () {
+    $scenario = assignmentScenario();
+
+    $otherTenant = tenantContext(['code' => 'AJENA']);
+    $foreignCollector = memberFor($otherTenant, TenantRole::Collector);
+    app(CurrentTenant::class)->set($scenario['tenant']->id);
+
+    $this->actingAs($scenario['admin']);
+
+    Livewire::test('pages::admin.assignments')
+        ->set('bulkCollectorId', $foreignCollector->id)
+        ->call('assignAll')
+        ->assertHasErrors('bulkCollectorId');
+
+    expect($scenario['customer']->fresh()->collector_user_id)->toBeNull();
+});
+
+it('renders bulk assignment actions enabled when their prerequisites are met', function () {
+    $scenario = assignmentScenario();
+
+    $this->actingAs($scenario['admin']);
+    app(CurrentTenant::class)->set($scenario['tenant']->id);
+
+    Livewire::test('pages::admin.assignments')
+        ->set('selected', [$scenario['customer']->id])
+        ->set('bulkCollectorId', $scenario['collector']->id)
+        ->assertDontSeeHtml('disabled=""');
+});
+
+it('synchronizes customer selection so partial assignment actions can be enabled', function () {
+    $scenario = assignmentScenario();
+
+    $this->actingAs($scenario['admin']);
+    app(CurrentTenant::class)->set($scenario['tenant']->id);
+
+    $component = Livewire::test('pages::admin.assignments');
+
+    expect(substr_count($component->html(), 'wire:model.live="selected"'))->toBe(6);
+});
