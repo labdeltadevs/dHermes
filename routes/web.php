@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CollectionProofController;
+use App\Http\Controllers\PlatformTenantManagementController;
 use App\Http\Controllers\TenantSwitchController;
 use App\Http\Controllers\VerificationController;
 use App\Http\Controllers\VerificationPrintController;
@@ -13,6 +14,14 @@ Route::get('/', fn () => auth()->check()
 Route::post('/tenant', TenantSwitchController::class)
     ->middleware('auth')
     ->name('tenant.switch');
+
+Route::post('/platform/empresas/{tenant}/gestionar', [PlatformTenantManagementController::class, 'manage'])
+    ->middleware('auth')
+    ->name('platform.tenants.manage');
+
+Route::post('/platform/suplantacion/salir', [PlatformTenantManagementController::class, 'exit'])
+    ->middleware('auth')
+    ->name('platform.impersonation.exit');
 
 Route::livewire('/cartera', 'pages::portfolio')
     ->middleware('auth')

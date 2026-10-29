@@ -94,11 +94,44 @@ class User extends Authenticatable
     {
         $tenantId = $tenant instanceof Tenant ? $tenant->id : $tenant;
 
-        return $this->tenantUsers()
+        $membership = $this->tenantUsers()
             ->withoutGlobalScope('tenant')
             ->where('tenant_id', $tenantId)
             ->where('active', true)
             ->first();
+
+        return $membership ?? $this->virtualPlatformMembership($tenantId);
+    }
+
+    /**
+     * Ephemeral administrator membership for a platform admin currently
+     * impersonating the given tenant. It is never persisted.
+     */
+    private function virtualPlatformMembership(string $tenantId): ?TenantUser
+    {
+        if (! $this->is_platform_admin || app(CurrentTenant::class)->id() !== $tenantId) {
+            return null;
+        }
+
+        $tenant = Tenant::query()
+            ->whereKey($tenantId)
+            ->where('active', true)
+            ->first();
+
+        if ($tenant === null) {
+            return null;
+        }
+
+        $membership = new TenantUser([
+            'tenant_id' => $tenant->id,
+            'user_id' => $this->id,
+            'role' => TenantRole::Admin,
+            'active' => true,
+        ]);
+
+        $membership->setRelation('tenant', $tenant);
+
+        return $membership;
     }
 
     public function hasRoleIn(Tenant|string $tenant, TenantRole ...$roles): bool

@@ -229,12 +229,27 @@ new #[Layout('layouts.app')] #[Title('Asignaciones')] class extends Component
             <p class="mt-1.5 text-sm text-muted">Asigna clientes a los cobradores de {{ auth()->user()->currentMembership()?->tenant?->name ?? 'tu empresa' }}.</p>
         </div>
 
-        @if ($search !== '' || $collectorFilter !== '' || $salesRepId !== '' || $active !== '')
-            <button type="button" wire:click="clearFilters"
-                class="btn btn-outline">
-                Limpiar filtros
-            </button>
-        @endif
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div wire:loading.delay
+                wire:target="search, collectorFilter, salesRepId, active, assignSingle, assignSelected, unassignSelected, unassignSingle"
+                class="inline-flex items-center justify-center gap-2 rounded-xl border border-brand-100 bg-brand-50 px-3 py-2 text-sm font-medium text-brand-800">
+                <svg class="size-4 animate-spin text-brand-600" fill="none" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                        stroke-width="3"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z">
+                    </path>
+                </svg>
+                <span>Procesando grupo seleccionado…</span>
+            </div>
+
+            @if ($search !== '' || $collectorFilter !== '' || $salesRepId !== '' || $active !== '')
+                <button type="button" wire:click="clearFilters"
+                    class="btn btn-outline">
+                    Limpiar filtros
+                </button>
+            @endif
+        </div>
     </section>
 
     @if (session('status'))
@@ -247,43 +262,91 @@ new #[Layout('layouts.app')] #[Title('Asignaciones')] class extends Component
         <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div class="xl:col-span-2">
                 <label for="assignments-search" class="label">Buscar</label>
-                <input id="assignments-search" type="search" wire:model.live.debounce.400ms="search"
-                    placeholder="Nombre o código del cliente"
-                    class="input">
+                <div class="relative">
+                    <input id="assignments-search" type="search" wire:model.live.debounce.400ms="search"
+                        placeholder="Nombre o código del cliente"
+                        class="input">
+                    <div wire:loading.delay wire:target="search"
+                        class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+                        <svg class="size-4 animate-spin text-muted" fill="none" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                stroke-width="3"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z">
+                            </path>
+                        </svg>
+                    </div>
+                </div>
             </div>
 
             <div>
                 <label for="assignments-collector" class="label">Cobrador</label>
-                <select id="assignments-collector" wire:model.live="collectorFilter"
-                    class="input">
-                    <option value="">Todos</option>
-                    <option value="unassigned">Sin cobrador</option>
-                    <option value="assigned">Con cobrador</option>
-                    @foreach ($collectors as $collector)
-                        <option value="{{ $collector->user_id }}">{{ $collector->user->name }}</option>
-                    @endforeach
-                </select>
+                <div class="relative">
+                    <select id="assignments-collector" wire:model.live="collectorFilter"
+                        class="input">
+                        <option value="">Todos</option>
+                        <option value="unassigned">Sin cobrador</option>
+                        <option value="assigned">Con cobrador</option>
+                        @foreach ($collectors as $collector)
+                            <option value="{{ $collector->user_id }}">{{ $collector->user->name }}</option>
+                        @endforeach
+                    </select>
+                    <div wire:loading.delay wire:target="collectorFilter"
+                        class="pointer-events-none absolute right-8 top-1/2 -translate-y-1/2">
+                        <svg class="size-4 animate-spin text-muted" fill="none" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                stroke-width="3"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z">
+                            </path>
+                        </svg>
+                    </div>
+                </div>
             </div>
 
             <div>
                 <label for="assignments-sales-rep" class="label">Vendedor</label>
-                <select id="assignments-sales-rep" wire:model.live="salesRepId"
-                    class="input">
-                    <option value="">Todos</option>
-                    @foreach ($salesReps as $salesRep)
-                        <option value="{{ $salesRep->id }}">{{ $salesRep->name }} · SLP {{ $salesRep->slpcode }}</option>
-                    @endforeach
-                </select>
+                <div class="relative">
+                    <select id="assignments-sales-rep" wire:model.live="salesRepId"
+                        class="input">
+                        <option value="">Todos</option>
+                        @foreach ($salesReps as $salesRep)
+                            <option value="{{ $salesRep->id }}">{{ $salesRep->name }} · SLP {{ $salesRep->slpcode }}</option>
+                        @endforeach
+                    </select>
+                    <div wire:loading.delay wire:target="salesRepId"
+                        class="pointer-events-none absolute right-8 top-1/2 -translate-y-1/2">
+                        <svg class="size-4 animate-spin text-muted" fill="none" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                stroke-width="3"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z">
+                            </path>
+                        </svg>
+                    </div>
+                </div>
             </div>
 
             <div>
                 <label for="assignments-active" class="label">Estado</label>
-                <select id="assignments-active" wire:model.live="active"
-                    class="input">
-                    <option value="">Todos</option>
-                    <option value="1">Activos</option>
-                    <option value="0">Inactivos</option>
-                </select>
+                <div class="relative">
+                    <select id="assignments-active" wire:model.live="active"
+                        class="input">
+                        <option value="">Todos</option>
+                        <option value="1">Activos</option>
+                        <option value="0">Inactivos</option>
+                    </select>
+                    <div wire:loading.delay wire:target="active"
+                        class="pointer-events-none absolute right-8 top-1/2 -translate-y-1/2">
+                        <svg class="size-4 animate-spin text-muted" fill="none" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                stroke-width="3"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z">
+                            </path>
+                        </svg>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -350,7 +413,8 @@ new #[Layout('layouts.app')] #[Title('Asignaciones')] class extends Component
                         <th class="table-head">Asignar a</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-line">
+                <tbody class="divide-y divide-line" wire:loading.delay.class="opacity-40"
+                    wire:target="search, collectorFilter, salesRepId, active, assignSingle, assignSelected, unassignSelected, unassignSingle">
                     @forelse ($customers as $customer)
                         <tr wire:key="assignment-{{ $customer->id }}" class="transition hover:bg-brand-50/40">
                             <td class="px-4 py-4">
@@ -373,6 +437,7 @@ new #[Layout('layouts.app')] #[Title('Asignaciones')] class extends Component
                             </td>
                             <td class="px-4 py-4">
                                 <select wire:change="assignSingle('{{ $customer->id }}', $event.target.value)"
+                                    wire:loading.attr="disabled" wire:target="assignSingle"
                                     aria-label="Cobrador de {{ $customer->name }}"
                                     class="select">
                                     <option value="">Sin asignar</option>
@@ -399,7 +464,8 @@ new #[Layout('layouts.app')] #[Title('Asignaciones')] class extends Component
         </div>
     </section>
 
-    <section class="space-y-3 md:hidden" aria-label="Asignación de clientes">
+    <section class="space-y-3 md:hidden" aria-label="Asignación de clientes" wire:loading.delay.class="opacity-40"
+        wire:target="search, collectorFilter, salesRepId, active, assignSingle, assignSelected, unassignSelected, unassignSingle">
         @forelse ($customers as $customer)
             <article wire:key="assignment-card-{{ $customer->id }}" class="card p-4">
                 <div class="flex items-start justify-between gap-3">
@@ -435,6 +501,7 @@ new #[Layout('layouts.app')] #[Title('Asignaciones')] class extends Component
                     <label for="assignment-card-collector-{{ $customer->id }}" class="label">Asignar a</label>
                     <select id="assignment-card-collector-{{ $customer->id }}"
                         wire:change="assignSingle('{{ $customer->id }}', $event.target.value)"
+                        wire:loading.attr="disabled" wire:target="assignSingle"
                         class="select">
                         <option value="">Sin asignar</option>
                         @foreach ($collectors as $collector)

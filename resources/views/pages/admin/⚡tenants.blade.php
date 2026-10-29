@@ -518,6 +518,20 @@ new #[Layout('layouts.app')] #[Title('Empresas')] class extends Component {
                             {{-- Acciones --}}
                             <td class="whitespace-nowrap px-4 py-4 text-right text-sm">
                                 <div class="flex items-center justify-end gap-1">
+                                    <form method="POST" action="{{ route('platform.tenants.manage', $tenant) }}">
+                                        @csrf
+                                        <button type="submit"
+                                            @disabled(! $tenant->active || $currentTenantId === $tenant->id)
+                                            class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-40">
+                                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor"
+                                                xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                                            </svg>
+                                            {{ $currentTenantId === $tenant->id ? 'Gestionando' : 'Gestionar' }}
+                                        </button>
+                                    </form>
                                     <button type="button" wire:click="edit('{{ $tenant->id }}')"
                                         class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-brand-700 transition-colors hover:bg-brand-50">
                                         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
@@ -670,6 +684,19 @@ new #[Layout('layouts.app')] #[Title('Empresas')] class extends Component {
                         @endif
                     </button>
                 </div>
+
+                <form method="POST" action="{{ route('platform.tenants.manage', $tenant) }}" class="mt-2">
+                    @csrf
+                    <button type="submit" @disabled(! $tenant->active || $currentTenantId === $tenant->id)
+                        class="btn btn-outline btn-sm w-full text-emerald-700 disabled:cursor-not-allowed disabled:opacity-40">
+                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                        </svg>
+                        {{ $currentTenantId === $tenant->id ? 'Gestionando esta empresa' : 'Gestionar empresa' }}
+                    </button>
+                </form>
             </article>
         @empty
             <div

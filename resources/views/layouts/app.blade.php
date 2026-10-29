@@ -143,6 +143,8 @@
             </header>
 
             <main id="contenido" class="mx-auto px-4 pb-32 pt-6 sm:px-6 sm:pt-8 md:pb-12 lg:px-8">
+                <x-platform-impersonation-banner />
+
                 @if (session('status'))
                     <div class="mb-6 flex items-start gap-3 rounded-2xl border border-mint-200 bg-mint-50 px-4 py-3 text-sm text-mint-700">
                         <svg class="mt-0.5 size-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

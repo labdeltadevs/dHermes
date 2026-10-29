@@ -2,7 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Tenant;
 use App\Support\Tenancy\CurrentTenant;
+use App\Support\Tenancy\Impersonation;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,6 +17,26 @@ final class ResolveTenant
         $currentTenant->clear();
 
         $user = $request->user();
+
+        if ($user !== null && $user->is_platform_admin) {
+            $impersonatedTenantId = (string) $request->session()->get(Impersonation::KEY, '');
+
+            if ($impersonatedTenantId !== '') {
+                $tenant = Tenant::query()
+                    ->whereKey($impersonatedTenantId)
+                    ->where('active', true)
+                    ->first();
+
+                if ($tenant !== null) {
+                    $currentTenant->set($tenant->id);
+                    $request->session()->put('tenant_id', $tenant->id);
+
+                    return $next($request);
+                }
+
+                $request->session()->forget([Impersonation::KEY, 'tenant_id']);
+            }
+        }
 
         if ($user !== null) {
             $memberships = $user->activeMemberships();
