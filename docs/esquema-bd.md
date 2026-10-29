@@ -20,8 +20,8 @@ erDiagram
     TENANTS ||--o{ CASH_SESSION_ITEMS : "empresa"
     TENANTS ||--o{ VERIFICATION_CODES : "empresa"
     TENANTS ||--o{ AUDIT_EVENTS : "empresa"
-    TENANTS ||--o{ ROLES }:: "team (Spatie)"
-    TENANTS ||--o{ PERMISSIONS }:: "team (Spatie)"
+    TENANTS ||--o{ ROLES : "team (Spatie)"
+    TENANTS ||--o{ PERMISSIONS : "team (Spatie)"
 
     USERS {
         string id PK
