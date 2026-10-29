@@ -181,7 +181,11 @@ new #[Layout('layouts.app')] #[Title('Registrar cobro')] class extends Component
     @if (!$embedded)
         <section class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-                <p class="eyebrow">Cartera y cobranzas</p>
+                <x-breadcrumb :items="[
+                    ['label' => 'Inicio', 'url' => route('dashboard')],
+                    ['label' => 'Cobranzas', 'url' => route('collections.index')],
+                    ['label' => 'Registrar cobro'],
+                ]" />
                 <h1 class="page-title">Registrar cobro</h1>
                 <p class="page-subtitle">Informa un cobro para una factura abierta de tu cartera.</p>
             </div>

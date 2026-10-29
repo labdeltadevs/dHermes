@@ -211,7 +211,7 @@
 
     /* ---------- Navegacion ---------- */
     .nav-link {
-        @apply rounded-xl px-3 py-2 text-sm font-medium text-muted transition hover:bg-black/[0.04] hover:text-ink;
+        @apply shrink-0 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium text-muted transition hover:bg-black/[0.04] hover:text-ink;
     }
 
     .nav-link-active {
@@ -219,7 +219,7 @@
     }
 
     .tab-item {
-        @apply flex min-h-16 flex-1 flex-col items-center justify-center gap-1 rounded-2xl px-1 text-[11px] font-medium text-muted transition;
+        @apply flex min-h-16 flex-1 flex-col items-center justify-center gap-1 rounded-2xl px-1 text-[9px] font-medium leading-tight tracking-tight text-muted transition min-[380px]:text-[10px];
     }
 
     .tab-item-active {

@@ -124,7 +124,11 @@ $detailValue = function (mixed $value): string {
 <div class="space-y-5 sm:space-y-6">
     <section class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-            <p class="eyebrow">Administración</p>
+            <x-breadcrumb :items="[
+                ['label' => 'Inicio', 'url' => route('dashboard')],
+                ['label' => 'Administración'],
+                ['label' => 'Auditoría'],
+            ]" />
             <h1 class="page-title">Auditoría</h1>
             <p class="mt-1.5 text-sm text-muted">Consulta los eventos registrados en tu empresa. Esta vista es de solo lectura.</p>
         </div>

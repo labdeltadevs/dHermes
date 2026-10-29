@@ -99,7 +99,11 @@ $subjectSummary = function (VerificationCode $code) use ($money): string {
 <div class="space-y-5 sm:space-y-6">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-            <p class="eyebrow">Administración</p>
+            <x-breadcrumb :items="[
+                ['label' => 'Inicio', 'url' => route('dashboard')],
+                ['label' => 'Administración'],
+                ['label' => 'Comprobantes'],
+            ]" />
             <h1 class="page-title">Comprobantes</h1>
             <p class="mt-1.5 text-sm text-muted">Consulta, imprime y revoca los códigos de verificación emitidos.</p>
         </div>

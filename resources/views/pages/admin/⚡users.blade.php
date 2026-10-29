@@ -308,7 +308,11 @@ new #[Layout('layouts.app')] #[Title('Usuarios')] class extends Component
 <div class="space-y-5 sm:space-y-6">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-            <p class="eyebrow">Administración</p>
+            <x-breadcrumb :items="[
+                ['label' => 'Inicio', 'url' => route('dashboard')],
+                ['label' => 'Administración'],
+                ['label' => 'Usuarios'],
+            ]" />
             <h1 class="page-title">Usuarios</h1>
             <p class="mt-1.5 text-sm text-muted">Gestiona las cuentas de tu empresa y sus roles.</p>
         </div>

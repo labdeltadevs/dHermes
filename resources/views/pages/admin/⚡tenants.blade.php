@@ -302,7 +302,11 @@ new #[Layout('layouts.app')] #[Title('Empresas')] class extends Component {
                 </svg>
             </div>
             <div>
-                <p class="eyebrow">Plataforma</p>
+                <x-breadcrumb :items="[
+                    ['label' => 'Inicio', 'url' => route('dashboard')],
+                    ['label' => 'Administración'],
+                    ['label' => 'Empresas'],
+                ]" />
                 <h1 class="page-title">Empresas</h1>
                 <p class="mt-1 text-sm text-muted">Crea y administra los tenants del sistema.</p>
             </div>

@@ -15,24 +15,27 @@
             $memberships = $user?->activeMemberships() ?? collect();
             $membership = $memberships->firstWhere('tenant_id', $user?->currentTenantId()) ?? $memberships->first();
             $canManageTenant = $user?->can(\App\Enums\Permission::UsersManage->value) ?? false;
-            $canApprove = $user?->can(\App\Enums\Permission::VerificationCodesView->value) ?? false;
+            $canManageAssignments = $user?->can(\App\Enums\Permission::AssignmentsManage->value) ?? false;
+            $canViewAudit = $user?->can('viewAny', \App\Models\AuditEvent::class) ?? false;
+            $canViewVerificationCodes = $user?->can('viewAny', \App\Models\VerificationCode::class) ?? false;
             $isPlatformAdmin = $user?->is_platform_admin ?? false;
+            $hasAdminAccess = $canManageTenant || $canManageAssignments || $canViewAudit || $canViewVerificationCodes || $isPlatformAdmin;
         @endphp
 
         <a href="#contenido" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-ink focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white">
             Saltar al contenido
         </a>
 
-        <div x-data="{ accountOpen: false }" x-on:keydown.escape.window="accountOpen = false" class="min-h-dvh">
+        <div x-data="{ accountOpen: false, adminOpen: false }" x-on:keydown.escape.window="accountOpen = false; adminOpen = false" class="min-h-dvh">
             <header class="sticky top-0 z-30 border-b border-black/5 bg-white/80 backdrop-blur-xl backdrop-saturate-150 safe-top">
                 <div class="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
-                    <div class="flex min-w-0 items-center gap-3 lg:gap-8">
+                    <div class="flex min-w-0 flex-1 items-center gap-2 lg:gap-6">
                         <a href="{{ route('dashboard') }}" wire:navigate class="group flex shrink-0 items-center gap-2.5">
                             <span class="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 text-xs font-extrabold text-white shadow-[0_6px_16px_-8px_rgba(240,79,8,0.9)] transition group-hover:scale-105">dH</span>
-                            <span class="hidden text-[15px] font-semibold tracking-tight text-ink sm:inline">dHermes</span>
+                            <span class="hidden text-[15px] font-semibold tracking-tight text-ink lg:inline">dHermes</span>
                         </a>
 
-                        <nav class="hidden items-center gap-1 md:flex" aria-label="Navegación principal">
+                        <nav class="hidden min-w-0 items-center gap-0.5 md:flex xl:gap-1" aria-label="Navegación principal">
                             <a href="{{ route('dashboard') }}" wire:navigate wire:current="nav-link-active" class="nav-link">
                                 Inicio
                             </a>
@@ -48,20 +51,83 @@
                             <a href="{{ route('cash-sessions.index') }}" wire:navigate wire:current="nav-link-active" class="nav-link">
                                 Arqueos
                             </a>
-                            @if ($canManageTenant)
-                                <a href="{{ route('admin.users') }}" wire:navigate wire:current="nav-link-active" class="nav-link">
-                                    Usuarios
-                                </a>
-                            @endif
-                            @if ($isPlatformAdmin)
-                                <a href="{{ route('admin.tenants') }}" wire:navigate wire:current="nav-link-active" class="nav-link">
-                                    Empresas
-                                </a>
+
+                            @if ($hasAdminAccess)
+                                <div class="relative ml-1" x-on:click.outside="adminOpen = false">
+                                    <button type="button" x-on:click="adminOpen = ! adminOpen" :aria-expanded="adminOpen"
+                                        aria-haspopup="true"
+                                        class="nav-link flex items-center gap-1.5 {{ request()->routeIs('admin.*') ? 'nav-link-active' : '' }}">
+                                        Administración
+                                        <svg class="size-3.5 transition" :class="adminOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="m6 9 6 6 6-6" />
+                                        </svg>
+                                    </button>
+
+                                    <div x-show="adminOpen" x-cloak x-transition.origin.top.left
+                                        class="absolute left-0 top-full z-40 mt-2 w-64 origin-top-left rounded-2xl border border-line bg-surface p-2 shadow-pop">
+                                        <p class="px-3 pb-1.5 pt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-muted">Gestión</p>
+
+                                        @if ($canManageTenant)
+                                            <a href="{{ route('admin.users') }}" wire:navigate x-on:click="adminOpen = false"
+                                                wire:current="bg-brand-50 text-brand-800"
+                                                class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-soft transition hover:bg-brand-50 hover:text-brand-800">
+                                                <svg class="size-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                                                </svg>
+                                                Usuarios
+                                            </a>
+                                        @endif
+
+                                        @if ($canManageAssignments)
+                                            <a href="{{ route('admin.assignments') }}" wire:navigate x-on:click="adminOpen = false"
+                                                wire:current="bg-brand-50 text-brand-800"
+                                                class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-soft transition hover:bg-brand-50 hover:text-brand-800">
+                                                <svg class="size-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m-6 9 2 2 4-4" />
+                                                </svg>
+                                                Asignaciones
+                                            </a>
+                                        @endif
+
+                                        @if ($canViewAudit)
+                                            <a href="{{ route('admin.audit') }}" wire:navigate x-on:click="adminOpen = false"
+                                                wire:current="bg-brand-50 text-brand-800"
+                                                class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-soft transition hover:bg-brand-50 hover:text-brand-800">
+                                                <svg class="size-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2ZM14 3v5h5" />
+                                                </svg>
+                                                Auditoría
+                                            </a>
+                                        @endif
+
+                                        @if ($canViewVerificationCodes)
+                                            <a href="{{ route('admin.verification-codes') }}" wire:navigate x-on:click="adminOpen = false"
+                                                wire:current="bg-brand-50 text-brand-800"
+                                                class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-soft transition hover:bg-brand-50 hover:text-brand-800">
+                                                <svg class="size-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 3h3v3M14 14h3" />
+                                                </svg>
+                                                Comprobantes
+                                            </a>
+                                        @endif
+
+                                        @if ($isPlatformAdmin)
+                                            <a href="{{ route('admin.tenants') }}" wire:navigate x-on:click="adminOpen = false"
+                                                wire:current="bg-brand-50 text-brand-800"
+                                                class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-soft transition hover:bg-brand-50 hover:text-brand-800">
+                                                <svg class="size-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01" />
+                                                </svg>
+                                                Empresas
+                                            </a>
+                                        @endif
+                                    </div>
+                                </div>
                             @endif
                         </nav>
                     </div>
 
-                    <div class="hidden items-center gap-3 md:flex">
+                    <div class="hidden shrink-0 items-center gap-3 md:flex">
                         <button type="button" data-pwa-install hidden
                             class="btn btn-outline btn-sm">
                             Instalar app
@@ -73,7 +139,7 @@
                                 <span class="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-ink to-ink-soft text-xs font-semibold text-white">
                                     {{ auth()->user()->initials() }}
                                 </span>
-                                <span class="min-w-0">
+                                <span class="hidden min-w-0 lg:block">
                                     <span class="block max-w-40 truncate text-sm font-medium text-ink">{{ auth()->user()->name }}</span>
                                     <span class="block text-xs text-muted">{{ $membership?->role->label() }}</span>
                                 </span>
@@ -127,7 +193,7 @@
 
                     <button type="button" x-on:click="accountOpen = true"
                         class="flex items-center gap-2 rounded-xl border border-line bg-surface p-1.5 pr-2.5 transition hover:border-brand-200 hover:bg-brand-50/50 md:hidden"
-                        aria-label="Abrir menú de cuenta">
+                        aria-label="Abrir navegación y cuenta">
                         <span class="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-ink to-ink-soft text-xs font-semibold text-white">
                             {{ auth()->user()->initials() }}
                         </span>
@@ -173,6 +239,13 @@
                         Cartera
                     </a>
 
+                    <a href="{{ route('receipts') }}" wire:navigate wire:current="tab-item-active" class="tab-item">
+                        <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2Z" />
+                        </svg>
+                        Cobros
+                    </a>
+
                     <a href="{{ route('collections.index') }}" wire:navigate wire:current="tab-item-active" class="tab-item">
                         <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6v12m-4-9h8M5 21h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2Z" />
@@ -187,12 +260,13 @@
                         Arqueos
                     </a>
 
-                    <a href="{{ route('profile') }}" wire:navigate wire:current="tab-item-active" class="tab-item">
+                    <button type="button" x-on:click="accountOpen = true" class="tab-item" aria-label="Abrir navegación y cuenta"
+                        aria-haspopup="dialog">
                         <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 0h6v6h-6v-6Z" />
                         </svg>
-                        Perfil
-                    </a>
+                        Más
+                    </button>
                 </div>
             </nav>
 
@@ -201,9 +275,17 @@
 
                 <div x-show="accountOpen" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="translate-y-full" x-transition:enter-end="translate-y-0"
                     x-transition:leave="transition ease-in duration-150" x-transition:leave-start="translate-y-0" x-transition:leave-end="translate-y-full"
-                    role="dialog" aria-modal="true" aria-label="Menú de cuenta"
-                    class="absolute inset-x-0 bottom-0 rounded-t-3xl border-t border-line bg-surface p-5 pb-8 shadow-pop safe-bottom">
-                    <div class="mx-auto mb-5 h-1 w-10 rounded-full bg-black/10"></div>
+                    role="dialog" aria-modal="true" aria-label="Navegación y cuenta"
+                    class="absolute inset-x-0 bottom-0 max-h-[85dvh] overflow-y-auto overscroll-contain rounded-t-3xl border-t border-line bg-surface p-5 pb-8 shadow-pop safe-bottom">
+                    <div class="relative">
+                        <div class="mx-auto mb-5 h-1 w-10 rounded-full bg-black/10"></div>
+                        <button type="button" x-on:click="accountOpen = false" aria-label="Cerrar menú"
+                            class="absolute -top-3 right-0 flex size-9 items-center justify-center rounded-xl text-muted transition hover:bg-black/[0.04] hover:text-ink">
+                            <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18 18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
 
                     <div class="flex items-center gap-3">
                         <span class="flex size-11 items-center justify-center rounded-2xl bg-gradient-to-br from-ink to-ink-soft text-sm font-semibold text-white">
@@ -219,6 +301,8 @@
                     <x-tenant-switcher :memberships="$memberships" :current-tenant-id="$membership?->tenant_id" />
 
                     <div class="mt-5 space-y-1.5">
+                        <p class="px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-muted">Cuenta</p>
+
                         <a href="{{ route('profile') }}" wire:navigate
                             class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-ink-soft transition hover:bg-brand-50 hover:text-brand-800">
                             <svg class="size-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -227,35 +311,61 @@
                             Mi perfil
                         </a>
 
-                        @if ($canManageTenant)
-                            <a href="{{ route('admin.users') }}" wire:navigate
-                                class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-ink-soft transition hover:bg-brand-50 hover:text-brand-800">
-                                <svg class="size-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-                                </svg>
-                                Usuarios
-                            </a>
+                        @if ($hasAdminAccess)
+                            <p class="px-3 pt-2 text-[10px] font-bold uppercase tracking-[0.14em] text-muted">Administración</p>
+
+                            @if ($canManageTenant)
+                                <a href="{{ route('admin.users') }}" wire:navigate
+                                    class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-ink-soft transition hover:bg-brand-50 hover:text-brand-800">
+                                    <svg class="size-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm13 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                                    </svg>
+                                    Usuarios
+                                </a>
+                            @endif
+
+                            @if ($canManageAssignments)
+                                <a href="{{ route('admin.assignments') }}" wire:navigate
+                                    class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-ink-soft transition hover:bg-brand-50 hover:text-brand-800">
+                                    <svg class="size-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m-6 9 2 2 4-4" />
+                                    </svg>
+                                    Asignaciones
+                                </a>
+                            @endif
+
+                            @if ($canViewAudit)
+                                <a href="{{ route('admin.audit') }}" wire:navigate
+                                    class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-ink-soft transition hover:bg-brand-50 hover:text-brand-800">
+                                    <svg class="size-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2ZM14 3v5h5" />
+                                    </svg>
+                                    Auditoría
+                                </a>
+                            @endif
+
+                            @if ($canViewVerificationCodes)
+                                <a href="{{ route('admin.verification-codes') }}" wire:navigate
+                                    class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-ink-soft transition hover:bg-brand-50 hover:text-brand-800">
+                                    <svg class="size-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 3h3v3M14 14h3" />
+                                    </svg>
+                                    Comprobantes
+                                </a>
+                            @endif
+
+                            @if ($isPlatformAdmin)
+                                <a href="{{ route('admin.tenants') }}" wire:navigate
+                                    class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-ink-soft transition hover:bg-brand-50 hover:text-brand-800">
+                                    <svg class="size-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01" />
+                                    </svg>
+                                    Empresas
+                                </a>
+                            @endif
                         @endif
 
-                        @if ($isPlatformAdmin)
-                            <a href="{{ route('admin.tenants') }}" wire:navigate
-                                class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-ink-soft transition hover:bg-brand-50 hover:text-brand-800">
-                                <svg class="size-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01" />
-                                </svg>
-                                Empresas
-                            </a>
-                        @endif
-
-                        @if ($canApprove)
-                            <a href="{{ route('admin.verification-codes') }}" wire:navigate
-                                class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-ink-soft transition hover:bg-brand-50 hover:text-brand-800">
-                                <svg class="size-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 3h3v3M14 14h3" />
-                                </svg>
-                                Comprobantes
-                            </a>
-                        @endif
+                        <p class="px-3 pt-2 text-[10px] font-bold uppercase tracking-[0.14em] text-muted">Aplicación</p>
 
                         <button type="button" data-pwa-install hidden
                             class="flex w-full items-center gap-3 rounded-xl border border-brand-200 bg-brand-50 px-3 py-3 text-left text-sm font-semibold text-brand-800 transition hover:bg-brand-100">

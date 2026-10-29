@@ -203,7 +203,11 @@ $statusClasses = fn (CashSessionStatus $value): string => match ($value) {
 <div class="space-y-5 sm:space-y-6">
     <section class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-            <a href="{{ route('cash-sessions.index') }}" wire:navigate class="text-sm font-semibold text-brand-700 hover:text-brand-800">Volver a arqueos</a>
+            <x-breadcrumb :items="[
+                ['label' => 'Inicio', 'url' => route('dashboard')],
+                ['label' => 'Arqueos', 'url' => route('cash-sessions.index')],
+                ['label' => 'Arqueo'],
+            ]" />
             <h1 class="page-title">Arqueo de {{ $cashSession->seller?->name ?? 'vendedor' }}</h1>
             <p class="page-subtitle">Apertura {{ $cashSession->opened_at?->format('d/m/Y H:i') }} · Moneda {{ $cashSession->currency }}</p>
         </div>

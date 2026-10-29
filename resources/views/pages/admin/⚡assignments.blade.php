@@ -224,7 +224,11 @@ new #[Layout('layouts.app')] #[Title('Asignaciones')] class extends Component
 <div class="space-y-5 sm:space-y-6">
     <section class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-            <p class="eyebrow">Administración</p>
+            <x-breadcrumb :items="[
+                ['label' => 'Inicio', 'url' => route('dashboard')],
+                ['label' => 'Administración'],
+                ['label' => 'Asignaciones'],
+            ]" />
             <h1 class="page-title">Asignaciones</h1>
             <p class="mt-1.5 text-sm text-muted">Asigna clientes a los cobradores de {{ auth()->user()->currentMembership()?->tenant?->name ?? 'tu empresa' }}.</p>
         </div>

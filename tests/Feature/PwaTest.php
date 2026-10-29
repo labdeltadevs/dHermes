@@ -62,7 +62,8 @@ it('exposes pwa metadata and mobile navigation to authenticated users', function
         ->assertSee('data-pwa-update-banner', false)
         ->assertSee('Navegación móvil')
         ->assertSee('Usuarios')
-        ->assertSee('Perfil');
+        ->assertSee('Más')
+        ->assertSee('Mi perfil');
 });
 
 it('exposes pwa metadata on the login screen', function () {

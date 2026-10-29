@@ -69,7 +69,11 @@ $money = fn (string|int|float|null $value): string => number_format((float) $val
 <div class="space-y-5 sm:space-y-6">
     <section class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-            <p class="eyebrow">Cartera y cobranzas</p>
+            <x-breadcrumb :items="[
+                ['label' => 'Inicio', 'url' => route('dashboard')],
+                ['label' => 'Cartera', 'url' => route('portfolio')],
+                ['label' => 'Cartera por vendedor'],
+            ]" />
             <h1 class="page-title">Cartera por vendedor</h1>
             <p class="page-subtitle">Saldo abierto agrupado por vendedor y moneda de {{ $tenant?->name ?? 'tu empresa' }}.</p>
         </div>
