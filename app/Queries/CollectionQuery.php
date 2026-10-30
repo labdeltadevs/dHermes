@@ -52,6 +52,9 @@ final class CollectionQuery
             $query->where(function (Builder $query) use ($search): void {
                 $query->whereLike('erp_docnum', '%'.$search.'%')
                     ->orWhereLike('voucher_code', '%'.$search.'%')
+                    ->orWhereLike('flash_invoice_number', '%'.$search.'%')
+                    ->orWhereLike('flash_cardcode', '%'.$search.'%')
+                    ->orWhereLike('flash_customer_name', '%'.$search.'%')
                     ->orWhereHas('invoice', function (Builder $invoice) use ($search): void {
                         $invoice->where(function (Builder $invoice) use ($search): void {
                             $invoice->whereLike('number', '%'.$search.'%')

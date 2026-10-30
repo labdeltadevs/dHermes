@@ -31,7 +31,7 @@
                 <div class="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
                     <div class="flex min-w-0 flex-1 items-center gap-2 lg:gap-6">
                         <a href="{{ route('dashboard') }}" wire:navigate class="group flex shrink-0 items-center gap-2.5">
-                            <span class="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 text-xs font-extrabold text-white shadow-[0_6px_16px_-8px_rgba(240,79,8,0.9)] transition group-hover:scale-105">dH</span>
+                            <x-brand-mark class="size-9 text-brand-600 group-hover:text-brand-700 transition" />
                             <span class="hidden text-[15px] font-semibold tracking-tight text-ink lg:inline">dHermes</span>
                         </a>
 

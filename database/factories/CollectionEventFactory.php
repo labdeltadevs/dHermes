@@ -48,6 +48,16 @@ class CollectionEventFactory extends Factory
         ]);
     }
 
+    public function flash(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'invoice_id' => null,
+            'flash_invoice_number' => 'F-'.fake()->unique()->numerify('######'),
+            'flash_cardcode' => 'C'.fake()->unique()->numerify('####'),
+            'flash_customer_name' => fake()->company(),
+        ]);
+    }
+
     public function rejected(): static
     {
         return $this->state(fn (array $attributes): array => [

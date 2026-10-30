@@ -19,7 +19,10 @@ use Illuminate\Support\Carbon;
 /**
  * @property string $id
  * @property string $tenant_id
- * @property string $invoice_id
+ * @property string|null $invoice_id
+ * @property string|null $flash_invoice_number
+ * @property string|null $flash_cardcode
+ * @property string|null $flash_customer_name
  * @property string $seller_user_id
  * @property string $amount
  * @property string $currency
@@ -45,6 +48,9 @@ use Illuminate\Support\Carbon;
 #[Fillable([
     'tenant_id',
     'invoice_id',
+    'flash_invoice_number',
+    'flash_cardcode',
+    'flash_customer_name',
     'seller_user_id',
     'amount',
     'currency',
@@ -118,6 +124,11 @@ class CollectionEvent extends Model implements Verifiable
     public function cashSessionItems(): HasMany
     {
         return $this->hasMany(CashSessionItem::class);
+    }
+
+    public function isFlash(): bool
+    {
+        return $this->invoice_id === null;
     }
 
     public function verificationPayload(): array

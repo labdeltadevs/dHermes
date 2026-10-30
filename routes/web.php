@@ -39,6 +39,10 @@ Route::livewire('/cobranzas/registrar', 'pages::collection-create')
     ->middleware('auth')
     ->name('collections.create');
 
+Route::livewire('/cobranzas/flash', 'pages::collection-flash')
+    ->middleware(['auth', 'can:collections.create.flash'])
+    ->name('collections.flash');
+
 Route::livewire('/arqueos', 'pages::cash-sessions')
     ->middleware('auth')
     ->name('cash-sessions.index');

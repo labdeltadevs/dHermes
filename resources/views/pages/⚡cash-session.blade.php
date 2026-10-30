@@ -345,7 +345,7 @@ $statusClasses = fn (CashSessionStatus $value): string => match ($value) {
                         <option value="">Sin cobro asociado</option>
                         @foreach ($availableCollections as $collection)
                             <option value="{{ $collection->id }}">
-                                {{ $collection->collected_on?->format('d/m/Y') }} · {{ $collection->invoice?->number }} · {{ $collection->invoice?->customer?->name }} · {{ $money($collection->amount) }} {{ $collection->currency }}
+                                {{ $collection->collected_on?->format('d/m/Y') }} · {{ $collection->invoice?->number ?? $collection->flash_invoice_number }} · {{ $collection->invoice?->customer?->name ?? $collection->flash_customer_name }} · {{ $money($collection->amount) }} {{ $collection->currency }}
                             </option>
                         @endforeach
                     </select>

@@ -4,6 +4,7 @@ use App\Actions\Collection\AcceptCollection;
 use App\Actions\Collection\CancelCollection;
 use App\Actions\Collection\RejectCollection;
 use App\Enums\CollectionStatus;
+use App\Enums\Permission;
 use App\Enums\TenantRole;
 use App\Models\CollectionEvent;
 use App\Models\TenantUser;
@@ -250,6 +251,7 @@ new #[Layout('layouts.app')] #[Title('Cobranzas')] class extends Component {
         $filters = $this->filters();
         $isApprover = $membership->role->canApprove();
         $canCreate = $membership->role->sells();
+        $canCreateFlash = $user->can(Permission::CollectionsCreateFlash->value);
         $actionEvent = $this->pendingActionEventId !== ''
             ? $query->for($user)->find($this->pendingActionEventId)
             : null;
@@ -262,6 +264,7 @@ new #[Layout('layouts.app')] #[Title('Cobranzas')] class extends Component {
             'summary' => $query->summaryByCurrency($user, $filters),
             'isApprover' => $isApprover,
             'canCreate' => $canCreate,
+            'canCreateFlash' => $canCreateFlash,
             'actionEvent' => $actionEvent,
             'cancelEvent' => $cancelEvent,
             'sellers' => $isApprover
@@ -343,6 +346,15 @@ new #[Layout('layouts.app')] #[Title('Cobranzas')] class extends Component {
                 <button type="button" wire:click="clearFilters" class="btn btn-outline">
                     Limpiar filtros
                 </button>
+            @endif
+
+            @if ($canCreateFlash)
+                <a href="{{ route('collections.flash') }}" wire:navigate class="btn btn-outline">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                    </svg>
+                    Cobros flash
+                </a>
             @endif
 
             @if ($canCreate)
@@ -493,12 +505,12 @@ new #[Layout('layouts.app')] #[Title('Cobranzas')] class extends Component {
                     <dl class="grid gap-3 rounded-xl border border-line bg-surface p-4 text-sm sm:grid-cols-2">
                         <div>
                             <dt class="text-xs font-medium text-muted">Factura</dt>
-                            <dd class="mt-0.5 font-semibold text-ink">{{ $cancelEvent->invoice?->number ?? '—' }}</dd>
+                            <dd class="mt-0.5 font-semibold text-ink">{{ $cancelEvent->invoice?->number ?? $cancelEvent->flash_invoice_number ?? '—' }}</dd>
                         </div>
                         <div>
                             <dt class="text-xs font-medium text-muted">Cliente</dt>
                             <dd class="mt-0.5 font-semibold text-ink">
-                                {{ $cancelEvent->invoice?->customer?->name ?? '—' }}</dd>
+                                {{ $cancelEvent->invoice?->customer?->name ?? $cancelEvent->flash_customer_name ?? '—' }}</dd>
                         </div>
                         <div>
                             <dt class="text-xs font-medium text-muted">Monto</dt>
@@ -571,14 +583,14 @@ new #[Layout('layouts.app')] #[Title('Cobranzas')] class extends Component {
             <dl class="grid gap-3 rounded-xl border border-line bg-surface p-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
                 <div>
                     <dt class="text-xs font-medium text-muted">Factura</dt>
-                    <dd class="mt-0.5 font-semibold text-ink">{{ $actionEvent->invoice?->number ?? '—' }}</dd>
-                    <dd class="font-mono text-[11px] text-black/40">{{ $actionEvent->invoice?->docentry ?? '—' }}</dd>
+                    <dd class="mt-0.5 font-semibold text-ink">{{ $actionEvent->invoice?->number ?? $actionEvent->flash_invoice_number ?? '—' }}</dd>
+                    <dd class="font-mono text-[11px] text-black/40">{{ $actionEvent->invoice?->docentry ?? ($actionEvent->isFlash() ? 'Cobro flash' : '—') }}</dd>
                 </div>
                 <div>
                     <dt class="text-xs font-medium text-muted">Cliente</dt>
-                    <dd class="mt-0.5 font-semibold text-ink">{{ $actionEvent->invoice?->customer?->name ?? '—' }}</dd>
+                    <dd class="mt-0.5 font-semibold text-ink">{{ $actionEvent->invoice?->customer?->name ?? $actionEvent->flash_customer_name ?? '—' }}</dd>
                     <dd class="font-mono text-[11px] text-black/40">
-                        {{ $actionEvent->invoice?->customer?->cardcode ?? '—' }}</dd>
+                        {{ $actionEvent->invoice?->customer?->cardcode ?? $actionEvent->flash_cardcode ?? '—' }}</dd>
                 </div>
                 <div>
                     <dt class="text-xs font-medium text-muted">Vendedor</dt>
@@ -746,16 +758,20 @@ new #[Layout('layouts.app')] #[Title('Cobranzas')] class extends Component {
                             $showReview = $isApprover && $event->status === CollectionStatus::Pending;
                             $showReceipt = $event->status === CollectionStatus::Accepted;
                             $hasActions = $showReview || $canCancel || $showReceipt;
-                            $initial = mb_strtoupper(mb_substr($event->invoice?->customer?->name ?? '—', 0, 1));
+                            $invoiceNumber = $event->invoice?->number ?? $event->flash_invoice_number;
+                            $invoiceReference = $event->invoice?->docentry ?? ($event->isFlash() ? 'Cobro flash' : null);
+                            $customerName = $event->invoice?->customer?->name ?? $event->flash_customer_name;
+                            $customerCardcode = $event->invoice?->customer?->cardcode ?? $event->flash_cardcode;
+                            $initial = mb_strtoupper(mb_substr($customerName ?? '—', 0, 1));
                         @endphp
                         <tr wire:key="collection-{{ $event->id }}"
                             class="group transition-colors hover:bg-brand-50/50">
                             {{-- Factura --}}
                             <td class="whitespace-nowrap px-4 py-3.5 pl-5 align-middle">
-                                <p class="font-semibold tabular-nums text-ink">{{ $event->invoice?->number ?? '—' }}
+                                <p class="font-semibold tabular-nums text-ink">{{ $invoiceNumber ?? '—' }}
                                 </p>
                                 <p class="mt-0.5 font-mono text-[11px] tabular-nums text-black/40">
-                                    {{ $event->invoice?->docentry ?? '—' }}</p>
+                                    {{ $invoiceReference ?? '—' }}</p>
                             </td>
 
                             {{-- Cliente --}}
@@ -765,10 +781,10 @@ new #[Layout('layouts.app')] #[Title('Cobranzas')] class extends Component {
                                         class="flex size-8 shrink-0 items-center justify-center rounded-full bg-ink text-[11px] font-bold text-white">{{ $initial }}</span>
                                     <div class="min-w-0">
                                         <p class="truncate font-medium text-ink"
-                                            title="{{ $event->invoice?->customer?->name }}">
-                                            {{ $event->invoice?->customer?->name ?? '—' }}</p>
+                                            title="{{ $customerName }}">
+                                            {{ $customerName ?? '—' }}</p>
                                         <p class="mt-0.5 truncate font-mono text-[11px] text-black/40">
-                                            {{ $event->invoice?->customer?->cardcode ?? '' }}</p>
+                                            {{ $customerCardcode ?? '' }}</p>
                                     </div>
                                 </div>
                             </td>
@@ -914,9 +930,9 @@ new #[Layout('layouts.app')] #[Title('Cobranzas')] class extends Component {
             <article wire:key="collection-card-{{ $event->id }}" class="card p-4">
                 <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0">
-                        <p class="truncate text-sm font-semibold text-ink">{{ $event->invoice?->customer?->name }}</p>
-                        <p class="mt-0.5 text-xs text-muted">{{ $event->invoice?->number }} ·
-                            {{ $event->invoice?->customer?->cardcode }}</p>
+                        <p class="truncate text-sm font-semibold text-ink">{{ $event->invoice?->customer?->name ?? $event->flash_customer_name ?? '—' }}</p>
+                        <p class="mt-0.5 text-xs text-muted">{{ $event->invoice?->number ?? $event->flash_invoice_number ?? '—' }} ·
+                            {{ $event->invoice?->customer?->cardcode ?? $event->flash_cardcode ?? '' }}</p>
                     </div>
                     <div class="shrink-0 text-right">
                         <p class="text-sm font-semibold text-ink">{{ $event->currency }} {{ $money($event->amount) }}

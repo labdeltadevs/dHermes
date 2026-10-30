@@ -10,6 +10,7 @@ enum Permission: string
     case ReceiptsView = 'receipts.view';
     case CollectionsView = 'collections.view';
     case CollectionsCreate = 'collections.create';
+    case CollectionsCreateFlash = 'collections.create.flash';
     case CollectionsApprove = 'collections.approve';
     case CollectionsCancelAny = 'collections.cancel.any';
     case CollectionsVoid = 'collections.void';
@@ -28,6 +29,7 @@ enum Permission: string
             self::ReceiptsView => 'Ver cobros',
             self::CollectionsView => 'Ver cobranzas',
             self::CollectionsCreate => 'Registrar cobranzas',
+            self::CollectionsCreateFlash => 'Registrar cobranzas flash',
             self::CollectionsApprove => 'Aprobar o rechazar cobranzas',
             self::CollectionsCancelAny => 'Anular cobranzas de cualquier usuario',
             self::CollectionsVoid => 'Anular cobranzas aprobadas',

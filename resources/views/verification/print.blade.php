@@ -277,10 +277,10 @@
             </div>
             <div class="cols">
                 <div class="col"><span class="l">Factura</span><span
-                        class="v">{{ $subject->invoice?->number ?? '—' }}</span>
+                        class="v">{{ $subject->invoice?->number ?? $subject->flash_invoice_number ?? '—' }}</span>
                 </div>
                 <div class="col"><span class="l">DocEntry</span><span
-                        class="v">{{ $subject->invoice?->docentry ?? '—' }}</span></div>
+                        class="v">{{ $subject->invoice?->docentry ?? ($subject->isFlash() ? 'Cobro flash' : '—') }}</span></div>
             </div>
             <div class="cols">
                 <div class="col"><span class="l">Doc. ERP</span><span
@@ -291,7 +291,7 @@
             <div class="line">
                 <span class="l">Cliente:</span>
                 <span
-                    class="v left">{{ \Illuminate\Support\Str::limit($subject->invoice?->customer?->name ?? '—', 32) }}</span>
+                    class="v left">{{ \Illuminate\Support\Str::limit($subject->invoice?->customer?->name ?? $subject->flash_customer_name ?? '—', 32) }}</span>
             </div>
             <div class="line">
                 <span class="l">Adj:</span>

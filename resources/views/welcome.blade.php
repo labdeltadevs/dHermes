@@ -88,29 +88,6 @@
             flex: 0 0 auto;
         }
 
-        .brand__mark {
-            position: relative;
-            width: 38px;
-            height: 38px;
-            display: grid;
-            place-items: center;
-            background: var(--ink);
-            color: var(--paper-light);
-            font-size: 15px;
-            font-weight: 700;
-            letter-spacing: -0.08em;
-        }
-
-        .brand__mark::after {
-            position: absolute;
-            top: 6px;
-            right: 6px;
-            width: 5px;
-            height: 5px;
-            background: var(--accent);
-            content: "";
-        }
-
         .brand__text {
             display: grid;
             gap: 3px;
@@ -937,7 +914,7 @@
     <div class="site-shell">
         <header class="masthead">
             <a class="brand" href="{{ route('home') }}" aria-label="dHermes, inicio">
-                <span class="brand__mark" aria-hidden="true">dh</span>
+                <x-brand-mark style="color: var(--ink);" aria-hidden="true" />
                 <span class="brand__text">
                     <span class="brand__name">dHermes</span>
                     <span class="brand__descriptor">Cartera y cobranzas</span>

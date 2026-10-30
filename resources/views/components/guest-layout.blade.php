@@ -18,7 +18,7 @@
         <main class="relative flex min-h-dvh flex-col px-4 py-6 sm:px-6 sm:py-10 safe-top">
             <header class="mx-auto flex w-full max-w-5xl items-center justify-between">
                 <a href="{{ route('home') }}" class="flex items-center gap-2.5 font-semibold tracking-tight text-ink">
-                    <span class="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 text-xs font-extrabold text-white shadow-[0_6px_16px_-8px_rgba(240,79,8,0.9)]">dH</span>
+                    <x-brand-mark class="size-9 text-brand-600" />
                     <span>dHermes</span>
                 </a>
 

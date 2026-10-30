@@ -45,6 +45,11 @@ class CollectionEventPolicy
             && $user->canAccessInvoice($invoice);
     }
 
+    public function createFlash(User $user): bool
+    {
+        return $this->hasCurrentPermission($user, Permission::CollectionsCreateFlash);
+    }
+
     public function update(User $user, CollectionEvent $collectionEvent): bool
     {
         return $collectionEvent->status === CollectionStatus::Pending
