@@ -280,6 +280,10 @@
         </div>
 
         @if ($isCollection)
+            <div class="line">
+                <span class="l">N° COBRANZA:</span>
+                <span class="v mono left">{{ $subject->number_code ?? '—' }}</span>
+            </div>
             <div class="cols">
                 <div class="col"><span class="l">Monto</span><span class="v">{{ $subject->currency }}
                         {{ $money($subject->amount) }}</span></div>

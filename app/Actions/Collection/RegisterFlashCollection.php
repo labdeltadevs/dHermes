@@ -9,6 +9,7 @@ use App\Models\CollectionEvent;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\Audit\AuditLogger;
+use App\Support\Collection\CollectionNumberAllocator;
 use App\Support\Collection\CollectionProofStorage;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
@@ -89,6 +90,7 @@ final class RegisterFlashCollection
         try {
             return DB::transaction(function () use ($seller, $tenant, $tenantId, $validated, $paymentMethod, $voucherCode, $proof, $storage, &$storedPath): CollectionEvent {
                 $collectionEvent = CollectionEvent::create([
+                    ...app(CollectionNumberAllocator::class)->next($tenantId),
                     'tenant_id' => $tenantId,
                     'invoice_id' => null,
                     'flash_invoice_number' => trim((string) $validated['flash_invoice_number']),
@@ -117,6 +119,7 @@ final class RegisterFlashCollection
                     $collectionEvent->id,
                     [
                         'flash' => true,
+                        'number_code' => $collectionEvent->number_code,
                         'invoice_id' => null,
                         'flash_invoice_number' => $collectionEvent->flash_invoice_number,
                         'flash_cardcode' => $collectionEvent->flash_cardcode,

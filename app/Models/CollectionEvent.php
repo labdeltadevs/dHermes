@@ -31,6 +31,8 @@ use Illuminate\Support\Carbon;
  * @property Carbon $collected_on
  * @property CollectionKind $kind
  * @property CollectionStatus $status
+ * @property int|null $number
+ * @property string|null $number_code
  * @property string|null $erp_docnum
  * @property string|null $reviewed_by
  * @property Carbon|null $reviewed_at
@@ -59,6 +61,8 @@ use Illuminate\Support\Carbon;
     'collected_on',
     'kind',
     'status',
+    'number',
+    'number_code',
     'erp_docnum',
     'reviewed_by',
     'reviewed_at',

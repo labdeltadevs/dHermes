@@ -51,6 +51,7 @@ final class CollectionQuery
         if ($search !== '') {
             $query->where(function (Builder $query) use ($search): void {
                 $query->whereLike('erp_docnum', '%'.$search.'%')
+                    ->orWhereLike('number_code', '%'.$search.'%')
                     ->orWhereLike('voucher_code', '%'.$search.'%')
                     ->orWhereLike('flash_invoice_number', '%'.$search.'%')
                     ->orWhereLike('flash_cardcode', '%'.$search.'%')

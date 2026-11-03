@@ -9,6 +9,7 @@ use App\Models\CollectionEvent;
 use App\Models\Invoice;
 use App\Models\User;
 use App\Support\Audit\AuditLogger;
+use App\Support\Collection\CollectionNumberAllocator;
 use App\Support\Collection\CollectionProofStorage;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
@@ -104,6 +105,7 @@ final class RegisterCollection
 
                 $collectionEvent = CollectionEvent::create([
                     ...$attributes,
+                    ...app(CollectionNumberAllocator::class)->next($invoice->tenant_id),
                     'voucher_code' => $voucherCode,
                     'tenant_id' => $invoice->tenant_id,
                     'invoice_id' => $invoice->id,
@@ -121,6 +123,7 @@ final class RegisterCollection
                     CollectionEvent::class,
                     $collectionEvent->id,
                     [
+                        'number_code' => $collectionEvent->number_code,
                         'invoice_id' => $invoice->id,
                         'amount' => $collectionEvent->amount,
                         'currency' => $collectionEvent->currency,

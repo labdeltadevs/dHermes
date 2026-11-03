@@ -536,6 +536,10 @@ new #[Layout('layouts.app')] #[Title('Cobranzas')] class extends Component {
                 <div class="overflow-y-auto p-5 sm:p-6">
                     <dl class="grid gap-3 rounded-xl border border-line bg-surface p-4 text-sm sm:grid-cols-2">
                         <div>
+                            <dt class="text-xs font-medium text-muted">N° de cobranza</dt>
+                            <dd class="mt-0.5 font-mono text-xs font-semibold text-ink">{{ $cancelEvent->number_code ?? '—' }}</dd>
+                        </div>
+                        <div>
                             <dt class="text-xs font-medium text-muted">Factura</dt>
                             <dd class="mt-0.5 font-semibold text-ink">{{ $cancelEvent->invoice?->number ?? $cancelEvent->flash_invoice_number ?? '—' }}</dd>
                         </div>
@@ -613,6 +617,26 @@ new #[Layout('layouts.app')] #[Title('Cobranzas')] class extends Component {
 
                 <div class="overflow-y-auto p-5 sm:p-6">
             <dl class="grid gap-3 rounded-xl border border-line bg-surface p-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
+                <div class="sm:col-span-2 lg:col-span-3">
+                    <dt class="text-xs font-medium text-muted">N° de cobranza</dt>
+                    <dd class="mt-1 flex items-center gap-2" x-data="{ copied: false }">
+                        <code
+                            class="rounded-lg border border-line bg-canvas px-3 py-1.5 font-mono text-base font-semibold tracking-tight text-ink">{{ $actionEvent->number_code ?? '—' }}</code>
+                        @if ($actionEvent->number_code)
+                            <button type="button"
+                                x-on:click="navigator.clipboard.writeText('{{ $actionEvent->number_code }}'); copied = true; setTimeout(() => copied = false, 1500)"
+                                class="inline-flex items-center gap-1 rounded-lg border border-line px-2.5 py-1.5 text-xs font-semibold text-muted transition hover:bg-black/[0.03] hover:text-ink">
+                                <svg class="size-3.5" fill="none" stroke="currentColor" stroke-width="1.8"
+                                    viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+                                </svg>
+                                <span x-show="!copied">Copiar</span>
+                                <span x-show="copied" x-cloak>Copiado</span>
+                            </button>
+                        @endif
+                    </dd>
+                </div>
                 <div>
                     <dt class="text-xs font-medium text-muted">Factura</dt>
                     <dd class="mt-0.5 font-semibold text-ink">{{ $actionEvent->invoice?->number ?? $actionEvent->flash_invoice_number ?? '—' }}</dd>
@@ -795,6 +819,9 @@ new #[Layout('layouts.app')] #[Title('Cobranzas')] class extends Component {
                             Factura</th>
                         <th
                             class="whitespace-nowrap px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-black/45">
+                            N°</th>
+                        <th
+                            class="whitespace-nowrap px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-black/45">
                             Cliente</th>
                         <th
                             class="whitespace-nowrap px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-black/45">
@@ -844,6 +871,16 @@ new #[Layout('layouts.app')] #[Title('Cobranzas')] class extends Component {
                                 </p>
                                 <p class="mt-0.5 font-mono text-[11px] tabular-nums text-black/40">
                                     {{ $invoiceReference ?? '—' }}</p>
+                            </td>
+
+                            {{-- N° de cobranza --}}
+                            <td class="whitespace-nowrap px-4 py-3.5 align-middle">
+                                @if ($event->number_code)
+                                    <code
+                                        class="rounded-md bg-black/[0.05] px-1.5 py-0.5 font-mono text-[11px] font-medium text-ink">{{ $event->number_code }}</code>
+                                @else
+                                    <span class="text-black/30">—</span>
+                                @endif
                             </td>
 
                             {{-- Cliente --}}
@@ -962,7 +999,7 @@ new #[Layout('layouts.app')] #[Title('Cobranzas')] class extends Component {
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="11" class="px-6 py-14 text-center">
+                            <td colspan="12" class="px-6 py-14 text-center">
                                 <div class="mx-auto flex max-w-sm flex-col items-center">
                                     <span
                                         class="flex size-11 items-center justify-center rounded-full bg-black/[0.04]">
@@ -998,6 +1035,7 @@ new #[Layout('layouts.app')] #[Title('Cobranzas')] class extends Component {
                         <p class="truncate text-sm font-semibold text-ink">{{ $event->invoice?->customer?->name ?? $event->flash_customer_name ?? '—' }}</p>
                         <p class="mt-0.5 text-xs text-muted">{{ $event->invoice?->number ?? $event->flash_invoice_number ?? '—' }} ·
                             {{ $event->invoice?->customer?->cardcode ?? $event->flash_cardcode ?? '' }}</p>
+                        <p class="mt-0.5 font-mono text-[11px] text-black/40">{{ $event->number_code ?? '—' }}</p>
                     </div>
                     <div class="shrink-0 text-right">
                         <p class="text-sm font-semibold text-ink">{{ $event->currency }} {{ $money($event->amount) }}
