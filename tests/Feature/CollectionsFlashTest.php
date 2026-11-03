@@ -107,22 +107,24 @@ it('requires a voucher for non-cash flash collections and keeps it unique per te
     ))->toThrow(ValidationException::class);
 });
 
-it('requires a voucher for QR flash collections', function () {
+it('lets QR flash collections omit the voucher', function () {
     $scenario = flashScenario();
     $this->actingAs($scenario['seller']);
 
-    expect(fn () => app(RegisterFlashCollection::class)->handle(
+    $withoutVoucher = app(RegisterFlashCollection::class)->handle(
         $scenario['seller'],
         flashPayload(['payment_method' => PaymentMethod::Qr, 'voucher_code' => null]),
-    ))->toThrow(ValidationException::class);
+    );
 
-    $event = app(RegisterFlashCollection::class)->handle(
+    expect($withoutVoucher->payment_method)->toBe(PaymentMethod::Qr)
+        ->and($withoutVoucher->voucher_code)->toBeNull();
+
+    $withVoucher = app(RegisterFlashCollection::class)->handle(
         $scenario['seller'],
         flashPayload(['payment_method' => PaymentMethod::Qr, 'voucher_code' => 'QR-001']),
     );
 
-    expect($event->payment_method)->toBe(PaymentMethod::Qr)
-        ->and($event->voucher_code)->toBe('QR-001');
+    expect($withVoucher->voucher_code)->toBe('QR-001');
 });
 
 it('offers the configured payment methods on the flash page', function () {

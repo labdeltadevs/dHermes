@@ -99,7 +99,7 @@ new #[Layout('layouts.app')] #[Title('Registrar cobro')] class extends Component
         $this->validate(
             [
                 'invoiceId' => ['required', 'string'],
-                'voucherCode' => ['nullable', 'string', 'max:64', Rule::requiredIf($paymentMethod !== PaymentMethod::Cash)],
+                'voucherCode' => ['nullable', 'string', 'max:64', Rule::requiredIf($paymentMethod !== PaymentMethod::Cash && $paymentMethod !== PaymentMethod::Qr)],
                 'proof' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
                 'confirmed' => ['accepted'],
             ],
@@ -346,7 +346,7 @@ new #[Layout('layouts.app')] #[Title('Registrar cobro')] class extends Component
                     <div>
                         <label for="collection-voucher" class="label">Código de voucher</label>
                         <input id="collection-voucher" type="text" maxlength="64" wire:model="voucherCode"
-                            placeholder="Obligatorio para QR, depósito-transferencia, cheque u otros" class="input">
+                            placeholder="Opcional. Obligatorio para depósito-transferencia, cheque u otros" class="input">
                         @error('voucherCode')
                             <p class="field-error">{{ $message }}</p>
                         @enderror

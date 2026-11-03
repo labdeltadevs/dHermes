@@ -75,6 +75,20 @@ it('accepts a cash collection without a voucher code', function () {
     expect($event->voucher_code)->toBeNull();
 });
 
+it('accepts a QR collection without a voucher code', function () {
+    $scenario = proofScenario();
+    $this->actingAs($scenario['seller']);
+
+    $event = app(RegisterCollection::class)->handle(
+        $scenario['seller'],
+        $scenario['invoice'],
+        proofPayload(['payment_method' => PaymentMethod::Qr]),
+    );
+
+    expect($event->payment_method)->toBe(PaymentMethod::Qr)
+        ->and($event->voucher_code)->toBeNull();
+});
+
 it('rejects a duplicated voucher code inside the same tenant', function () {
     $scenario = proofScenario();
     $this->actingAs($scenario['seller']);

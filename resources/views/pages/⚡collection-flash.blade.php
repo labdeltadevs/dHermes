@@ -53,7 +53,7 @@ new #[Layout('layouts.app')] #[Title('Cobro flash')] class extends Component {
                 'flashInvoiceNumber' => ['required', 'string', 'max:32'],
                 'flashCardcode' => ['required', 'string', 'max:32'],
                 'flashCustomerName' => ['required', 'string', 'max:255'],
-                'voucherCode' => ['nullable', 'string', 'max:64', Rule::requiredIf($paymentMethod !== PaymentMethod::Cash)],
+                'voucherCode' => ['nullable', 'string', 'max:64', Rule::requiredIf($paymentMethod !== PaymentMethod::Cash && $paymentMethod !== PaymentMethod::Qr)],
                 'collectedOn' => ['required', 'date', 'before_or_equal:today'],
                 'notes' => ['nullable', 'string', 'max:1000'],
                 'proof' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
@@ -195,7 +195,7 @@ new #[Layout('layouts.app')] #[Title('Cobro flash')] class extends Component {
                 <div>
                     <label for="flash-voucher" class="label">N° voucher / transacción</label>
                     <input id="flash-voucher" type="text" maxlength="64" wire:model="voucherCode"
-                        placeholder="Obligatorio para QR, depósito-transferencia, cheque u otros" class="input">
+                        placeholder="Opcional. Obligatorio para depósito-transferencia, cheque u otros" class="input">
                     @error('voucherCode')
                         <p class="field-error">{{ $message }}</p>
                     @enderror

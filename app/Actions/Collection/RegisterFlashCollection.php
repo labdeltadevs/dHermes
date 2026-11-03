@@ -65,13 +65,15 @@ final class RegisterFlashCollection
 
         $voucherCode = trim((string) ($validated['voucher_code'] ?? ''));
 
-        if ($paymentMethod !== PaymentMethod::Cash && $voucherCode === '') {
+        if ($paymentMethod !== PaymentMethod::Cash
+            && $paymentMethod !== PaymentMethod::Qr
+            && $voucherCode === '') {
             throw ValidationException::withMessages([
                 'voucher_code' => 'El código de voucher es obligatorio para este método de pago.',
             ]);
         }
 
-        if ($paymentMethod === PaymentMethod::Cash && $voucherCode === '') {
+        if ($voucherCode === '') {
             $voucherCode = null;
         }
 
