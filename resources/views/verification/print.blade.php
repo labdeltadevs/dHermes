@@ -85,6 +85,14 @@
             letter-spacing: 0;
         }
 
+        .state {
+            margin-top: 0.5mm;
+            font-size: 6pt;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0;
+        }
+
         .sep {
             border-top: 1px dotted #000;
             margin: 1.5mm 0;
@@ -258,6 +266,9 @@
             <div class="tenant">{{ $tenant?->name ?? 'Comprobante' }}</div>
             <div class="doctype">Comprobante de {{ strtolower($subjectLabel) }}</div>
             <div class="status">{{ $statusLabel }}</div>
+            @if ($isCollection)
+                <div class="state">ESTADO: {{ mb_strtoupper($subject->status->label()) }}</div>
+            @endif
         </div>
 
         <div class="sep"></div>

@@ -432,22 +432,63 @@ it('issues and redirects to the receipt for an accepted collection', function ()
         ->assertRedirect(route('verification.print', $code->code));
 });
 
-it('does not issue a receipt for collections that are not accepted', function () {
+it('issues a receipt for collections in any status', function () {
     $scenario = collectionPageScenario();
 
     $this->actingAs($scenario['sellerOne']);
 
     Livewire::test('pages::collections')
         ->call('issueComprobante', $scenario['eventOne']->id)
-        ->assertForbidden();
+        ->assertHasNoErrors();
 
     $this->actingAs($scenario['supervisor']);
 
     Livewire::test('pages::collections')
         ->call('issueComprobante', $scenario['eventTwo']->id)
-        ->assertForbidden();
+        ->assertHasNoErrors();
 
-    expect(VerificationCode::query()->count())->toBe(0);
+    expect(VerificationCode::query()
+        ->whereIn('verifiable_id', [$scenario['eventOne']->id, $scenario['eventTwo']->id])
+        ->count())->toBe(2);
+});
+
+it('previews an attached proof in a modal and closes it', function () {
+    $scenario = collectionPageScenario();
+    $scenario['eventOne']->forceFill([
+        'proof_disk' => 'local',
+        'proof_path' => 'collection-proofs/proof.jpg',
+        'proof_mime_type' => 'image/jpeg',
+    ])->save();
+
+    $this->actingAs($scenario['sellerOne']);
+
+    Livewire::test('pages::collections')
+        ->call('openProof', $scenario['eventOne']->id)
+        ->assertSet('proofEventId', $scenario['eventOne']->id)
+        ->assertSet('proofIsImage', true)
+        ->assertSet('proofUrl', route('collections.proof', $scenario['eventOne']->id))
+        ->assertSee('Comprobante adjunto')
+        ->call('closeProof')
+        ->assertSet('proofEventId', '')
+        ->assertSet('proofUrl', '')
+        ->assertSet('proofIsImage', false);
+});
+
+it('offers to open a non-image proof in a new tab instead of previewing it', function () {
+    $scenario = collectionPageScenario();
+    $scenario['eventOne']->forceFill([
+        'proof_disk' => 'local',
+        'proof_path' => 'collection-proofs/proof.pdf',
+        'proof_mime_type' => 'application/pdf',
+    ])->save();
+
+    $this->actingAs($scenario['sellerOne']);
+
+    Livewire::test('pages::collections')
+        ->call('openProof', $scenario['eventOne']->id)
+        ->assertSet('proofIsImage', false)
+        ->assertSee('no se puede previsualizar')
+        ->assertSee('Abrir archivo');
 });
 
 it('opens the create collection modal for sellers', function () {

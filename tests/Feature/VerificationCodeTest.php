@@ -62,21 +62,23 @@ function verificationScenario(): array
     return compact('tenant', 'rep', 'seller', 'supervisor', 'customer', 'invoice', 'event');
 }
 
-it('does not issue a verification code for a collection that is not accepted', function () {
+it('issues a verification code for a collection in any status', function () {
     $scenario = verificationScenario();
     $scenario['event']->update(['status' => CollectionStatus::Pending]);
     $this->actingAs($scenario['seller']);
 
-    expect(fn () => app(IssueVerificationCode::class)->handle($scenario['seller'], $scenario['event']))
-        ->toThrow(AuthorizationException::class);
+    $pendingCode = app(IssueVerificationCode::class)->handle($scenario['seller'], $scenario['event']);
+
+    expect($pendingCode->verifiable_id)->toBe($scenario['event']->id);
 
     $scenario['event']->update(['status' => CollectionStatus::Rejected]);
     $this->actingAs($scenario['supervisor']);
 
-    expect(fn () => app(IssueVerificationCode::class)->handle($scenario['supervisor'], $scenario['event']->refresh()))
-        ->toThrow(AuthorizationException::class);
+    $rejectedCode = app(IssueVerificationCode::class)->handle($scenario['supervisor'], $scenario['event']->refresh());
 
-    expect(VerificationCode::query()->count())->toBe(0);
+    expect($rejectedCode->verifiable_id)->toBe($scenario['event']->id)
+        ->and($rejectedCode->id)->toBe($pendingCode->id)
+        ->and(VerificationCode::query()->count())->toBe(1);
 });
 
 it('issues a verification code signed with the record payload', function () {
@@ -266,6 +268,7 @@ it('prints a verification receipt for the owner and approvers', function () {
         ->assertSee('Imprimir')
         ->assertSee($code->code)
         ->assertSee('Comprobante de registro de cobranza')
+        ->assertSee('ESTADO: ACEPTADO')
         ->assertSee('BOB')
         ->assertSee(route('verification.show', $code->code))
         ->assertSee('<svg', false);
@@ -275,6 +278,22 @@ it('prints a verification receipt for the owner and approvers', function () {
     $this->withoutVite()
         ->get(route('verification.print', $code->code))
         ->assertOk();
+});
+
+it('prints the collection status for a receipt issued before acceptance', function () {
+    registerVerificationPrintRoute();
+
+    $scenario = verificationScenario();
+    $scenario['event']->update(['status' => CollectionStatus::Pending]);
+    $this->actingAs($scenario['seller']);
+
+    $code = app(IssueVerificationCode::class)->handle($scenario['seller'], $scenario['event']);
+
+    $this->withoutVite()
+        ->get(route('verification.print', $code->code))
+        ->assertOk()
+        ->assertSee('ESTADO: EN REVISIÓN')
+        ->assertSee('VALIDO');
 });
 
 it('returns not found when printing an unknown verification code', function () {

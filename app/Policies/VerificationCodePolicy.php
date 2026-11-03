@@ -2,9 +2,7 @@
 
 namespace App\Policies;
 
-use App\Enums\CollectionStatus;
 use App\Enums\Permission;
-use App\Models\CollectionEvent;
 use App\Models\User;
 use App\Models\VerificationCode;
 use App\Policies\Concerns\AuthorizesTenant;
@@ -36,10 +34,6 @@ class VerificationCodePolicy
 
     public function issue(User $user, Model $verifiable): bool
     {
-        if ($verifiable instanceof CollectionEvent && $verifiable->status !== CollectionStatus::Accepted) {
-            return false;
-        }
-
         return $user->can('view', $verifiable);
     }
 
