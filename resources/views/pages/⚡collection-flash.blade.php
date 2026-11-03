@@ -174,10 +174,9 @@ new #[Layout('layouts.app')] #[Title('Cobro flash')] class extends Component {
                 <div>
                     <label for="flash-method" class="label">Tipo de pago</label>
                     <select id="flash-method" wire:model="paymentMethod" required class="select">
-                        <option value="cash">Efectivo</option>
-                        <option value="check">Cheque</option>
-                        <option value="transfer">Transferencia</option>
-                        <option value="other">Otro</option>
+                        @foreach (\App\Enums\PaymentMethod::cases() as $method)
+                            <option value="{{ $method->value }}">{{ $method->label() }}</option>
+                        @endforeach
                     </select>
                     @error('paymentMethod')
                         <p class="field-error">{{ $message }}</p>
@@ -196,7 +195,7 @@ new #[Layout('layouts.app')] #[Title('Cobro flash')] class extends Component {
                 <div>
                     <label for="flash-voucher" class="label">N° voucher / transacción</label>
                     <input id="flash-voucher" type="text" maxlength="64" wire:model="voucherCode"
-                        placeholder="Obligatorio para cheque, transferencia u otro" class="input">
+                        placeholder="Obligatorio para QR, depósito-transferencia, cheque u otros" class="input">
                     @error('voucherCode')
                         <p class="field-error">{{ $message }}</p>
                     @enderror

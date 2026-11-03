@@ -180,7 +180,7 @@ it('registers a collection from the create page', function () {
         ->assertSee($invoice->number)
         ->set('amount', '400')
         ->set('kind', CollectionKind::Partial->value)
-        ->set('paymentMethod', PaymentMethod::Transfer->value)
+        ->set('paymentMethod', PaymentMethod::DepositTransfer->value)
         ->set('collectedOn', now()->toDateString())
         ->set('voucherCode', 'V-123')
         ->set('notes', 'Abono')

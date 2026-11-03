@@ -56,7 +56,7 @@ it('requires a voucher code for non cash payments', function () {
     expect(fn () => app(RegisterCollection::class)->handle(
         $scenario['seller'],
         $scenario['invoice'],
-        proofPayload(['payment_method' => PaymentMethod::Transfer]),
+        proofPayload(['payment_method' => PaymentMethod::DepositTransfer]),
     ))->toThrow(ValidationException::class);
 
     expect(CollectionEvent::query()->count())->toBe(0);
@@ -265,7 +265,7 @@ it('registers a collection with a voucher and a proof from the form', function (
     Livewire::test('pages::collection-create', ['invoice' => $scenario['invoice']->id])
         ->set('amount', '200')
         ->set('kind', CollectionKind::Partial->value)
-        ->set('paymentMethod', PaymentMethod::Transfer->value)
+        ->set('paymentMethod', PaymentMethod::DepositTransfer->value)
         ->set('collectedOn', now()->toDateString())
         ->set('voucherCode', 'V-777')
         ->set('proof', UploadedFile::fake()->image('comprobante.jpg'))
@@ -288,7 +288,7 @@ it('requires a voucher code in the form for non cash payments', function () {
     Livewire::test('pages::collection-create', ['invoice' => $scenario['invoice']->id])
         ->set('amount', '200')
         ->set('kind', CollectionKind::Partial->value)
-        ->set('paymentMethod', PaymentMethod::Transfer->value)
+        ->set('paymentMethod', PaymentMethod::DepositTransfer->value)
         ->set('collectedOn', now()->toDateString())
         ->set('confirmed', true)
         ->call('save')

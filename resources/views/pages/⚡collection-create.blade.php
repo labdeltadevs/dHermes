@@ -305,10 +305,9 @@ new #[Layout('layouts.app')] #[Title('Registrar cobro')] class extends Component
                     <div>
                         <label for="collection-method" class="label">Método de pago</label>
                         <select id="collection-method" wire:model="paymentMethod" required class="select">
-                            <option value="cash">Efectivo</option>
-                            <option value="check">Cheque</option>
-                            <option value="transfer">Transferencia</option>
-                            <option value="other">Otro</option>
+                            @foreach (\App\Enums\PaymentMethod::cases() as $method)
+                                <option value="{{ $method->value }}">{{ $method->label() }}</option>
+                            @endforeach
                         </select>
                         @error('payment_method')
                             <p class="field-error">{{ $message }}</p>
@@ -347,7 +346,7 @@ new #[Layout('layouts.app')] #[Title('Registrar cobro')] class extends Component
                     <div>
                         <label for="collection-voucher" class="label">Código de voucher</label>
                         <input id="collection-voucher" type="text" maxlength="64" wire:model="voucherCode"
-                            placeholder="Obligatorio para cheque, transferencia u otro" class="input">
+                            placeholder="Obligatorio para QR, depósito-transferencia, cheque u otros" class="input">
                         @error('voucherCode')
                             <p class="field-error">{{ $message }}</p>
                         @enderror

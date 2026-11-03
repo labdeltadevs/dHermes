@@ -173,12 +173,9 @@ new #[Layout('layouts.app')] #[Title('Arqueo')] class extends Component
             'isSubmitted' => $isSubmitted,
             'isRejected' => $isRejected,
             'canPrint' => $canPrint,
-            'paymentMethods' => [
-                PaymentMethod::Cash->value => 'Efectivo',
-                PaymentMethod::Check->value => 'Cheque',
-                PaymentMethod::Transfer->value => 'Transferencia',
-                PaymentMethod::Other->value => 'Otro',
-            ],
+            'paymentMethods' => collect(PaymentMethod::cases())
+                ->mapWithKeys(fn (PaymentMethod $method): array => [$method->value => $method->label()])
+                ->all(),
             'statusLabels' => [
                 CashSessionStatus::Open->value => 'Abierto',
                 CashSessionStatus::Submitted->value => 'Enviado',
@@ -304,7 +301,7 @@ $statusClasses = fn (CashSessionStatus $value): string => match ($value) {
     @if ($canManage && $isOpen)
         <section class="card p-4 sm:p-6">
             <h2 class="text-base font-semibold text-ink">Agregar cobro</h2>
-            <p class="mt-1 text-sm text-muted">Registra el efectivo, cheque o transferencia recibida.</p>
+            <p class="mt-1 text-sm text-muted">Registra el efectivo, QR, depósito-transferencia o cheque recibido.</p>
 
             <form wire:submit="addItem" class="mt-5 grid gap-4 sm:grid-cols-2">
                 <div>

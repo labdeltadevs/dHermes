@@ -354,12 +354,9 @@ new #[Layout('layouts.app')] #[Title('Cobranzas')] class extends Component {
         'rejected' => 'bg-rose-100 text-rose-700',
         'cancelled' => 'bg-neutral-200 text-neutral-700',
     ];
-    $paymentLabels = [
-        'cash' => 'Efectivo',
-        'check' => 'Cheque',
-        'transfer' => 'Transferencia',
-        'other' => 'Otro',
-    ];
+    $paymentLabels = collect(\App\Enums\PaymentMethod::cases())
+        ->mapWithKeys(fn (\App\Enums\PaymentMethod $method): array => [$method->value => $method->label()])
+        ->all();
     $kindLabels = [
         'full' => 'Total',
         'partial' => 'Parcial',

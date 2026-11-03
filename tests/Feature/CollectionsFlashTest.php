@@ -93,18 +93,49 @@ it('requires a voucher for non-cash flash collections and keeps it unique per te
 
     expect(fn () => app(RegisterFlashCollection::class)->handle(
         $scenario['seller'],
-        flashPayload(['payment_method' => PaymentMethod::Transfer, 'voucher_code' => null]),
+        flashPayload(['payment_method' => PaymentMethod::DepositTransfer, 'voucher_code' => null]),
     ))->toThrow(ValidationException::class);
 
     app(RegisterFlashCollection::class)->handle(
         $scenario['seller'],
-        flashPayload(['payment_method' => PaymentMethod::Transfer, 'voucher_code' => 'TRX-1']),
+        flashPayload(['payment_method' => PaymentMethod::DepositTransfer, 'voucher_code' => 'TRX-1']),
     );
 
     expect(fn () => app(RegisterFlashCollection::class)->handle(
         $scenario['seller'],
-        flashPayload(['payment_method' => PaymentMethod::Transfer, 'voucher_code' => 'TRX-1']),
+        flashPayload(['payment_method' => PaymentMethod::DepositTransfer, 'voucher_code' => 'TRX-1']),
     ))->toThrow(ValidationException::class);
+});
+
+it('requires a voucher for QR flash collections', function () {
+    $scenario = flashScenario();
+    $this->actingAs($scenario['seller']);
+
+    expect(fn () => app(RegisterFlashCollection::class)->handle(
+        $scenario['seller'],
+        flashPayload(['payment_method' => PaymentMethod::Qr, 'voucher_code' => null]),
+    ))->toThrow(ValidationException::class);
+
+    $event = app(RegisterFlashCollection::class)->handle(
+        $scenario['seller'],
+        flashPayload(['payment_method' => PaymentMethod::Qr, 'voucher_code' => 'QR-001']),
+    );
+
+    expect($event->payment_method)->toBe(PaymentMethod::Qr)
+        ->and($event->voucher_code)->toBe('QR-001');
+});
+
+it('offers the configured payment methods on the flash page', function () {
+    $scenario = flashScenario();
+    $this->actingAs($scenario['seller']);
+
+    Livewire::test('pages::collection-flash')
+        ->assertOk()
+        ->assertSee('Efectivo')
+        ->assertSee('QR')
+        ->assertSee('Depósito-Transferencia')
+        ->assertSee('Cheque')
+        ->assertSee('Otros');
 });
 
 it('rejects flash collections dated in the future', function () {

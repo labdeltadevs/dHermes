@@ -59,7 +59,7 @@ it('adds items and recalculates the expected amount', function () {
         'amount' => 100,
     ]);
     app(AddCashSessionItem::class)->handle($scenario['seller'], $session, [
-        'payment_method' => PaymentMethod::Transfer,
+        'payment_method' => PaymentMethod::DepositTransfer,
         'amount' => 50,
         'reference' => 'TRX-1',
     ]);
