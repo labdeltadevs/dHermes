@@ -25,9 +25,12 @@ final class CancelCollection
             'reason.required' => 'El motivo de la anulación es obligatorio.',
         ])->validate();
 
-        if ($collectionEvent->status !== CollectionStatus::Pending) {
+        $cancellable = $collectionEvent->status === CollectionStatus::Pending
+            || ($collectionEvent->status === CollectionStatus::Accepted && $collectionEvent->erp_docnum === null);
+
+        if (! $cancellable) {
             throw ValidationException::withMessages([
-                'status' => 'Solo se pueden anular cobranzas pendientes.',
+                'status' => 'Solo se pueden anular cobranzas pendientes o aceptadas sin DocNum.',
             ]);
         }
 

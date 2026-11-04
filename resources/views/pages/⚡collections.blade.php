@@ -2,6 +2,7 @@
 
 use App\Actions\Collection\AcceptCollection;
 use App\Actions\Collection\CancelCollection;
+use App\Actions\Collection\RegisterCollectionErpDocnum;
 use App\Actions\Collection\RejectCollection;
 use App\Enums\CollectionStatus;
 use App\Enums\Permission;
@@ -111,8 +112,11 @@ new #[Layout('layouts.app')] #[Title('Cobranzas')] class extends Component {
 
         abort_if($event === null, 404);
 
-        if ($event->status !== CollectionStatus::Pending) {
-            $this->addError('status', 'Solo se pueden revisar cobranzas pendientes.');
+        $isPending = $event->status === CollectionStatus::Pending;
+        $isAwaitingDocnum = $event->status === CollectionStatus::Accepted && $event->erp_docnum === null;
+
+        if (! $isPending && ! $isAwaitingDocnum) {
+            $this->addError('status', 'Esta cobranza ya no requiere revisión.');
 
             return;
         }
@@ -163,6 +167,20 @@ new #[Layout('layouts.app')] #[Title('Cobranzas')] class extends Component {
         app(AcceptCollection::class)->handle($user, $event, $this->erpDocnum, $this->fundsReceived);
 
         $this->feedback = 'Cobranza aceptada.';
+        $this->closeActionPanel();
+        $this->resetPage();
+    }
+
+    public function registerDocnum(): void
+    {
+        $this->validate(['pendingActionEventId' => ['required', 'string']]);
+
+        $user = auth()->user();
+        $event = app(CollectionQuery::class)->for($user)->findOrFail($this->pendingActionEventId);
+
+        app(RegisterCollectionErpDocnum::class)->handle($user, $event, $this->erpDocnum);
+
+        $this->feedback = 'DocNum del ERP registrado.';
         $this->closeActionPanel();
         $this->resetPage();
     }
@@ -293,6 +311,7 @@ new #[Layout('layouts.app')] #[Title('Cobranzas')] class extends Component {
         $cancelEvent = $this->cancelEventId !== ''
             ? $query->for($user)->find($this->cancelEventId)
             : null;
+        $actionMode = $actionEvent?->status === CollectionStatus::Pending ? 'review' : 'docnum';
 
         return $this->view()->with([
             'events' => $query->filtered($user, $filters)->paginate(25)->onEachSide(1)->withQueryString(),
@@ -301,6 +320,7 @@ new #[Layout('layouts.app')] #[Title('Cobranzas')] class extends Component {
             'canCreate' => $canCreate,
             'canCreateFlash' => $canCreateFlash,
             'actionEvent' => $actionEvent,
+            'actionMode' => $actionMode,
             'cancelEvent' => $cancelEvent,
             'sellers' => $isApprover
                 ? TenantUser::query()
@@ -611,10 +631,15 @@ new #[Layout('layouts.app')] #[Title('Cobranzas')] class extends Component {
                 class="flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl border border-sky-200 bg-surface shadow-pop sm:rounded-3xl">
                 <header class="flex items-start justify-between gap-3 border-b border-line px-5 py-4 sm:px-6">
                 <div>
-                        <h2 id="action-panel-title" class="text-lg font-semibold text-ink">Revisar cobranza</h2>
+                        <h2 id="action-panel-title" class="text-lg font-semibold text-ink">
+                            {{ $actionMode === 'docnum' ? 'Registrar DocNum' : 'Revisar cobranza' }}</h2>
                         <p class="mt-1 text-sm text-muted">
-                            Verifica los datos y confirma la entrega física. Registra el cobro en el ERP y luego ingresa el
-                            DocNum para aceptarlo.
+                            @if ($actionMode === 'docnum')
+                                Este cobro fue aceptado automáticamente. Cuando lo registres en el ERP, ingresa el DocNum para conciliarlo.
+                            @else
+                                Verifica los datos y confirma la entrega física. Registra el cobro en el ERP y luego ingresa el
+                                DocNum para aceptarlo.
+                            @endif
                         </p>
                     </div>
 
@@ -707,7 +732,38 @@ new #[Layout('layouts.app')] #[Title('Cobranzas')] class extends Component {
                 @endif
             </dl>
 
-            <div class="mt-5 grid gap-4 lg:grid-cols-2">
+            @if ($actionMode === 'docnum')
+                <div class="mt-5 rounded-xl border border-sky-200 bg-sky-50/60 p-4">
+                    <h3 class="text-sm font-semibold text-ink">Registrar DocNum del ERP</h3>
+                    <p class="mt-1 text-xs text-muted">
+                        Ingresa el DocNum con el que quedó registrado este cobro en SAP. No cambia el estado del cobro.
+                    </p>
+
+                    <div class="mt-3">
+                        <label for="erp-docnum" class="label">DocNum ERP</label>
+                        <input id="erp-docnum" type="text" inputmode="numeric" wire:model="erpDocnum"
+                            placeholder="Ej. 100341331" class="input" autocomplete="off">
+
+                        @error('erpDocnum')
+                            <p class="field-error">{{ $message }}</p>
+                        @enderror
+
+                        @error('status')
+                            <p class="field-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <button type="button" wire:click="registerDocnum" wire:loading.attr="disabled"
+                        class="mt-4 inline-flex w-full items-center justify-center gap-2 btn btn-dark">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Registrar DocNum
+                    </button>
+                </div>
+            @else
+                <div class="mt-5 grid gap-4 lg:grid-cols-2">
                 <div class="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
                     <h3 class="text-sm font-semibold text-ink">Aceptar cobro</h3>
                     <p class="mt-1 text-xs text-muted">
@@ -770,6 +826,7 @@ new #[Layout('layouts.app')] #[Title('Cobranzas')] class extends Component {
                     </button>
                 </div>
             </div>
+            @endif
                 </div>
             </section>
         </div>
@@ -866,6 +923,7 @@ new #[Layout('layouts.app')] #[Title('Cobranzas')] class extends Component {
                         @php
                             $canCancel = auth()->user()->can('cancel', $event);
                             $showReview = $isApprover && $event->status === CollectionStatus::Pending;
+                            $showDocnum = $isApprover && $event->status === CollectionStatus::Accepted && $event->erp_docnum === null;
                             $invoiceNumber = $event->invoice?->number ?? $event->flash_invoice_number;
                             $invoiceReference = $event->invoice?->docentry ?? ($event->isFlash() ? 'Cobro flash' : null);
                             $customerName = $event->invoice?->customer?->name ?? $event->flash_customer_name;
@@ -979,6 +1037,19 @@ new #[Layout('layouts.app')] #[Title('Cobranzas')] class extends Component {
                                                     d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                                             </svg>
                                             Revisar
+                                        </button>
+                                    @endif
+
+                                    @if ($showDocnum)
+                                        <button type="button" wire:click="openActionPanel('{{ $event->id }}')"
+                                            title="Registrar DocNum"
+                                            class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-sky-300 bg-sky-50 px-3 text-xs font-semibold text-sky-800 transition hover:bg-sky-100">
+                                            <svg class="size-3.5" fill="none" stroke="currentColor"
+                                                stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M12 4.5v15m7.5-7.5h-15" />
+                                            </svg>
+                                            DocNum
                                         </button>
                                     @endif
 
@@ -1113,6 +1184,17 @@ new #[Layout('layouts.app')] #[Title('Cobranzas')] class extends Component {
                                     d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             Revisar
+                        </button>
+                    @endif
+
+                    @if ($isApprover && $event->status === CollectionStatus::Accepted && $event->erp_docnum === null)
+                        <button type="button" wire:click="openActionPanel('{{ $event->id }}')"
+                            class="inline-flex items-center justify-center gap-1.5 flex-1 min-w-[120px] btn btn-outline">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            Registrar DocNum
                         </button>
                     @endif
 

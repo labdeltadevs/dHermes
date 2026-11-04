@@ -81,6 +81,15 @@ new #[Layout('layouts.app')] #[Title('Reporte de cobranzas')] class extends Comp
             'currency' => $filters['currency'],
         ], fn (string $value): bool => $value !== ''));
 
+        $exportPdfUrl = route('collections.report.pdf', array_filter([
+            'from' => $filters['from'],
+            'to' => $filters['to'],
+            'status' => $filters['status'],
+            'payment_method' => $filters['payment_method'],
+            'seller_user_id' => $filters['seller_user_id'],
+            'currency' => $filters['currency'],
+        ], fn (string $value): bool => $value !== ''));
+
         return $this->view()->with([
             'groups' => $groups,
             'totalCount' => $events->count(),
@@ -88,6 +97,7 @@ new #[Layout('layouts.app')] #[Title('Reporte de cobranzas')] class extends Comp
                 fn ($group, string $currency): array => [
                     'currency' => $currency,
                     'total' => (float) $group->sum(fn (CollectionEvent $event): float => (float) $event->amount),
+                    'count' => $group->count(),
                 ],
             )->values(),
             'sellers' => $membership->role->canApprove()
@@ -107,6 +117,7 @@ new #[Layout('layouts.app')] #[Title('Reporte de cobranzas')] class extends Comp
             'statuses' => CollectionStatus::cases(),
             'paymentMethods' => PaymentMethod::cases(),
             'exportUrl' => $exportUrl,
+            'exportPdfUrl' => $exportPdfUrl,
         ]);
     }
 
@@ -151,6 +162,15 @@ new #[Layout('layouts.app')] #[Title('Reporte de cobranzas')] class extends Comp
         </div>
 
         <div class="flex flex-col gap-2 sm:flex-row">
+            <a href="{{ $exportPdfUrl }}" class="btn btn-primary">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+                    aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                </svg>
+                Descargar PDF
+            </a>
+
             <a href="{{ $exportUrl }}" class="btn btn-outline">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
                     aria-hidden="true">
@@ -235,11 +255,32 @@ new #[Layout('layouts.app')] #[Title('Reporte de cobranzas')] class extends Comp
 
         @foreach ($totalsByCurrency as $total)
             <article class="stat">
-                <p class="stat-label">Total {{ $total['currency'] }}</p>
+                <p class="stat-label">Total recibido {{ $total['currency'] }}</p>
                 <p class="stat-value">{{ $money($total['total']) }}</p>
+                <p class="mt-1 text-xs text-muted">{{ number_format($total['count'], 0, ',', '.') }} cobros</p>
             </article>
         @endforeach
     </section>
+
+    @if ($totalsByCurrency->isNotEmpty())
+        <section class="overflow-hidden rounded-2xl border border-ink/10 bg-ink px-5 py-4 text-white shadow-pop">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/60">Total general de pagos recibidos</p>
+                    <p class="mt-1 text-sm text-white/70">{{ number_format($totalCount, 0, ',', '.') }} cobros en el periodo y filtros seleccionados</p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-6">
+                    @foreach ($totalsByCurrency as $total)
+                        <div class="text-right">
+                            <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-white/60">{{ $total['currency'] }}</p>
+                            <p class="text-2xl font-semibold tabular-nums tracking-tight">{{ $money($total['total']) }}</p>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+    @endif
 
     @forelse ($groups as $group)
         <section class="space-y-3" wire:key="report-group-{{ $group['method']->value }}">

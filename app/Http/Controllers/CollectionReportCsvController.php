@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\CollectionStatus;
 use App\Enums\PaymentMethod;
 use App\Models\CollectionEvent;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\User;
 use App\Queries\CollectionQuery;
+use App\Support\Collection\CollectionReportFilters;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class CollectionReportCsvController extends Controller
@@ -21,7 +20,7 @@ final class CollectionReportCsvController extends Controller
 
         abort_unless($user instanceof User, 403);
 
-        $filters = $this->filters($request);
+        $filters = CollectionReportFilters::fromRequest($request);
         $events = app(CollectionQuery::class)->filtered($user, $filters)->get();
 
         $filename = 'cobranzas_'.$filters['from'].'_a_'.$filters['to'].'.csv';
@@ -88,6 +87,24 @@ final class CollectionReportCsvController extends Controller
                 }
             }
 
+            if ($events->isNotEmpty()) {
+                fputcsv($handle, ['']);
+
+                foreach ($events->groupBy('currency') as $currency => $rows) {
+                    fputcsv($handle, [
+                        'TOTAL GENERAL ('.$currency.')',
+                        '',
+                        '',
+                        number_format((float) $rows->sum(fn (CollectionEvent $event): float => (float) $event->amount), 2, '.', ''),
+                        $currency,
+                        $rows->count().' cobros',
+                        '',
+                        '',
+                        '',
+                    ]);
+                }
+            }
+
             fclose($handle);
         }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
@@ -114,31 +131,5 @@ final class CollectionReportCsvController extends Controller
             'cardcode' => (string) ($event->flash_cardcode ?? ''),
             'customer' => (string) ($event->flash_customer_name ?? ''),
         ];
-    }
-
-    /**
-     * @return array{from: string, to: string, status: string, payment_method: string, seller_user_id: string, currency: string}
-     */
-    private function filters(Request $request): array
-    {
-        $status = (string) $request->query('status', CollectionStatus::Accepted->value);
-
-        if (! in_array($status, CollectionStatus::values(), true)) {
-            $status = CollectionStatus::Accepted->value;
-        }
-
-        return [
-            'from' => $this->date($request->query('from')) ?? now()->toDateString(),
-            'to' => $this->date($request->query('to')) ?? now()->toDateString(),
-            'status' => $status,
-            'payment_method' => (string) $request->query('payment_method', ''),
-            'seller_user_id' => (string) $request->query('seller_user_id', ''),
-            'currency' => (string) $request->query('currency', ''),
-        ];
-    }
-
-    private function date(mixed $value): ?string
-    {
-        return is_string($value) && Carbon::hasFormat($value, 'Y-m-d') ? $value : null;
     }
 }

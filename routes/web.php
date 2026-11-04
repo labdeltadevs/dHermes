@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CollectionProofController;
 use App\Http\Controllers\CollectionReportCsvController;
+use App\Http\Controllers\CollectionReportPdfController;
 use App\Http\Controllers\PlatformTenantManagementController;
 use App\Http\Controllers\TenantSwitchController;
 use App\Http\Controllers\VerificationController;
@@ -39,6 +40,10 @@ Route::livewire('/cobranzas', 'pages::collections')
 Route::get('/cobranzas/reportes/csv', CollectionReportCsvController::class)
     ->middleware('auth')
     ->name('collections.report.csv');
+
+Route::get('/cobranzas/reportes/pdf', CollectionReportPdfController::class)
+    ->middleware('auth')
+    ->name('collections.report.pdf');
 
 Route::livewire('/cobranzas/reportes', 'pages::collection-reports')
     ->middleware('auth')

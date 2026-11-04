@@ -39,6 +39,7 @@ final class RegisterFlashCollection
         Gate::authorize('createFlash', CollectionEvent::class);
 
         $tenant = Tenant::query()->whereKey($tenantId)->firstOrFail();
+        $autoAccept = (bool) $tenant->auto_accept_collections;
 
         $proof = $data['proof'] ?? null;
 
@@ -88,7 +89,7 @@ final class RegisterFlashCollection
         $storedPath = null;
 
         try {
-            return DB::transaction(function () use ($seller, $tenant, $tenantId, $validated, $paymentMethod, $voucherCode, $proof, $storage, &$storedPath): CollectionEvent {
+            return DB::transaction(function () use ($seller, $tenant, $tenantId, $validated, $paymentMethod, $voucherCode, $proof, $storage, $autoAccept, &$storedPath): CollectionEvent {
                 $collectionEvent = CollectionEvent::create([
                     ...app(CollectionNumberAllocator::class)->next($tenantId),
                     'tenant_id' => $tenantId,
@@ -103,7 +104,8 @@ final class RegisterFlashCollection
                     'payment_method' => $paymentMethod,
                     'collected_on' => $validated['collected_on'],
                     'kind' => CollectionKind::Partial,
-                    'status' => CollectionStatus::Pending,
+                    'status' => $autoAccept ? CollectionStatus::Accepted : CollectionStatus::Pending,
+                    'reviewed_at' => $autoAccept ? now() : null,
                     'notes' => $validated['notes'] ?? null,
                     'voucher_code' => $voucherCode,
                 ]);
@@ -129,6 +131,7 @@ final class RegisterFlashCollection
                         'payment_method' => $collectionEvent->payment_method->value,
                         'voucher_code' => $collectionEvent->voucher_code,
                         'has_proof' => $collectionEvent->proof_path !== null,
+                        'auto_accepted' => $autoAccept,
                     ],
                     $seller,
                 );

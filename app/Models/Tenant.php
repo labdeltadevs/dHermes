@@ -20,11 +20,12 @@ use Illuminate\Support\Carbon;
  * @property string|null $tax_id
  * @property string $timezone
  * @property string $local_currency
+ * @property bool $auto_accept_collections
  * @property bool $active
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['code', 'name', 'tax_id', 'timezone', 'local_currency', 'active'])]
+#[Fillable(['code', 'name', 'tax_id', 'timezone', 'local_currency', 'auto_accept_collections', 'active'])]
 #[ObservedBy(TenantObserver::class)]
 class Tenant extends Model
 {
@@ -39,6 +40,7 @@ class Tenant extends Model
     {
         return [
             'active' => 'boolean',
+            'auto_accept_collections' => 'boolean',
         ];
     }
 

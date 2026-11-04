@@ -74,7 +74,11 @@ class CollectionEventPolicy
 
     public function cancel(User $user, CollectionEvent $collectionEvent): bool
     {
-        if ($collectionEvent->status !== CollectionStatus::Pending) {
+        $isPending = $collectionEvent->status === CollectionStatus::Pending;
+        $isUnreconciledAccepted = $collectionEvent->status === CollectionStatus::Accepted
+            && $collectionEvent->erp_docnum === null;
+
+        if (! $isPending && ! $isUnreconciledAccepted) {
             return false;
         }
 
@@ -82,7 +86,8 @@ class CollectionEventPolicy
             return true;
         }
 
-        return $collectionEvent->seller_user_id === $user->id
+        return $isPending
+            && $collectionEvent->seller_user_id === $user->id
             && $collectionEvent->collected_on->isToday()
             && $this->hasPermission($user, $collectionEvent, Permission::CollectionsCreate);
     }

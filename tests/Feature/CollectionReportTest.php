@@ -141,6 +141,8 @@ it('reports only accepted collections by default grouped by payment method', fun
         ->assertSee('100,00')
         ->assertSee('200,00')
         ->assertSee('50,00')
+        ->assertSee('Total general de pagos recibidos')
+        ->assertSee('750,00')
         ->assertDontSee('RP-000000003');
 });
 
@@ -224,6 +226,8 @@ it('exports the report as CSV with separated columns and method subtotals', func
         ->toContain('Cliente Reporte')
         ->toContain('Subtotal Efectivo (BOB)')
         ->toContain('Subtotal QR (BOB)')
+        ->toContain('TOTAL GENERAL (BOB)')
+        ->toContain('750.00')
         ->toContain('100.00')
         ->toContain('200.00')
         ->not->toContain('RP-000000003');
@@ -266,4 +270,24 @@ it('redirects a user without an active membership away from the report', functio
     $this->actingAs(User::factory()->create());
 
     $this->get(route('collections.report.csv'))->assertRedirect();
+});
+
+it('downloads the report as a PDF document', function () {
+    $scenario = collectionReportScenario();
+
+    $this->actingAs($scenario['supervisor']);
+
+    $response = $this->get(route('collections.report.pdf', [
+        'from' => now()->toDateString(),
+        'to' => now()->toDateString(),
+    ]));
+
+    $response->assertOk();
+    $response->assertHeader('content-type', 'application/pdf');
+    $response->assertHeader(
+        'content-disposition',
+        'attachment; filename="cobranzas_'.now()->toDateString().'_a_'.now()->toDateString().'.pdf"',
+    );
+
+    expect($response->getContent())->toStartWith('%PDF');
 });

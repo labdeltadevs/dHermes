@@ -7,10 +7,12 @@ use App\Enums\CollectionStatus;
 use App\Enums\PaymentMethod;
 use App\Models\CollectionEvent;
 use App\Models\Invoice;
+use App\Models\Tenant;
 use App\Models\User;
 use App\Support\Audit\AuditLogger;
 use App\Support\Collection\CollectionNumberAllocator;
 use App\Support\Collection\CollectionProofStorage;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -88,11 +90,14 @@ final class RegisterCollection
 
         $this->assertAmountWithinAvailable($invoice, $amount, $kind);
 
+        $tenant = Tenant::query()->whereKey($invoice->tenant_id)->firstOrFail();
+        $autoAccept = (bool) $tenant->auto_accept_collections;
+
         $storage = app(CollectionProofStorage::class);
         $storedPath = null;
 
         try {
-            return DB::transaction(function () use ($seller, $invoice, $validated, $amount, $kind, $voucherCode, $proof, $storage, &$storedPath): CollectionEvent {
+            return DB::transaction(function () use ($seller, $invoice, $validated, $amount, $kind, $voucherCode, $proof, $storage, $autoAccept, &$storedPath): CollectionEvent {
                 $invoice = Invoice::query()
                     ->whereKey($invoice->getKey())
                     ->lockForUpdate()
@@ -110,7 +115,8 @@ final class RegisterCollection
                     'tenant_id' => $invoice->tenant_id,
                     'invoice_id' => $invoice->id,
                     'seller_user_id' => $seller->id,
-                    'status' => CollectionStatus::Pending,
+                    'status' => $autoAccept ? CollectionStatus::Accepted : CollectionStatus::Pending,
+                    'reviewed_at' => $autoAccept ? now() : null,
                 ]);
 
                 if ($proof instanceof UploadedFile) {
@@ -130,6 +136,7 @@ final class RegisterCollection
                         'payment_method' => $collectionEvent->payment_method->value,
                         'voucher_code' => $collectionEvent->voucher_code,
                         'has_proof' => $collectionEvent->proof_path !== null,
+                        'auto_accepted' => $autoAccept,
                     ],
                     $seller,
                 );
@@ -147,7 +154,8 @@ final class RegisterCollection
 
     /**
      * Valida que el monto no supere el saldo disponible: saldo de la factura
-     * menos el total de cobros aún pendientes sobre ella.
+     * menos el total de cobros aún no conciliados en el ERP (pendientes y
+     * aceptados automáticamente sin DocNum).
      */
     private function assertAmountWithinAvailable(Invoice $invoice, float $amount, CollectionKind $kind): void
     {
@@ -173,7 +181,13 @@ final class RegisterCollection
 
         $pendingAmount = (float) CollectionEvent::query()
             ->where('invoice_id', $invoice->id)
-            ->where('status', CollectionStatus::Pending)
+            ->where(function (Builder $query): void {
+                $query->where('status', CollectionStatus::Pending->value)
+                    ->orWhere(function (Builder $query): void {
+                        $query->where('status', CollectionStatus::Accepted->value)
+                            ->whereNull('erp_docnum');
+                    });
+            })
             ->sum('amount');
 
         if ($amount > $balance - $pendingAmount + 0.000001) {
