@@ -3,6 +3,7 @@
 namespace App\Queries;
 
 use App\Enums\CollectionStatus;
+use App\Enums\PaymentMethod;
 use App\Enums\TenantRole;
 use App\Models\CollectionEvent;
 use App\Models\User;
@@ -40,7 +41,7 @@ final class CollectionQuery
     }
 
     /**
-     * @param  array{search?: string, status?: string, seller_user_id?: string, currency?: string, from?: string, to?: string}  $filters
+     * @param  array{search?: string, status?: string, seller_user_id?: string, currency?: string, from?: string, to?: string, payment_method?: string}  $filters
      * @return Builder<CollectionEvent>
      */
     public function filtered(User $user, array $filters = []): Builder
@@ -84,6 +85,12 @@ final class CollectionQuery
             $query->where('currency', $filters['currency']);
         }
 
+        $paymentMethod = (string) ($filters['payment_method'] ?? '');
+
+        if (in_array($paymentMethod, PaymentMethod::values(), true)) {
+            $query->where('payment_method', $paymentMethod);
+        }
+
         if (($filters['from'] ?? '') !== '') {
             $query->whereDate('collected_on', '>=', $filters['from']);
         }
@@ -96,7 +103,7 @@ final class CollectionQuery
     }
 
     /**
-     * @param  array{search?: string, status?: string, seller_user_id?: string, currency?: string, from?: string, to?: string}  $filters
+     * @param  array{search?: string, status?: string, seller_user_id?: string, currency?: string, from?: string, to?: string, payment_method?: string}  $filters
      * @return Collection<int, \stdClass>
      */
     public function summaryByCurrency(User $user, array $filters = []): Collection

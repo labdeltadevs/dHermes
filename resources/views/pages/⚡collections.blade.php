@@ -374,6 +374,15 @@ new #[Layout('layouts.app')] #[Title('Cobranzas')] class extends Component {
         </div>
 
         <div class="flex flex-col gap-2 sm:flex-row">
+            <a href="{{ route('collections.report') }}" wire:navigate class="btn btn-outline">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+                    aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M3 3v18h18M7 15l4-4 3 3 5-6" />
+                </svg>
+                Reportes
+            </a>
+
             @if ($hasFilters)
                 <button type="button" wire:click="clearFilters" class="btn btn-outline">
                     Limpiar filtros
