@@ -21,6 +21,7 @@ function integrityScenario(): array
     $seller = memberFor($tenant, TenantRole::Seller, salesRep: $rep);
     $admin = memberFor($tenant, TenantRole::Admin);
     $otherSeller = memberFor($tenant, TenantRole::Seller, salesRep: $rep);
+    $collector = memberFor($tenant, TenantRole::Collector, salesRep: $rep);
 
     $customer = Customer::factory()->create(['sales_rep_id' => $rep->id]);
     $invoice = Invoice::factory()->create([
@@ -31,7 +32,7 @@ function integrityScenario(): array
         'balance' => 1000,
     ]);
 
-    return compact('tenant', 'rep', 'seller', 'admin', 'otherSeller', 'customer', 'invoice');
+    return compact('tenant', 'rep', 'seller', 'admin', 'otherSeller', 'collector', 'customer', 'invoice');
 }
 
 function integrityPayload(): array
@@ -131,7 +132,7 @@ it('allows an admin to cancel a pending collection of any seller', function () {
         ->and(AuditEvent::query()->where('action', 'collection.cancelled')->count())->toBe(1);
 });
 
-it('rejects cancellation from another seller', function () {
+it('allows a same-day cancellation from another seller', function () {
     $scenario = integrityScenario();
     $this->actingAs($scenario['otherSeller']);
 
@@ -141,11 +142,49 @@ it('rejects cancellation from another seller', function () {
         integrityPayload(),
     );
 
+    app(CancelCollection::class)->handle($scenario['otherSeller'], $event, 'Corrección del equipo.');
+
+    expect($event->refresh()->status)->toBe(CollectionStatus::Cancelled);
+});
+
+it('allows a collector to cancel another seller same-day collection', function () {
+    $scenario = integrityScenario();
+    $this->actingAs($scenario['seller']);
+
+    $event = app(RegisterCollection::class)->handle(
+        $scenario['seller'],
+        $scenario['invoice'],
+        integrityPayload(),
+    );
+
+    $this->actingAs($scenario['collector']);
+
+    app(CancelCollection::class)->handle($scenario['collector'], $event, 'Cobro duplicado.');
+
+    expect($event->refresh()->status)->toBe(CollectionStatus::Cancelled);
+});
+
+it('rejects cancelling a same-day collection already reconciled with the ERP', function () {
+    $scenario = integrityScenario();
+    $this->actingAs($scenario['seller']);
+
+    $event = CollectionEvent::factory()->accepted()->create([
+        'tenant_id' => $scenario['tenant']->id,
+        'invoice_id' => $scenario['invoice']->id,
+        'seller_user_id' => $scenario['seller']->id,
+        'amount' => 100,
+        'currency' => 'BOB',
+        'collected_on' => now()->toDateString(),
+        'erp_docnum' => '700000123',
+    ]);
+
     expect(fn () => app(CancelCollection::class)->handle(
-        $scenario['otherSeller'],
+        $scenario['seller'],
         $event,
-        'Intento espurio.',
+        'Intento sobre cobro conciliado.',
     ))->toThrow(AuthorizationException::class);
+
+    expect($event->refresh()->status)->toBe(CollectionStatus::Accepted);
 });
 
 it('rejects a seller cancellation of a collection from a previous day', function () {

@@ -86,9 +86,7 @@ class CollectionEventPolicy
             return true;
         }
 
-        return $isPending
-            && $collectionEvent->seller_user_id === $user->id
-            && $collectionEvent->collected_on->isToday()
+        return $collectionEvent->collected_on->isToday()
             && $this->hasPermission($user, $collectionEvent, Permission::CollectionsCreate);
     }
 
