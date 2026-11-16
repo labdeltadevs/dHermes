@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\HeroSlide;
 use App\Models\Tenant;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -16,11 +17,22 @@ new #[Layout('layouts.app')] #[Title('Inicio')] class extends Component {
             'tenant' => $membership === null ? null : Tenant::find($membership->tenant_id),
             'canApprove' => $membership?->role->canApprove() ?? false,
             'canManageTenant' => $membership?->role->canManageTenant() ?? false,
+            'heroSlides' => HeroSlide::query()
+                ->published()
+                ->inDisplayOrder()
+                ->get(['title', 'body'])
+                ->map(fn (HeroSlide $slide): array => [
+                    'title' => $slide->title,
+                    'body' => $slide->body,
+                ])
+                ->all(),
         ]);
     }
 };
 ?>
 <div class="space-y-8 sm:space-y-10">
+    <x-hero-slides :slides="$heroSlides" :session-key="session()->getId()" />
+
     <section
         class="relative isolate overflow-hidden rounded-3xl border border-line bg-gradient-to-br from-surface via-surface to-brand-50/70 shadow-card">
         <div class="pointer-events-none absolute -right-16 -top-20 size-72 rounded-full bg-brand-500/10 blur-3xl"></div>

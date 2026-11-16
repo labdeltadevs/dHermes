@@ -120,6 +120,15 @@
                                                 </svg>
                                                 Empresas
                                             </a>
+
+                                            <a href="{{ route('admin.hero-slides') }}" wire:navigate x-on:click="adminOpen = false"
+                                                wire:current="bg-brand-50 text-brand-800"
+                                                class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-soft transition hover:bg-brand-50 hover:text-brand-800">
+                                                <svg class="size-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 8.25h18M3 12h18M3 15.75h10.5M6 3.75h12A2.25 2.25 0 0 1 20.25 6v12A2.25 2.25 0 0 1 18 20.25H6A2.25 2.25 0 0 1 3.75 18V6A2.25 2.25 0 0 1 6 3.75Z" />
+                                                </svg>
+                                                Comunicados
+                                            </a>
                                         @endif
                                     </div>
                                 </div>
@@ -361,6 +370,14 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01" />
                                     </svg>
                                     Empresas
+                                </a>
+
+                                <a href="{{ route('admin.hero-slides') }}" wire:navigate
+                                    class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-ink-soft transition hover:bg-brand-50 hover:text-brand-800">
+                                    <svg class="size-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 8.25h18M3 12h18M3 15.75h10.5M6 3.75h12A2.25 2.25 0 0 1 20.25 6v12A2.25 2.25 0 0 1 18 20.25H6A2.25 2.25 0 0 1 3.75 18V6A2.25 2.25 0 0 1 6 3.75Z" />
+                                    </svg>
+                                    Comunicados
                                 </a>
                             @endif
                         @endif

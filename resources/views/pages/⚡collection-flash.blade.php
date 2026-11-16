@@ -258,7 +258,7 @@ new #[Layout('layouts.app')] #[Title('Cobro flash')] class extends Component {
                     <input id="flash-invoice-number" type="text" maxlength="255" wire:model="flashInvoiceNumber"
                         placeholder="Factura a la que corresponde el pago" required class="input">
                     <p class="mt-1.5 text-xs text-muted">
-                        Varias facturas: sepáralas con coma (FAC-001, FAC-002).
+                        Varias facturas: sepáralas con coma (00911, 00912, 00913, 00915).
                     </p>
                     @error('flashInvoiceNumber')
                         <p class="field-error">{{ $message }}</p>
@@ -271,7 +271,7 @@ new #[Layout('layouts.app')] #[Title('Cobro flash')] class extends Component {
                         wire:model.live.debounce.400ms="flashCardcode" placeholder="Código del cliente" required
                         class="input">
                     <p class="mt-1.5 text-xs text-muted">
-                        Se limpia automáticamente: sin espacios, sin símbolos y en mayúsculas.
+                        Buscar coincidencias en la cartera. Si no hay coincidencias, se guardará el código ingresado.
                     </p>
                     @error('flashCardcode')
                         <p class="field-error">{{ $message }}</p>
@@ -279,7 +279,7 @@ new #[Layout('layouts.app')] #[Title('Cobro flash')] class extends Component {
                 </div>
 
                 <div>
-                    <label for="flash-cardcode-clean" class="label">Código normalizado</label>
+                    <label for="flash-cardcode-clean" class="label">Código normalizado (autogenerado por el sistema)</label>
                     <input id="flash-cardcode-clean" type="text" value="{{ $this->normalizedCardcode }}" readonly
                         tabindex="-1" aria-readonly="true" class="input cursor-not-allowed bg-canvas text-muted">
                     @if ($matchedCustomerName !== null)

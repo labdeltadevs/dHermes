@@ -92,6 +92,10 @@ Route::livewire('/admin/empresas', 'pages::admin.tenants')
     ->middleware(['auth', 'can:viewAny,App\Models\Tenant'])
     ->name('admin.tenants');
 
+Route::livewire('/admin/comunicados', 'pages::admin.hero-slides')
+    ->middleware(['auth', 'can:viewAny,App\Models\HeroSlide'])
+    ->name('admin.hero-slides');
+
 Route::get('/cobranzas/{collectionEvent}/comprobante', CollectionProofController::class)
     ->middleware('auth')
     ->name('collections.proof');
