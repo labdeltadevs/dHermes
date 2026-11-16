@@ -12,6 +12,14 @@ Route::get('/', fn () => auth()->check()
     ? redirect()->route('dashboard')
     : view('welcome'))->name('home');
 
+// El service worker se renderiza desde Blade para inyectar APP_VERSION y así
+// invalidar el cache de la PWA en cada despliegue.
+Route::get('/sw.js', fn () => response()
+    ->view('pwa.sw')
+    ->header('Content-Type', 'application/javascript; charset=utf-8')
+    ->header('Cache-Control', 'no-cache, must-revalidate'))
+    ->name('pwa.service-worker');
+
 Route::post('/tenant', TenantSwitchController::class)
     ->middleware('auth')
     ->name('tenant.switch');

@@ -34,7 +34,7 @@ it('provides a branded offline fallback', function () {
 });
 
 it('never precaches authenticated pages', function () {
-    $serviceWorker = file_get_contents(public_path('sw.js'));
+    $serviceWorker = $this->get('/sw.js')->assertOk()->getContent();
 
     expect($serviceWorker)
         ->toContain("request.method !== 'GET'")

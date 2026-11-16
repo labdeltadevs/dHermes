@@ -475,4 +475,16 @@ new #[Layout('layouts.app')] #[Title('Mi perfil')] class extends Component
             @endif
         </div>
     </section>
+
+    <section class="card p-4 sm:p-6">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h2 class="text-base font-semibold text-ink">Acerca de</h2>
+                <p class="mt-1 text-sm text-muted">
+                    Versión del sistema en ejecución. Compártela si necesitas reportar un problema.
+                </p>
+            </div>
+            <p class="font-mono text-sm text-ink">Versión: {{ config('app.version') ?: 'dev' }}</p>
+        </div>
+    </section>
 </div>

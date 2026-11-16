@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'dhermes-static-v1';
+const CACHE_VERSION = 'dhermes-static-{{ config('app.version') ?: 'dev' }}';
 const OFFLINE_URL = '/offline.html';
 
 const PRECACHE_URLS = [
