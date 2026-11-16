@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\CollectionProofController;
-use App\Http\Controllers\CollectionReportCsvController;
 use App\Http\Controllers\CollectionReportPdfController;
 use App\Http\Controllers\PlatformTenantManagementController;
 use App\Http\Controllers\TenantSwitchController;
@@ -36,10 +35,6 @@ Route::livewire('/cobros', 'pages::receipts')
 Route::livewire('/cobranzas', 'pages::collections')
     ->middleware('auth')
     ->name('collections.index');
-
-Route::get('/cobranzas/reportes/csv', CollectionReportCsvController::class)
-    ->middleware('auth')
-    ->name('collections.report.csv');
 
 Route::get('/cobranzas/reportes/pdf', CollectionReportPdfController::class)
     ->middleware('auth')

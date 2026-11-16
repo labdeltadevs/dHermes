@@ -6,7 +6,7 @@
     <title>Reporte de cobranzas</title>
     <style>
         @page {
-            margin: 26px 26px 40px 26px;
+            margin: 18px 16px 32px 16px;
         }
 
         * {
@@ -14,140 +14,226 @@
         }
 
         body {
-            font-family: "DejaVu Sans", sans-serif;
+            font-family: "Segoe UI", Arial, sans-serif;
             font-size: 9px;
-            color: #111827;
+            line-height: 1.35;
+            color: #1f2937;
             margin: 0;
         }
 
-        h1 {
-            font-size: 17px;
-            margin: 0 0 2px;
-        }
-
-        h2 {
-            font-size: 11px;
-            margin: 0;
-            padding: 6px 8px;
-            background: #f3f4f6;
-            border: 1px solid #d1d5db;
-            border-bottom: none;
-        }
-
-        .muted {
-            color: #6b7280;
-        }
-
-        .header {
+        /* ---------- Encabezado ---------- */
+        .doc-head {
+            border-top: 3px solid #2563eb;
             border-bottom: 2px solid #111827;
-            padding-bottom: 8px;
-            margin-bottom: 10px;
+            padding: 5px 0 6px;
+            margin-bottom: 8px;
         }
 
-        .header .company {
-            font-size: 10px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #374151;
-        }
-
-        .meta {
-            margin-top: 6px;
-            font-size: 8.5px;
-            color: #4b5563;
-        }
-
-        .meta span {
-            margin-right: 14px;
-        }
-
-        .group {
-            margin-bottom: 12px;
-            page-break-inside: auto;
-        }
-
-        table {
+        .doc-head table {
             width: 100%;
             border-collapse: collapse;
         }
 
-        th,
-        td {
-            border: 1px solid #d1d5db;
-            padding: 4px 5px;
+        .doc-head td {
+            border: none;
+            padding: 0;
+            vertical-align: bottom;
+        }
+
+        .company {
+            font-size: 9px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #2563eb;
+            margin-bottom: 2px;
+        }
+
+        h1 {
+            font-size: 15px;
+            margin: 0;
+            color: #111827;
+        }
+
+        .head-right {
+            text-align: right;
+            font-size: 9px;
+            color: #6b7280;
+            line-height: 1.5;
+            white-space: nowrap;
+        }
+
+        .head-right strong {
+            color: #111827;
+        }
+
+        .meta {
+            margin-top: 5px;
+            font-size: 9px;
+            color: #4b5563;
+        }
+
+        .meta strong {
+            color: #111827;
+        }
+
+        .meta .dot {
+            color: #9ca3af;
+            margin: 0 3px;
+        }
+
+        /* ---------- Tablas ---------- */
+        table.data {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9px;
+        }
+
+        .data th,
+        .data td {
+            border: 1px solid #e5e7eb;
+            padding: 2.5px 4px;
             text-align: left;
             vertical-align: top;
             word-break: break-word;
         }
 
-        th {
-            background: #f9fafb;
-            font-size: 7.5px;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            color: #4b5563;
+        .data thead {
+            display: table-header-group;
+            /* repite el encabezado en cada página */
         }
 
-        td.num,
-        th.num {
+        .data thead th {
+            background: #f3f4f6;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: #374151;
+            border-bottom: 1.5px solid #9ca3af;
+        }
+
+        .data tr {
+            page-break-inside: avoid;
+        }
+
+        .data tr.alt td {
+            background: #f8fafc;
+        }
+
+        .data td.num,
+        .data th.num {
             text-align: right;
             white-space: nowrap;
         }
 
-        .mono {
-            font-family: "DejaVu Sans Mono", monospace;
-            font-size: 7.5px;
-        }
-
-        .subtotal td {
-            background: #f9fafb;
+        .data td.amt {
             font-weight: bold;
+            color: #111827;
         }
 
-        .total-box {
+        .data .mono {
+            font-family: "DejaVu Sans Mono", monospace;
+            font-size: 9px;
+            color: #6b7280;
+        }
+
+        .data .name {
+            font-weight: bold;
+            color: #111827;
+        }
+
+        .data .invoices {
+            font-size: 9px;
+            line-height: 1.4;
+            color: #374151;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 1px 5px;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            color: #334155;
+            white-space: nowrap;
+        }
+
+        /* ---------- Totales ---------- */
+        .totals {
             margin-top: 8px;
-            border: 2px solid #111827;
-            padding: 8px 10px;
+            border: 1.5px solid #111827;
+            padding: 5px 8px 6px;
             page-break-inside: avoid;
         }
 
-        .total-box .label {
-            font-size: 9px;
+        .totals .label {
+            font-size: 7px;
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 0.8px;
+            color: #6b7280;
         }
 
-        .total-row {
-            width: 100%;
-            margin-top: 4px;
-        }
-
-        .total-row td {
-            border: none;
-            padding: 2px 0;
-        }
-
-        .total-line {
-            font-size: 15px;
+        .chip {
+            display: inline-block;
+            margin: 3px 6px 0 0;
+            padding: 3px 8px;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 3px;
+            font-size: 9px;
             font-weight: bold;
-            text-align: right;
+            color: #111827;
+            white-space: nowrap;
+        }
+
+        .chip .cur {
+            color: #2563eb;
+            margin-right: 3px;
+        }
+
+        .chip .cnt {
+            font-size: 7px;
+            font-weight: normal;
+            color: #6b7280;
+            margin-left: 4px;
+        }
+
+        /* ---------- Secciones ---------- */
+        .section-title {
+            margin: 9px 0 4px;
+            font-size: 8.5px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #111827;
+            border-left: 3px solid #2563eb;
+            padding: 2px 0 2px 7px;
+        }
+
+        .cur-row td {
+            background: #eff6ff;
+            border-color: #93c5fd;
+            font-weight: bold;
+            color: #1e3a8a;
         }
 
         .empty {
-            padding: 20px;
+            border: 1px dashed #cbd5e1;
+            padding: 18px;
             text-align: center;
-            border: 1px solid #d1d5db;
             color: #6b7280;
         }
 
         .footer {
             position: fixed;
-            bottom: -26px;
+            bottom: -24px;
             left: 0;
             right: 0;
-            font-size: 7.5px;
+            font-size: 7px;
             color: #9ca3af;
         }
 
@@ -159,88 +245,117 @@
 
 <body>
     <div class="footer">
-        Reporte de cobranzas · Generado {{ $generatedAt->format('d/m/Y H:i') }} · Página <span class="page-number"></span>
+        Reporte de cobranzas · {{ $reportCode }} · Generado {{ $generatedAt->format('d/m/Y H:i') }} · Página
+        <span class="page-number"></span>
     </div>
 
-    <div class="header">
-        <div class="company">{{ $tenantName ?? 'Empresa' }}</div>
-        <h1>Reporte de cobranzas</h1>
+    <div class="doc-head">
+        <table>
+            <tr>
+                <td>
+                    <div class="company">{{ $tenantName ?? 'Empresa' }}</div>
+                    <h1>Reporte de cobranzas</h1>
+                </td>
+                <td class="head-right">
+                    <strong>N° reporte: {{ $reportCode }}</strong><br>
+                    Generado {{ $generatedAt->format('d/m/Y H:i') }}
+                </td>
+            </tr>
+        </table>
+
         <div class="meta">
-            <span><strong>Periodo:</strong> {{ $filters['from'] }} a {{ $filters['to'] }}</span>
-            <span><strong>Estado:</strong> {{ $statusLabel ?? 'Todos' }}</span>
-            <span><strong>Método:</strong> {{ $paymentMethodLabel ?? 'Todos' }}</span>
+            <span><strong>Periodo:</strong> {{ $filters['from'] }} – {{ $filters['to'] }}</span>
+            <span class="dot">·</span><span><strong>Estado:</strong> {{ $statusLabel ?? 'Todos' }}</span>
+            <span class="dot">·</span><span><strong>Método:</strong> {{ $paymentMethodLabel ?? 'Todos' }}</span>
             @if ($filters['currency'] !== '')
-                <span><strong>Moneda:</strong> {{ $filters['currency'] }}</span>
+                <span class="dot">·</span><span><strong>Moneda:</strong> {{ $filters['currency'] }}</span>
             @endif
             @if ($sellerName !== null)
-                <span><strong>Vendedor:</strong> {{ $sellerName }}</span>
+                <span class="dot">·</span><span><strong>Vendedor:</strong> {{ $sellerName }}</span>
             @endif
-            <span><strong>Cobros:</strong> {{ number_format($totalCount, 0, ',', '.') }}</span>
+            <span class="dot">·</span><span><strong>Generado por:</strong> {{ $generatedByName ?? '—' }}</span>
         </div>
     </div>
 
-    @forelse ($groups as $group)
-        <div class="group">
-            <h2>{{ $group['method']->label() }} · {{ $group['rows']->count() }} cobros</h2>
-
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width: 13%">Identificador app</th>
-                        <th style="width: 14%">Identificador interno</th>
-                        <th style="width: 10%">Factura (NumAtCard)</th>
-                        <th class="num" style="width: 9%">Monto asignado</th>
-                        <th style="width: 5%">Moneda</th>
-                        <th style="width: 10%">Fecha/hora creación</th>
-                        <th style="width: 8%">Código cliente</th>
-                        <th style="width: 17%">Cliente</th>
-                        <th style="width: 8%">Estado</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($group['rows'] as $row)
-                        <tr>
-                            <td class="mono">{{ $row['number_code'] !== '' ? $row['number_code'] : '—' }}</td>
-                            <td class="mono">{{ $row['id'] }}</td>
-                            <td>{{ $row['invoice'] !== '' ? $row['invoice'] : '—' }}</td>
-                            <td class="num">{{ number_format($row['amount'], 2, ',', '.') }}</td>
-                            <td>{{ $row['currency'] }}</td>
-                            <td>{{ $row['created_at'] }}</td>
-                            <td class="mono">{{ $row['cardcode'] !== '' ? $row['cardcode'] : '—' }}</td>
-                            <td>{{ $row['customer'] !== '' ? $row['customer'] : '—' }}</td>
-                            <td>{{ $row['status'] }}</td>
-                        </tr>
-                    @endforeach
-
-                    @foreach ($group['subtotals'] as $subtotal)
-                        <tr class="subtotal">
-                            <td colspan="3">Subtotal {{ $group['method']->label() }} ({{ $subtotal['currency'] }})</td>
-                            <td class="num">{{ number_format($subtotal['total'], 2, ',', '.') }}</td>
-                            <td>{{ $subtotal['currency'] }}</td>
-                            <td colspan="2">{{ $subtotal['count'] }} cobros</td>
-                            <td colspan="2"></td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    @empty
-        <div class="empty">Sin cobros para este periodo y filtros.</div>
-    @endforelse
-
-    @if ($totals->isNotEmpty())
-        <div class="total-box">
-            <div class="label">Total general de pagos recibidos</div>
-
-            <table class="total-row">
-                @foreach ($totals as $total)
-                    <tr>
-                        <td>{{ $total['currency'] }} · {{ $total['count'] }} cobros</td>
-                        <td class="total-line">{{ $total['currency'] }} {{ number_format($total['total'], 2, ',', '.') }}</td>
+    @if ($rows->isNotEmpty())
+        <table class="data">
+            <thead>
+                <tr>
+                    <th style="width: 11%">ID app</th>
+                    <th style="width: 23%">Factura(s)</th>
+                    <th style="width: 23%">Cliente</th>
+                    <th style="width: 13%">Forma de pago</th>
+                    <th style="width: 11%">Fecha / hora</th>
+                    <th class="num" style="width: 11%">Monto</th>
+                    <th style="width: 8%">Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($rows as $row)
+                    <tr class="{{ $loop->even ? 'alt' : '' }}">
+                        <td class="mono">{{ $row['number_code'] !== '' ? $row['number_code'] : '—' }}</td>
+                        <td class="invoices">{{ $row['invoice'] !== '' ? $row['invoice'] : '—' }}</td>
+                        <td>
+                            @if ($row['customer'] !== '')
+                                @if ($row['cardcode'] !== '')
+                                    <span class="mono">({{ $row['cardcode'] }})</span>
+                                @endif
+                                <span class="name">{{ $row['customer'] }}</span>
+                            @else
+                                <span class="mono">{{ $row['cardcode'] !== '' ? $row['cardcode'] : '—' }}</span>
+                            @endif
+                        </td>
+                        <td>{{ $row['method_label'] }}</td>
+                        <td>{{ $row['created_at'] }}</td>
+                        <td class="num amt">{{ number_format($row['amount'], 2, ',', '.') }}
+                        </td>
+                        <td><span>{{ $row['status'] }}</span></td>
                     </tr>
                 @endforeach
-            </table>
+            </tbody>
+        </table>
+
+        <div class="totals">
+            <div class="label">Total general de pagos recibidos</div>
+            <div>
+                @foreach ($arqueo as $ct)
+                    <span class="chip">
+                        <span
+                            class="cur">{{ $ct['currency'] }}</span>{{ number_format($ct['total'], 2, ',', '.') }}
+                        <span class="cnt">{{ number_format($ct['count'], 0, ',', '.') }} cobros</span>
+                    </span>
+                @endforeach
+            </div>
         </div>
+
+        <div class="section-title">Arqueo de cobranzas por método de pago</div>
+        <table class="data">
+            <thead>
+                <tr>
+                    <th>Método de pago</th>
+                    <th class="num" style="width: 22%">Monto</th>
+                    <th class="num" style="width: 12%">Cobros</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($arqueo as $ct)
+                    <tr class="cur-row">
+                        <td>{{ $ct['currency'] }} — subtotal</td>
+                        <td class="num">{{ number_format($ct['total'], 2, ',', '.') }}</td>
+                        <td class="num">{{ number_format($ct['count'], 0, ',', '.') }}</td>
+                    </tr>
+                    @foreach ($ct['methods'] as $m)
+                        <tr>
+                            <td>{{ $m['label'] }}</td>
+                            <td class="num">{{ number_format($m['total'], 2, ',', '.') }}</td>
+                            <td class="num">{{ number_format($m['count'], 0, ',', '.') }}</td>
+                        </tr>
+                    @endforeach
+                @endforeach
+            </tbody>
+        </table>
+    @else
+        <div class="empty">Sin cobros para este periodo y filtros.</div>
     @endif
 </body>
 

@@ -7,6 +7,7 @@ use App\Enums\PaymentMethod;
 use App\Enums\TenantRole;
 use App\Models\AuditEvent;
 use App\Models\CollectionEvent;
+use App\Models\Customer;
 use App\Models\Invoice;
 use App\Support\Verification\IssueVerificationCode;
 use App\Support\Verification\VerificationResult;
@@ -54,7 +55,7 @@ it('registers a pending flash collection without an invoice', function () {
         ->and((float) $event->amount)->toBe(150.5)
         ->and($event->currency)->toBe($scenario['tenant']->local_currency)
         ->and($event->flash_invoice_number)->toBe('FAC-1001')
-        ->and($event->flash_cardcode)->toBe('CLI-001')
+        ->and($event->flash_cardcode)->toBe('CLI001')
         ->and($event->flash_customer_name)->toBe('Cliente Flotante')
         ->and(Invoice::query()->count())->toBe(0);
 
@@ -63,6 +64,23 @@ it('registers a pending flash collection without an invoice', function () {
     expect($audit->details['flash'])->toBeTrue()
         ->and($audit->details['flash_invoice_number'])->toBe('FAC-1001')
         ->and($audit->details['currency'])->toBe($scenario['tenant']->local_currency);
+});
+
+it('accepts a long list of invoices in a single flash collection', function () {
+    $scenario = flashScenario();
+    $this->actingAs($scenario['seller']);
+
+    $list = collect(range(1, 20))
+        ->map(fn (int $index): string => 'FAC-'.str_pad((string) $index, 4, '0', STR_PAD_LEFT))
+        ->implode(', ');
+
+    $event = app(RegisterFlashCollection::class)->handle(
+        $scenario['seller'],
+        flashPayload(['flash_invoice_number' => $list]),
+    );
+
+    expect($event->flash_invoice_number)->toBe($list)
+        ->and(strlen($list))->toBeGreaterThan(32);
 });
 
 it('ignores a currency supplied by the user and uses the tenant currency', function () {
@@ -238,6 +256,104 @@ it('forbids roles without the permission from opening the flash page', function 
     $this->withoutVite()
         ->get(route('collections.flash'))
         ->assertOk();
+});
+
+it('stores the customer code normalized even when typed with spaces, symbols or lowercase', function () {
+    $scenario = flashScenario();
+    $this->actingAs($scenario['seller']);
+
+    $event = app(RegisterFlashCollection::class)->handle(
+        $scenario['seller'],
+        flashPayload(['flash_cardcode' => ' cli-001/x ']),
+    );
+
+    expect($event->flash_cardcode)->toBe('CLI001X');
+});
+
+it('rejects a customer code without alphanumeric characters', function () {
+    $scenario = flashScenario();
+    $this->actingAs($scenario['seller']);
+
+    expect(fn () => app(RegisterFlashCollection::class)->handle(
+        $scenario['seller'],
+        flashPayload(['flash_cardcode' => '--- / ---']),
+    ))->toThrow(ValidationException::class);
+
+    expect(CollectionEvent::query()->count())->toBe(0);
+});
+
+it('autocompletes the customer name from the portfolio on an exact code match', function () {
+    $scenario = flashScenario();
+    $this->actingAs($scenario['seller']);
+
+    Customer::factory()->create([
+        'tenant_id' => $scenario['tenant']->id,
+        'cardcode' => 'C-1234',
+        'name' => 'Cliente Cartera',
+    ]);
+
+    Livewire::test('pages::collection-flash')
+        ->set('flashCardcode', 'c 1234')
+        ->assertSet('flashCustomerName', 'Cliente Cartera')
+        ->assertSet('matchedCustomerName', 'Cliente Cartera')
+        ->assertSet('customerMatches', []);
+});
+
+it('offers suggestions when a partial code matches several customers', function () {
+    $scenario = flashScenario();
+    $this->actingAs($scenario['seller']);
+
+    Customer::factory()->create([
+        'tenant_id' => $scenario['tenant']->id,
+        'cardcode' => 'C-1001',
+        'name' => 'Cliente Uno',
+    ]);
+
+    Customer::factory()->create([
+        'tenant_id' => $scenario['tenant']->id,
+        'cardcode' => 'C-1002',
+        'name' => 'Cliente Dos',
+    ]);
+
+    Livewire::test('pages::collection-flash')
+        ->set('flashCardcode', 'C100')
+        ->assertSet('flashCustomerName', '')
+        ->assertCount('customerMatches', 2)
+        ->call('selectMatch', 'C-1002')
+        ->assertSet('flashCustomerName', 'Cliente Dos')
+        ->assertSet('matchedCustomerName', 'Cliente Dos')
+        ->assertSet('customerMatches', []);
+});
+
+it('keeps the typed name when the customer code is not in the portfolio', function () {
+    $scenario = flashScenario();
+    $this->actingAs($scenario['seller']);
+
+    Livewire::test('pages::collection-flash')
+        ->set('flashCardcode', 'SIN-CLIENTE')
+        ->set('flashCustomerName', 'Cliente No Registrado')
+        ->assertSet('flashCustomerName', 'Cliente No Registrado')
+        ->assertSet('customerMatches', []);
+});
+
+it('saves the normalized customer code from the flash page', function () {
+    $scenario = flashScenario();
+    $this->actingAs($scenario['seller']);
+
+    Livewire::test('pages::collection-flash')
+        ->set('amount', '25')
+        ->set('flashInvoiceNumber', 'FAC-4004')
+        ->set('flashCardcode', ' cli 004 ')
+        ->set('flashCustomerName', 'Cliente Normalizado')
+        ->set('paymentMethod', PaymentMethod::Cash->value)
+        ->set('collectedOn', now()->toDateString())
+        ->set('confirmed', true)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $event = CollectionEvent::query()->where('flash_invoice_number', 'FAC-4004')->firstOrFail();
+
+    expect($event->flash_cardcode)->toBe('CLI004');
 });
 
 it('lists and searches flash collections by their declared invoice and customer', function () {

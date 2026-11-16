@@ -3,8 +3,12 @@
 use App\Actions\Collection\RegisterFlashCollection;
 use App\Enums\PaymentMethod;
 use App\Models\CollectionEvent;
+use App\Models\Customer;
 use App\Models\Tenant;
+use App\Support\Collection\CardcodeNormalizer;
 use App\Support\Tenancy\CurrentTenant;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
@@ -36,6 +40,11 @@ new #[Layout('layouts.app')] #[Title('Cobro flash')] class extends Component {
 
     public bool $confirmed = false;
 
+    /** @var list<array{cardcode: string, name: string}> */
+    public array $customerMatches = [];
+
+    public ?string $matchedCustomerName = null;
+
     public function mount(): void
     {
         Gate::authorize('createFlash', CollectionEvent::class);
@@ -43,14 +52,113 @@ new #[Layout('layouts.app')] #[Title('Cobro flash')] class extends Component {
         $this->collectedOn = now()->toDateString();
     }
 
+    public function getNormalizedCardcodeProperty(): string
+    {
+        return CardcodeNormalizer::normalize($this->flashCardcode);
+    }
+
+    public function updatedFlashCardcode(): void
+    {
+        $this->lookupCustomer();
+    }
+
+    public function lookupCustomer(): void
+    {
+        $this->customerMatches = [];
+        $this->matchedCustomerName = null;
+
+        $normalized = $this->normalizedCardcode;
+
+        if ($normalized === '') {
+            return;
+        }
+
+        $exact = $this->customersMatching($normalized, exact: true);
+
+        if ($exact->count() === 1) {
+            $customer = $exact->first();
+
+            $this->flashCustomerName = (string) $customer->name;
+            $this->matchedCustomerName = (string) $customer->name;
+
+            return;
+        }
+
+        $candidates = $exact->isNotEmpty()
+            ? $exact
+            : $this->customersMatching($normalized, exact: false);
+
+        $this->customerMatches = $candidates
+            ->take(5)
+            ->map(fn (Customer $customer): array => [
+                'cardcode' => (string) $customer->cardcode,
+                'name' => (string) $customer->name,
+            ])
+            ->values()
+            ->all();
+    }
+
+    public function selectMatch(string $cardcode): void
+    {
+        $match = collect($this->customerMatches)->firstWhere('cardcode', $cardcode);
+
+        if (! is_array($match)) {
+            return;
+        }
+
+        $this->flashCardcode = (string) $match['cardcode'];
+        $this->flashCustomerName = (string) $match['name'];
+        $this->matchedCustomerName = (string) $match['name'];
+        $this->customerMatches = [];
+    }
+
+    /**
+     * Busca clientes del tenant comparando el CardCode normalizado.
+     *
+     * @return Collection<int, Customer>
+     */
+    private function customersMatching(string $normalized, bool $exact): Collection
+    {
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            $expression = "REGEXP_REPLACE(UPPER(cardcode), '[^A-Z0-9]', '', 'g')";
+
+            return Customer::query()
+                ->when(
+                    $exact,
+                    fn ($query) => $query->whereRaw("{$expression} = ?", [$normalized]),
+                    fn ($query) => $query->whereRaw(
+                        "{$expression} LIKE ? OR ? LIKE '%' || {$expression} || '%'",
+                        ["%{$normalized}%", $normalized],
+                    ),
+                )
+                ->orderBy('name')
+                ->limit(5)
+                ->get(['id', 'cardcode', 'name']);
+        }
+
+        return Customer::query()
+            ->orderBy('name')
+            ->get(['id', 'cardcode', 'name'])
+            ->filter(function (Customer $customer) use ($normalized, $exact): bool {
+                $cardcode = CardcodeNormalizer::normalize((string) $customer->cardcode);
+
+                return $exact
+                    ? $cardcode === $normalized
+                    : str_contains($cardcode, $normalized) || str_contains($normalized, $cardcode);
+            })
+            ->values();
+    }
+
     public function save(): void
     {
         $paymentMethod = PaymentMethod::from($this->paymentMethod);
 
+        $this->flashCardcode = $this->normalizedCardcode;
+
         $this->validate(
             [
                 'amount' => ['required', 'numeric', 'gt:0'],
-                'flashInvoiceNumber' => ['required', 'string', 'max:32'],
+                'flashInvoiceNumber' => ['required', 'string', 'max:255'],
                 'flashCardcode' => ['required', 'string', 'max:32'],
                 'flashCustomerName' => ['required', 'string', 'max:255'],
                 'voucherCode' => ['nullable', 'string', 'max:64', Rule::requiredIf($paymentMethod !== PaymentMethod::Cash && $paymentMethod !== PaymentMethod::Qr)],
@@ -141,13 +249,17 @@ new #[Layout('layouts.app')] #[Title('Cobro flash')] class extends Component {
 
                 <div>
                     <label for="flash-currency" class="label">Moneda</label>
-                    <input id="flash-currency" type="text" value="{{ $currency }}" readonly class="input">
+                    <input id="flash-currency" type="text" value="{{ $currency }}" readonly tabindex="-1"
+                        aria-readonly="true" class="input cursor-not-allowed bg-canvas text-muted">
                 </div>
 
                 <div>
                     <label for="flash-invoice-number" class="label">Número de factura</label>
-                    <input id="flash-invoice-number" type="text" maxlength="32" wire:model="flashInvoiceNumber"
+                    <input id="flash-invoice-number" type="text" maxlength="255" wire:model="flashInvoiceNumber"
                         placeholder="Factura a la que corresponde el pago" required class="input">
+                    <p class="mt-1.5 text-xs text-muted">
+                        Varias facturas: sepáralas con coma (FAC-001, FAC-002).
+                    </p>
                     @error('flashInvoiceNumber')
                         <p class="field-error">{{ $message }}</p>
                     @enderror
@@ -155,12 +267,52 @@ new #[Layout('layouts.app')] #[Title('Cobro flash')] class extends Component {
 
                 <div>
                     <label for="flash-cardcode" class="label">Código de cliente</label>
-                    <input id="flash-cardcode" type="text" maxlength="32" wire:model="flashCardcode"
-                        placeholder="Código del cliente" required class="input">
+                    <input id="flash-cardcode" type="text" maxlength="32"
+                        wire:model.live.debounce.400ms="flashCardcode" placeholder="Código del cliente" required
+                        class="input">
+                    <p class="mt-1.5 text-xs text-muted">
+                        Se limpia automáticamente: sin espacios, sin símbolos y en mayúsculas.
+                    </p>
                     @error('flashCardcode')
                         <p class="field-error">{{ $message }}</p>
                     @enderror
                 </div>
+
+                <div>
+                    <label for="flash-cardcode-clean" class="label">Código normalizado</label>
+                    <input id="flash-cardcode-clean" type="text" value="{{ $this->normalizedCardcode }}" readonly
+                        tabindex="-1" aria-readonly="true" class="input cursor-not-allowed bg-canvas text-muted">
+                    @if ($matchedCustomerName !== null)
+                        <p class="mt-1.5 text-xs font-medium text-emerald-700">
+                            Cliente registrado: {{ $matchedCustomerName }}
+                        </p>
+                    @elseif (count($customerMatches) > 1)
+                        <p class="mt-1.5 text-xs text-amber-700">
+                            {{ count($customerMatches) }} coincidencias. Elige el cliente correcto abajo.
+                        </p>
+                    @elseif ($this->normalizedCardcode !== '')
+                        <p class="mt-1.5 text-xs text-muted">
+                            Sin coincidencia en la cartera. Se guardará este código.
+                        </p>
+                    @endif
+                </div>
+
+                @if (count($customerMatches) > 0)
+                    <div class="sm:col-span-2">
+                        <p class="label">Coincidencias en la cartera</p>
+                        <ul class="mt-1 divide-y divide-line overflow-hidden rounded-xl border border-line">
+                            @foreach ($customerMatches as $match)
+                                <li>
+                                    <button type="button" wire:click="selectMatch(@js($match['cardcode']))"
+                                        class="flex w-full items-center justify-between gap-3 px-4 py-2 text-left text-sm hover:bg-canvas">
+                                        <span class="font-mono text-xs text-muted">{{ $match['cardcode'] }}</span>
+                                        <span class="font-medium text-ink">{{ $match['name'] }}</span>
+                                    </button>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
 
                 <div class="sm:col-span-2">
                     <label for="flash-customer-name" class="label">Nombre del cliente</label>

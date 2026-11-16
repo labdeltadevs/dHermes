@@ -6,9 +6,14 @@ use App\Enums\TenantRole;
 use App\Models\CollectionEvent;
 use App\Models\Customer;
 use App\Models\Invoice;
+use App\Models\Receipt;
+use App\Models\ReceiptApplication;
 use App\Models\SalesRep;
 use App\Models\User;
+use App\Queries\CollectionQuery;
+use App\Support\Collection\CollectionReportPdfGenerator;
 use App\Support\Tenancy\CurrentTenant;
+use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
 
 function collectionReportScenario(): array
@@ -126,6 +131,21 @@ function collectionReportScenario(): array
     );
 }
 
+/**
+ * @return array{from: string, to: string, status: string, payment_method: string, seller_user_id: string, currency: string}
+ */
+function collectionReportFilters(array $overrides = []): array
+{
+    return array_merge([
+        'from' => now()->toDateString(),
+        'to' => now()->toDateString(),
+        'status' => CollectionStatus::Accepted->value,
+        'payment_method' => '',
+        'seller_user_id' => '',
+        'currency' => '',
+    ], $overrides);
+}
+
 it('reports only accepted collections by default grouped by payment method', function () {
     $scenario = collectionReportScenario();
 
@@ -173,7 +193,7 @@ it('shows a seller only their own collections in the report', function () {
         ->assertDontSee('FAC-9002');
 });
 
-it('does not expose another tenant collections', function () {
+it('does not expose another tenant collections in the PDF', function () {
     collectionReportScenario();
 
     $otherTenant = tenantContext(['code' => 'OTRO']);
@@ -183,73 +203,129 @@ it('does not expose another tenant collections', function () {
 
     $this->actingAs($otherTenantSeller);
 
-    Livewire::test('pages::collection-reports')
-        ->assertOk()
-        ->assertDontSee('FAC-9001');
+    $response = $this->get(route('collections.report.pdf'));
 
-    $response = $this->get(route('collections.report.csv'));
-    $content = $response->streamedContent();
-
-    expect($content)->not->toContain('FAC-9001');
+    expect($response)->assertOk();
+    expect($response->getContent())->not->toContain('FAC-9001');
 });
 
-it('exports the report as CSV with separated columns and method subtotals', function () {
+it('offers only the PDF download and no CSV export', function () {
     $scenario = collectionReportScenario();
 
     $this->actingAs($scenario['supervisor']);
 
-    $response = $this->get(route('collections.report.csv', [
-        'from' => now()->toDateString(),
-        'to' => now()->toDateString(),
-    ]));
+    expect(Route::has('collections.report.csv'))->toBeFalse();
 
-    $response->assertOk();
-    $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
-    $response->assertHeader('content-disposition', 'attachment; filename=cobranzas_'.now()->toDateString().'_a_'.now()->toDateString().'.csv');
+    Livewire::test('pages::collection-reports')
+        ->assertOk()
+        ->assertSee('Descargar PDF')
+        ->assertDontSee('Exportar CSV');
+});
 
-    $content = $response->streamedContent();
+it('renders the PDF report with a single payment method column, arqueo and user identification', function () {
+    $scenario = collectionReportScenario();
 
-    expect($content)
-        ->toContain('Identificador app')
-        ->toContain('Identificador interno (UUID)')
-        ->toContain('Factura (NumAtCard)')
-        ->toContain('Monto asignado')
-        ->toContain('Código cliente')
-        ->toContain('Cliente')
-        ->toContain('Estado')
-        ->toContain('MÉTODO: EFECTIVO')
-        ->toContain('MÉTODO: QR')
-        ->toContain('MÉTODO: DEPÓSITO-TRANSFERENCIA')
+    $this->actingAs($scenario['supervisor']);
+
+    $filters = collectionReportFilters();
+    $events = app(CollectionQuery::class)->filtered($scenario['supervisor'], $filters)->get();
+
+    $html = app(CollectionReportPdfGenerator::class)->generateHtml(
+        $events,
+        $filters,
+        'Empresa Reporte',
+        null,
+        CollectionStatus::Accepted->label(),
+        null,
+        (string) $scenario['supervisor']->name,
+    );
+
+    expect($html)
+        ->toContain('Forma de pago')
+        ->toContain('Arqueo de cobranzas por método de pago')
+        ->toContain('Total general de pagos recibidos')
+        ->toContain('Generado por:</strong> '.$scenario['supervisor']->name)
+        ->toContain('N° reporte:')
         ->toContain('RP-000000001')
-        ->toContain('FAC-9001')
-        ->toContain('C-REP-01')
-        ->toContain('Cliente Reporte')
-        ->toContain('Subtotal Efectivo (BOB)')
-        ->toContain('Subtotal QR (BOB)')
-        ->toContain('TOTAL GENERAL (BOB)')
-        ->toContain('750.00')
-        ->toContain('100.00')
-        ->toContain('200.00')
+        ->toContain('FLASH-777')
+        ->toContain('Depósito-Transferencia')
+        ->toContain('500,00')
+        ->toContain('750,00')
+        ->not->toContain('Identificador interno')
+        ->not->toContain('Subtotal')
         ->not->toContain('RP-000000003');
 });
 
-it('respects the payment method filter in the CSV export', function () {
+it('lists every invoice of a single payment separated by commas', function () {
     $scenario = collectionReportScenario();
+
+    $receipt = Receipt::factory()->create([
+        'tenant_id' => $scenario['tenant']->id,
+        'customer_id' => $scenario['customer']->id,
+        'number' => '900100',
+        'currency' => 'BOB',
+        'total' => 600,
+    ]);
+
+    ReceiptApplication::factory()->create([
+        'tenant_id' => $scenario['tenant']->id,
+        'receipt_id' => $receipt->id,
+        'invoice_id' => $scenario['invoice']->id,
+        'invtype' => '13',
+    ]);
+
+    ReceiptApplication::factory()->create([
+        'tenant_id' => $scenario['tenant']->id,
+        'receipt_id' => $receipt->id,
+        'invoice_id' => $scenario['otherInvoice']->id,
+        'invtype' => '13',
+    ]);
+
+    CollectionEvent::factory()->accepted()->create([
+        'tenant_id' => $scenario['tenant']->id,
+        'invoice_id' => $scenario['invoice']->id,
+        'seller_user_id' => $scenario['seller']->id,
+        'amount' => 600,
+        'currency' => 'BOB',
+        'payment_method' => PaymentMethod::Check,
+        'collected_on' => now()->toDateString(),
+        'number' => 6,
+        'number_code' => 'RP-000000006',
+        'erp_docnum' => '900100',
+    ]);
+
+    CollectionEvent::factory()->accepted()->flash()->create([
+        'tenant_id' => $scenario['tenant']->id,
+        'seller_user_id' => $scenario['seller']->id,
+        'amount' => 75,
+        'currency' => 'BOB',
+        'payment_method' => PaymentMethod::Cash,
+        'collected_on' => now()->toDateString(),
+        'number' => 7,
+        'number_code' => 'RP-000000007',
+        'flash_invoice_number' => 'FAC-A , FAC-B,FAC-C',
+        'flash_cardcode' => 'C-MULTI',
+        'flash_customer_name' => 'Cliente Multi',
+    ]);
 
     $this->actingAs($scenario['supervisor']);
 
-    $response = $this->get(route('collections.report.csv', [
-        'from' => now()->toDateString(),
-        'to' => now()->toDateString(),
-        'payment_method' => PaymentMethod::Qr->value,
-    ]));
+    $filters = collectionReportFilters();
+    $events = app(CollectionQuery::class)->filtered($scenario['supervisor'], $filters)->get();
 
-    $content = $response->streamedContent();
+    $html = app(CollectionReportPdfGenerator::class)->generateHtml(
+        $events,
+        $filters,
+        'Empresa Reporte',
+        null,
+        CollectionStatus::Accepted->label(),
+        null,
+        (string) $scenario['supervisor']->name,
+    );
 
-    expect($content)
-        ->toContain('RP-000000002')
-        ->not->toContain('RP-000000001')
-        ->not->toContain('RP-000000004');
+    expect($html)
+        ->toContain('FAC-9001, FAC-9002')
+        ->toContain('FAC-A, FAC-B, FAC-C');
 });
 
 it('allows an approver to filter the report by seller', function () {
@@ -269,7 +345,7 @@ it('redirects a user without an active membership away from the report', functio
 
     $this->actingAs(User::factory()->create());
 
-    $this->get(route('collections.report.csv'))->assertRedirect();
+    $this->get(route('collections.report.pdf'))->assertRedirect();
 });
 
 it('downloads the report as a PDF document', function () {

@@ -58,7 +58,11 @@ it('rejects users without an active tenant membership', function () {
 });
 
 it('renders the authentication screens', function () {
-    $this->get(route('login'))->assertOk()->assertSee('Iniciar sesión');
+    $this->get(route('login'))
+        ->assertOk()
+        ->assertSee('Iniciar sesión')
+        ->assertSee('Mostrar u ocultar contraseña')
+        ->assertSeeHtml('x-bind:type="showPassword ? \'text\' : \'password\'"');
     $this->get(route('password.request'))->assertOk()->assertSee('Recuperar contraseña');
     $this->get(route('password.reset', ['token' => 'token-de-prueba']))
         ->assertOk()

@@ -9,6 +9,7 @@ use App\Models\CollectionEvent;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\Audit\AuditLogger;
+use App\Support\Collection\CardcodeNormalizer;
 use App\Support\Collection\CollectionNumberAllocator;
 use App\Support\Collection\CollectionProofStorage;
 use Illuminate\Http\UploadedFile;
@@ -45,7 +46,7 @@ final class RegisterFlashCollection
 
         $validated = Validator::make($data, [
             'amount' => ['required', 'numeric', 'gt:0'],
-            'flash_invoice_number' => ['required', 'string', 'max:32'],
+            'flash_invoice_number' => ['required', 'string', 'max:255'],
             'flash_cardcode' => ['required', 'string', 'max:32'],
             'flash_customer_name' => ['required', 'string', 'max:255'],
             'payment_method' => ['required', Rule::enum(PaymentMethod::class)],
@@ -66,6 +67,14 @@ final class RegisterFlashCollection
             : PaymentMethod::from((string) $validated['payment_method']);
 
         $voucherCode = trim((string) ($validated['voucher_code'] ?? ''));
+
+        $cardcode = CardcodeNormalizer::normalize((string) $validated['flash_cardcode']);
+
+        if ($cardcode === '') {
+            throw ValidationException::withMessages([
+                'flash_cardcode' => 'El código del cliente no contiene caracteres válidos.',
+            ]);
+        }
 
         if ($paymentMethod !== PaymentMethod::Cash
             && $paymentMethod !== PaymentMethod::Qr
@@ -89,13 +98,13 @@ final class RegisterFlashCollection
         $storedPath = null;
 
         try {
-            return DB::transaction(function () use ($seller, $tenant, $tenantId, $validated, $paymentMethod, $voucherCode, $proof, $storage, $autoAccept, &$storedPath): CollectionEvent {
+            return DB::transaction(function () use ($seller, $tenant, $tenantId, $validated, $paymentMethod, $voucherCode, $cardcode, $proof, $storage, $autoAccept, &$storedPath): CollectionEvent {
                 $collectionEvent = CollectionEvent::create([
                     ...app(CollectionNumberAllocator::class)->next($tenantId),
                     'tenant_id' => $tenantId,
                     'invoice_id' => null,
                     'flash_invoice_number' => trim((string) $validated['flash_invoice_number']),
-                    'flash_cardcode' => trim((string) $validated['flash_cardcode']),
+                    'flash_cardcode' => $cardcode,
                     'flash_customer_name' => trim((string) $validated['flash_customer_name']),
                     'seller_user_id' => $seller->id,
                     'amount' => $validated['amount'],

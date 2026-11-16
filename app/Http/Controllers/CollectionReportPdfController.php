@@ -46,6 +46,7 @@ final class CollectionReportPdfController extends Controller
             is_string($sellerName) ? $sellerName : null,
             $statusLabel,
             $paymentMethodLabel,
+            (string) $user->name,
         );
 
         $filename = 'cobranzas_'.$filters['from'].'_a_'.$filters['to'].'.pdf';
