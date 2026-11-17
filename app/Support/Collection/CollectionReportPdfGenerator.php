@@ -17,7 +17,7 @@ final class CollectionReportPdfGenerator
 {
     /**
      * @param  Collection<int, CollectionEvent>  $events
-     * @param  array{from: string, to: string, status: string, payment_method: string, seller_user_id: string, currency: string}  $filters
+     * @param  array{from: string, to: string, status: string, payment_method: list<string>, seller_user_id: list<string>, currency: list<string>}  $filters
      */
     public function generate(
         Collection $events,
@@ -53,7 +53,7 @@ final class CollectionReportPdfGenerator
 
     /**
      * @param  Collection<int, CollectionEvent>  $events
-     * @param  array{from: string, to: string, status: string, payment_method: string, seller_user_id: string, currency: string}  $filters
+     * @param  array{from: string, to: string, status: string, payment_method: list<string>, seller_user_id: list<string>, currency: list<string>}  $filters
      */
     public function generateHtml(
         Collection $events,
@@ -230,6 +230,7 @@ final class CollectionReportPdfGenerator
      *     created_at: string,
      *     cardcode: string,
      *     customer: string,
+     *     seller: string,
      *     status: string,
      *     method: string,
      *     method_label: string
@@ -258,6 +259,7 @@ final class CollectionReportPdfGenerator
             'created_at' => $event->created_at?->format('d/m/Y H:i') ?? '',
             'cardcode' => $cardcode,
             'customer' => $customer,
+            'seller' => (string) $event->seller->name,
             'status' => $event->status->label(),
             'method' => $event->payment_method->value,
             'method_label' => $event->payment_method->label(),

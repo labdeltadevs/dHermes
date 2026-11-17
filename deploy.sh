@@ -46,6 +46,12 @@ run "Git Fetch" \
 run "Git Reset" \
     git reset --hard origin/main
 
+# La versión de la app (APP_VERSION en .env) es el SHA corto del commit
+# desplegado. Debe escribirse ANTES de "Make Cache", porque esa etapa
+# congela config() y de lo contrario la UI seguiría mostrando el valor viejo.
+run "Update App Version" \
+    bash -c 'VER=$(git rev-parse --short HEAD); if grep -q "^APP_VERSION=" .env; then sed -i "s/^APP_VERSION=.*/APP_VERSION=$VER/" .env; else sed -i "\$a APP_VERSION=$VER" .env; fi; echo "Version desplegada: $VER"'
+
 run "Composer Install" \
     composer install --no-dev --optimize-autoloader
 

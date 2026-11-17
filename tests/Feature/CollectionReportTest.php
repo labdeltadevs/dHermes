@@ -11,8 +11,10 @@ use App\Models\ReceiptApplication;
 use App\Models\SalesRep;
 use App\Models\User;
 use App\Queries\CollectionQuery;
+use App\Support\Collection\CollectionReportFilters;
 use App\Support\Collection\CollectionReportPdfGenerator;
 use App\Support\Tenancy\CurrentTenant;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
 
@@ -132,7 +134,7 @@ function collectionReportScenario(): array
 }
 
 /**
- * @return array{from: string, to: string, status: string, payment_method: string, seller_user_id: string, currency: string}
+ * @return array{from: string, to: string, status: string, payment_method: list<string>, seller_user_id: list<string>, currency: list<string>}
  */
 function collectionReportFilters(array $overrides = []): array
 {
@@ -140,9 +142,9 @@ function collectionReportFilters(array $overrides = []): array
         'from' => now()->toDateString(),
         'to' => now()->toDateString(),
         'status' => CollectionStatus::Accepted->value,
-        'payment_method' => '',
-        'seller_user_id' => '',
-        'currency' => '',
+        'payment_method' => [],
+        'seller_user_id' => [],
+        'currency' => [],
     ], $overrides);
 }
 
@@ -163,6 +165,8 @@ it('reports only accepted collections by default grouped by payment method', fun
         ->assertSee('50,00')
         ->assertSee('Total general de pagos recibidos')
         ->assertSee('750,00')
+        ->assertSee('Cobrado por')
+        ->assertSee($scenario['seller']->name)
         ->assertDontSee('RP-000000003');
 });
 
@@ -175,7 +179,7 @@ it('filters the report by status and payment method', function () {
         ->set('status', '')
         ->assertSee('RP-000000003')
         ->set('status', CollectionStatus::Accepted->value)
-        ->set('paymentMethod', PaymentMethod::Qr->value)
+        ->set('paymentMethod', [PaymentMethod::Qr->value])
         ->assertSee('FAC-9001')
         ->assertSee('RP-000000002')
         ->assertDontSee('RP-000000001')
@@ -242,9 +246,12 @@ it('renders the PDF report with a single payment method column, arqueo and user 
 
     expect($html)
         ->toContain('Forma de pago')
+        ->toContain('Cobrado por')
+        ->toContain($scenario['seller']->name)
         ->toContain('Arqueo de cobranzas por método de pago')
         ->toContain('Total general de pagos recibidos')
-        ->toContain('Generado por:</strong> '.$scenario['supervisor']->name)
+        ->toContain('Generado por:')
+        ->toContain((string) $scenario['supervisor']->name)
         ->toContain('N° reporte:')
         ->toContain('RP-000000001')
         ->toContain('FLASH-777')
@@ -335,9 +342,135 @@ it('allows an approver to filter the report by seller', function () {
 
     Livewire::test('pages::collection-reports')
         ->assertSee('FAC-9002')
-        ->set('sellerId', $scenario['seller']->id)
+        ->set('sellerId', [$scenario['seller']->id])
         ->assertSee('FAC-9001')
         ->assertDontSee('FAC-9002');
+});
+
+it('allows an approver to filter the report by several sellers at once', function () {
+    $scenario = collectionReportScenario();
+
+    $this->actingAs($scenario['supervisor']);
+
+    Livewire::test('pages::collection-reports')
+        ->set('sellerId', [$scenario['seller']->id])
+        ->assertSee('FAC-9001')
+        ->assertDontSee('FAC-9002')
+        ->set('sellerId', [$scenario['seller']->id, $scenario['otherSeller']->id])
+        ->assertSee('FAC-9001')
+        ->assertSee('FAC-9002')
+        ->set('sellerId', [])
+        ->assertSee('FAC-9002');
+});
+
+it('allows filtering the report by several payment methods at once', function () {
+    $scenario = collectionReportScenario();
+
+    $this->actingAs($scenario['supervisor']);
+
+    Livewire::test('pages::collection-reports')
+        ->set('paymentMethod', [PaymentMethod::Cash->value, PaymentMethod::Qr->value])
+        ->assertSee('RP-000000001')
+        ->assertSee('RP-000000002')
+        ->assertSee('RP-000000005')
+        ->assertDontSee('FLASH-777')
+        ->assertDontSee('RP-000000004');
+});
+
+it('allows filtering the report by several currencies at once', function () {
+    $scenario = collectionReportScenario();
+
+    CollectionEvent::factory()->accepted()->create([
+        'tenant_id' => $scenario['tenant']->id,
+        'invoice_id' => $scenario['invoice']->id,
+        'seller_user_id' => $scenario['seller']->id,
+        'amount' => 10,
+        'currency' => 'USD',
+        'payment_method' => PaymentMethod::Cash,
+        'collected_on' => now()->toDateString(),
+        'number' => 8,
+        'number_code' => 'RP-000000008',
+    ]);
+
+    $this->actingAs($scenario['supervisor']);
+
+    Livewire::test('pages::collection-reports')
+        ->assertSee('RP-000000008')
+        ->set('currency', ['BOB'])
+        ->assertSee('RP-000000001')
+        ->assertDontSee('RP-000000008')
+        ->set('currency', ['BOB', 'USD'])
+        ->assertSee('RP-000000001')
+        ->assertSee('RP-000000008')
+        ->set('currency', ['USD'])
+        ->assertDontSee('RP-000000001')
+        ->assertSee('RP-000000008');
+});
+
+it('renders the report header with several sellers and payment methods', function () {
+    $scenario = collectionReportScenario();
+
+    $filters = collectionReportFilters([
+        'payment_method' => [PaymentMethod::Cash->value, PaymentMethod::Qr->value],
+        'seller_user_id' => [$scenario['seller']->id, $scenario['otherSeller']->id],
+        'currency' => ['BOB', 'USD'],
+    ]);
+
+    $this->actingAs($scenario['supervisor']);
+
+    $events = app(CollectionQuery::class)->filtered($scenario['supervisor'], $filters)->get();
+
+    $html = app(CollectionReportPdfGenerator::class)->generateHtml(
+        $events,
+        $filters,
+        'Empresa Reporte',
+        'Ana, Beto',
+        CollectionStatus::Accepted->label(),
+        'Efectivo, QR',
+        (string) $scenario['supervisor']->name,
+    );
+
+    expect($html)
+        ->toContain('Vendedor(es):')
+        ->toContain('Ana, Beto')
+        ->toContain('Método(s):')
+        ->toContain('Efectivo, QR')
+        ->toContain('BOB, USD');
+});
+
+it('normalizes repeated report filters and ignores invalid values', function () {
+    $request = Request::create('/cobranzas/reportes/pdf', 'GET', [
+        'payment_method' => [PaymentMethod::Cash->value, 'inexistente', PaymentMethod::Cash->value],
+        'seller_user_id' => ['vendedor-a', 'vendedor-b', ''],
+        'currency' => ['BOB'],
+        'status' => 'inexistente',
+    ]);
+
+    $filters = CollectionReportFilters::fromRequest($request);
+
+    expect($filters['payment_method'])->toBe([PaymentMethod::Cash->value])
+        ->and($filters['seller_user_id'])->toBe(['vendedor-a', 'vendedor-b'])
+        ->and($filters['currency'])->toBe(['BOB'])
+        ->and($filters['status'])->toBe(CollectionStatus::Accepted->value);
+});
+
+it('accepts several filters in the PDF download query string', function () {
+    $scenario = collectionReportScenario();
+
+    $this->actingAs($scenario['supervisor']);
+
+    $response = $this->get(route('collections.report.pdf', [
+        'from' => now()->toDateString(),
+        'to' => now()->toDateString(),
+        'payment_method' => [PaymentMethod::Cash->value, PaymentMethod::Qr->value],
+        'seller_user_id' => [$scenario['seller']->id, $scenario['otherSeller']->id],
+        'currency' => ['BOB'],
+    ]));
+
+    $response->assertOk();
+    $response->assertHeader('content-type', 'application/pdf');
+
+    expect($response->getContent())->toStartWith('%PDF');
 });
 
 it('redirects a user without an active membership away from the report', function () {

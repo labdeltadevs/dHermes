@@ -27,25 +27,30 @@ final class CollectionReportPdfController extends Controller
             ? Tenant::query()->whereKey($user->currentTenantId())->value('name')
             : null;
 
-        $sellerName = $filters['seller_user_id'] !== ''
-            ? User::query()->whereKey($filters['seller_user_id'])->value('name')
-            : null;
+        $sellerNames = $filters['seller_user_id'] === []
+            ? null
+            : User::query()
+                ->whereIn('id', $filters['seller_user_id'])
+                ->orderBy('name')
+                ->pluck('name')
+                ->implode(', ');
 
         $statusLabel = $filters['status'] !== ''
             ? CollectionStatus::tryFrom($filters['status'])?->label()
             : null;
 
-        $paymentMethodLabel = $filters['payment_method'] !== ''
-            ? PaymentMethod::tryFrom($filters['payment_method'])?->label()
-            : null;
+        $paymentMethodLabels = collect($filters['payment_method'])
+            ->map(fn (string $method): ?string => PaymentMethod::tryFrom($method)?->label())
+            ->filter()
+            ->implode(', ');
 
         $pdf = app(CollectionReportPdfGenerator::class)->generate(
             $events,
             $filters,
             is_string($tenantName) ? $tenantName : null,
-            is_string($sellerName) ? $sellerName : null,
+            $sellerNames === '' ? null : $sellerNames,
             $statusLabel,
-            $paymentMethodLabel,
+            $paymentMethodLabels === '' ? null : $paymentMethodLabels,
             (string) $user->name,
         );
 

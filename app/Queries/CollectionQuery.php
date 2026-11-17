@@ -41,7 +41,7 @@ final class CollectionQuery
     }
 
     /**
-     * @param  array{search?: string, status?: string, seller_user_id?: string, currency?: string, from?: string, to?: string, payment_method?: string}  $filters
+     * @param  array{search?: string, status?: string, seller_user_id?: string|list<string>, currency?: string|list<string>, from?: string, to?: string, payment_method?: string|list<string>}  $filters
      * @return Builder<CollectionEvent>
      */
     public function filtered(User $user, array $filters = []): Builder
@@ -77,18 +77,25 @@ final class CollectionQuery
 
         $isApprover = $user->currentMembership()?->role->canApprove() ?? false;
 
-        if ($isApprover && ($filters['seller_user_id'] ?? '') !== '') {
-            $query->where('seller_user_id', $filters['seller_user_id']);
+        $sellers = $this->values($filters['seller_user_id'] ?? '');
+
+        if ($isApprover && $sellers !== []) {
+            $query->whereIn('seller_user_id', $sellers);
         }
 
-        if (($filters['currency'] ?? '') !== '') {
-            $query->where('currency', $filters['currency']);
+        $currencies = $this->values($filters['currency'] ?? '');
+
+        if ($currencies !== []) {
+            $query->whereIn('currency', $currencies);
         }
 
-        $paymentMethod = (string) ($filters['payment_method'] ?? '');
+        $paymentMethods = array_values(array_intersect(
+            $this->values($filters['payment_method'] ?? ''),
+            PaymentMethod::values(),
+        ));
 
-        if (in_array($paymentMethod, PaymentMethod::values(), true)) {
-            $query->where('payment_method', $paymentMethod);
+        if ($paymentMethods !== []) {
+            $query->whereIn('payment_method', $paymentMethods);
         }
 
         if (($filters['from'] ?? '') !== '') {
@@ -103,7 +110,7 @@ final class CollectionQuery
     }
 
     /**
-     * @param  array{search?: string, status?: string, seller_user_id?: string, currency?: string, from?: string, to?: string, payment_method?: string}  $filters
+     * @param  array{search?: string, status?: string, seller_user_id?: string|list<string>, currency?: string|list<string>, from?: string, to?: string, payment_method?: string|list<string>}  $filters
      * @return Collection<int, \stdClass>
      */
     public function summaryByCurrency(User $user, array $filters = []): Collection
@@ -122,5 +129,33 @@ final class CollectionQuery
             ->groupBy('currency')
             ->orderBy('currency')
             ->get();
+    }
+
+    /**
+     * Normaliza un filtro escalar o de selección múltiple a una lista de
+     * valores no vacíos y sin duplicados.
+     *
+     * @return list<string>
+     */
+    private function values(mixed $value): array
+    {
+        $values = is_array($value) ? $value : [$value];
+        $normalized = [];
+
+        foreach ($values as $item) {
+            if (! is_string($item)) {
+                continue;
+            }
+
+            $item = trim($item);
+
+            if ($item === '' || in_array($item, $normalized, true)) {
+                continue;
+            }
+
+            $normalized[] = $item;
+        }
+
+        return $normalized;
     }
 }

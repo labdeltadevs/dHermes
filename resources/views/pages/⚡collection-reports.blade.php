@@ -18,13 +18,16 @@ new #[Layout('layouts.app')] #[Title('Reporte de cobranzas')] class extends Comp
 
     public string $to = '';
 
-    public string $paymentMethod = '';
+    /** @var list<string> */
+    public array $paymentMethod = [];
 
     public string $status = CollectionStatus::Accepted->value;
 
-    public string $sellerId = '';
+    /** @var list<string> */
+    public array $sellerId = [];
 
-    public string $currency = '';
+    /** @var list<string> */
+    public array $currency = [];
 
     public function mount(): void
     {
@@ -79,7 +82,7 @@ new #[Layout('layouts.app')] #[Title('Reporte de cobranzas')] class extends Comp
             'payment_method' => $filters['payment_method'],
             'seller_user_id' => $filters['seller_user_id'],
             'currency' => $filters['currency'],
-        ], fn (string $value): bool => $value !== ''));
+        ], fn ($value): bool => is_array($value) ? $value !== [] : $value !== ''));
 
         return $this->view()->with([
             'groups' => $groups,
@@ -101,18 +104,36 @@ new #[Layout('layouts.app')] #[Title('Reporte de cobranzas')] class extends Comp
                     ->filter()
                     ->unique('id')
                     ->sortBy('name')
+                    ->map(fn (User $seller): array => [
+                        'value' => $seller->id,
+                        'label' => (string) $seller->name,
+                    ])
                     ->values()
-                : collect(),
-            'currencies' => $query->for($user)->reorder()->select('currency')->distinct()->orderBy('currency')->pluck('currency'),
+                    ->all()
+                : [],
+            'currencies' => $query->for($user)->reorder()->select('currency')->distinct()->orderBy('currency')
+                ->pluck('currency')
+                ->map(fn (string $currency): array => [
+                    'value' => $currency,
+                    'label' => $currency,
+                ])
+                ->values()
+                ->all(),
             'isApprover' => $membership->role->canApprove(),
             'statuses' => CollectionStatus::cases(),
-            'paymentMethods' => PaymentMethod::cases(),
+            'paymentMethods' => collect(PaymentMethod::cases())
+                ->map(fn (PaymentMethod $method): array => [
+                    'value' => $method->value,
+                    'label' => $method->label(),
+                ])
+                ->values()
+                ->all(),
             'exportPdfUrl' => $exportPdfUrl,
         ]);
     }
 
     /**
-     * @return array{from: string, to: string, status: string, payment_method: string, seller_user_id: string, currency: string}
+     * @return array{from: string, to: string, status: string, payment_method: list<string>, seller_user_id: list<string>, currency: list<string>}
      */
     private function filters(): array
     {
@@ -179,15 +200,8 @@ new #[Layout('layouts.app')] #[Title('Reporte de cobranzas')] class extends Comp
                 <input id="report-to" type="date" wire:model.live="to" class="input">
             </div>
 
-            <div>
-                <label for="report-method" class="label">Método de pago</label>
-                <select id="report-method" wire:model.live="paymentMethod" class="select">
-                    <option value="">Todos</option>
-                    @foreach ($paymentMethods as $method)
-                        <option value="{{ $method->value }}">{{ $method->label() }}</option>
-                    @endforeach
-                </select>
-            </div>
+            <x-multi-select id="report-method" label="Método de pago" property="paymentMethod"
+                :options="$paymentMethods" :selected="$paymentMethod" />
 
             <div>
                 <label for="report-status" class="label">Estado</label>
@@ -200,26 +214,12 @@ new #[Layout('layouts.app')] #[Title('Reporte de cobranzas')] class extends Comp
             </div>
 
             @if ($isApprover)
-                <div>
-                    <label for="report-seller" class="label">Vendedor</label>
-                    <select id="report-seller" wire:model.live="sellerId" class="select">
-                        <option value="">Todos</option>
-                        @foreach ($sellers as $seller)
-                            <option value="{{ $seller->id }}">{{ $seller->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
+                <x-multi-select id="report-seller" label="Vendedor" property="sellerId"
+                    :options="$sellers" :selected="$sellerId" />
             @endif
 
-            <div>
-                <label for="report-currency" class="label">Moneda</label>
-                <select id="report-currency" wire:model.live="currency" class="select">
-                    <option value="">Todas</option>
-                    @foreach ($currencies as $currencyOption)
-                        <option value="{{ $currencyOption }}">{{ $currencyOption }}</option>
-                    @endforeach
-                </select>
-            </div>
+            <x-multi-select id="report-currency" label="Moneda" property="currency"
+                :options="$currencies" :selected="$currency" placeholder="Todas" />
 
             <div class="flex items-end gap-2 sm:col-span-2 lg:col-span-2">
                 <button type="button" wire:click="applyToday" class="btn btn-outline">Hoy</button>
@@ -282,7 +282,7 @@ new #[Layout('layouts.app')] #[Title('Reporte de cobranzas')] class extends Comp
 
             <div class="overflow-hidden rounded-2xl border border-black/[0.07] bg-white shadow-[0_1px_2px_rgb(0_0_0/0.05)]">
                 <div class="overflow-x-auto">
-                    <table class="w-full min-w-[1080px] border-collapse text-[13px] leading-5">
+                    <table class="w-full min-w-[1200px] border-collapse text-[13px] leading-5">
                         <thead>
                             <tr class="border-b border-black/[0.07] bg-[#FAFAF8] text-left">
                                 <th class="whitespace-nowrap px-4 py-3 pl-5 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-black/45">
@@ -299,6 +299,8 @@ new #[Layout('layouts.app')] #[Title('Reporte de cobranzas')] class extends Comp
                                     Código cliente</th>
                                 <th class="whitespace-nowrap px-4 py-3 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-black/45">
                                     Cliente</th>
+                                <th class="whitespace-nowrap px-4 py-3 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-black/45">
+                                    Cobrado por</th>
                                 <th class="whitespace-nowrap px-4 py-3 pr-5 text-[10.5px] font-semibold uppercase tracking-[0.06em] text-black/45">
                                     Estado</th>
                             </tr>
@@ -326,6 +328,9 @@ new #[Layout('layouts.app')] #[Title('Reporte de cobranzas')] class extends Comp
                                     </td>
                                     <td class="max-w-[220px] truncate px-4 py-3 align-middle text-ink">
                                         {{ $event->invoice?->customer?->name ?? $event->flash_customer_name ?? '—' }}
+                                    </td>
+                                    <td class="max-w-[180px] truncate px-4 py-3 align-middle text-black/70">
+                                        {{ $event->seller?->name ?? '—' }}
                                     </td>
                                     <td class="whitespace-nowrap px-4 py-3 pr-5 align-middle">
                                         <span class="badge bg-black/[0.04] text-muted">{{ $event->status->label() }}</span>
