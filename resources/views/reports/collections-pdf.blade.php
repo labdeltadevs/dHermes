@@ -378,7 +378,7 @@
         <table class="data">
             <thead>
                 <tr>
-                    <th style="width: 9%">ID app</th>
+                    <th style="width: 9%">Identificador</th>
                     <th style="width: 19%">Factura(s)</th>
                     <th style="width: 19%">Cliente</th>
                     <th style="width: 14%">Cobrado por</th>
@@ -391,16 +391,16 @@
             <tbody>
                 @foreach ($rows as $row)
                     <tr class="{{ $loop->even ? 'alt' : '' }}">
-                        <td class="mono">{{ $row['number_code'] !== '' ? $row['number_code'] : '—' }}</td>
+                        <td class="invoices">{{ $row['number_code'] !== '' ? $row['number_code'] : '—' }}</td>
                         <td class="invoices">{{ $row['invoice'] !== '' ? $row['invoice'] : '—' }}</td>
-                        <td>
+                        <td>a
                             @if ($row['customer'] !== '')
                                 @if ($row['cardcode'] !== '')
-                                    <span class="mono">({{ $row['cardcode'] }})</span>
+                                    <span class="invoices">({{ $row['cardcode'] }})</span>
                                 @endif
                                 <span class="name">{{ $row['customer'] }}</span>
                             @else
-                                <span class="mono">{{ $row['cardcode'] !== '' ? $row['cardcode'] : '—' }}</span>
+                                <span class="invoices">{{ $row['cardcode'] !== '' ? $row['cardcode'] : '—' }}</span>
                             @endif
                         </td>
                         <td class="muted">{{ $row['seller'] !== '' ? $row['seller'] : '—' }}</td>
