@@ -3,6 +3,7 @@ const OFFLINE_URL = '/offline.html';
 
 const PRECACHE_URLS = [
     OFFLINE_URL,
+    '/manifest.json',
     '/manifest.webmanifest',
     '/favicon.svg',
     '/favicon-32.png',

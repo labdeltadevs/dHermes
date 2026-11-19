@@ -5,12 +5,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="description" content="dHermes: gestión de cartera, cobros, arqueos y verificación de comprobantes.">
-    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="shortcut icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <meta name="apple-mobile-web-app-title" content="dHermes" />
-    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="icon" type="image/png" href="{{ asset('favicon-96x96.png') }}" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}" />
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}" />
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}" />
+    <link rel="manifest" href="{{ asset('site.webmanifest') }}" />
     <title>{{ $title ?? config('app.name') }}</title>
     <x-pwa-meta />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -55,7 +54,8 @@
                             class="nav-link">
                             Cartera
                         </a>
-                        <a href="{{ route('receipts') }}" wire:navigate wire:current="nav-link-active" class="nav-link">
+                        <a href="{{ route('receipts') }}" wire:navigate wire:current="nav-link-active"
+                            class="nav-link">
                             Cobros
                         </a>
                         <a href="{{ route('collections.index') }}" wire:navigate wire:current="nav-link-active"
