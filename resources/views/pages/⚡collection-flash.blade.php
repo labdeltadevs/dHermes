@@ -158,7 +158,7 @@ new #[Layout('layouts.app')] #[Title('Cobro flash')] class extends Component {
         $this->validate(
             [
                 'amount' => ['required', 'numeric', 'gt:0'],
-                'flashInvoiceNumber' => ['required', 'string', 'max:255'],
+                'flashInvoiceNumber' => ['required', 'string', 'max:1000'],
                 'flashCardcode' => ['required', 'string', 'max:32'],
                 'flashCustomerName' => ['required', 'string', 'max:255'],
                 'voucherCode' => ['nullable', 'string', 'max:64', Rule::requiredIf($paymentMethod !== PaymentMethod::Cash && $paymentMethod !== PaymentMethod::Qr)],
@@ -255,7 +255,7 @@ new #[Layout('layouts.app')] #[Title('Cobro flash')] class extends Component {
 
                 <div>
                     <label for="flash-invoice-number" class="label">Número de factura</label>
-                    <input id="flash-invoice-number" type="text" maxlength="255" wire:model="flashInvoiceNumber"
+                    <input id="flash-invoice-number" type="text" maxlength="1000" wire:model="flashInvoiceNumber"
                         placeholder="Factura a la que corresponde el pago" required class="input">
                     <p class="mt-1.5 text-xs text-muted">
                         Varias facturas: sepáralas con coma (00911, 00912, 00913, 00915).

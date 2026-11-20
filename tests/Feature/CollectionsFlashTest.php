@@ -83,6 +83,33 @@ it('accepts a long list of invoices in a single flash collection', function () {
         ->and(strlen($list))->toBeGreaterThan(32);
 });
 
+it('accepts a flash invoice number longer than the previous 255 character limit', function () {
+    $scenario = flashScenario();
+    $this->actingAs($scenario['seller']);
+
+    $number = rtrim(str_repeat('FAC-0001, ', 60), ', ');
+
+    $event = app(RegisterFlashCollection::class)->handle(
+        $scenario['seller'],
+        flashPayload(['flash_invoice_number' => $number]),
+    );
+
+    expect($event->flash_invoice_number)->toBe($number)
+        ->and(strlen($number))->toBeGreaterThan(255);
+});
+
+it('rejects a flash invoice number over 1000 characters', function () {
+    $scenario = flashScenario();
+    $this->actingAs($scenario['seller']);
+
+    expect(fn () => app(RegisterFlashCollection::class)->handle(
+        $scenario['seller'],
+        flashPayload(['flash_invoice_number' => str_repeat('F', 1001)]),
+    ))->toThrow(ValidationException::class);
+
+    expect(CollectionEvent::query()->count())->toBe(0);
+});
+
 it('ignores a currency supplied by the user and uses the tenant currency', function () {
     $scenario = flashScenario(['local_currency' => 'USD']);
     $this->actingAs($scenario['seller']);

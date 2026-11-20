@@ -46,7 +46,7 @@ final class RegisterFlashCollection
 
         $validated = Validator::make($data, [
             'amount' => ['required', 'numeric', 'gt:0'],
-            'flash_invoice_number' => ['required', 'string', 'max:255'],
+            'flash_invoice_number' => ['required', 'string', 'max:1000'],
             'flash_cardcode' => ['required', 'string', 'max:32'],
             'flash_customer_name' => ['required', 'string', 'max:255'],
             'payment_method' => ['required', Rule::enum(PaymentMethod::class)],
